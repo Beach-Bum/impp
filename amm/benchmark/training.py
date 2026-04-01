@@ -50,12 +50,17 @@ def train_expert(
             f"Your score: {score}, True score: {item.true_score}, "
             f"Error: {error}. "
         )
-        if error <= 5:
-            feedback += "Excellent calibration."
-        elif score > item.true_score:
-            feedback += f"Too high by {error} points. Key mitigants you may have missed."
+        if error <= 10:
+            feedback += "Good calibration. "
+        elif error <= 25:
+            feedback += "Moderate error. "
         else:
-            feedback += f"Too low by {error} points. Key risk factors to reconsider."
+            feedback += "Significant miscalibration. "
+
+        if item.risk_factors:
+            feedback += f"Key risk factors you should note: {', '.join(item.risk_factors)}. "
+        if item.mitigants:
+            feedback += f"Key mitigants: {', '.join(item.mitigants)}."
 
         accumulated_memory.append(feedback)
 
@@ -77,7 +82,8 @@ def train_expert(
             },
         )
 
-        lesson = result.get("lesson", "No lesson extracted")
+        # Use ground truth lesson if available, otherwise fall back to LLM's extraction
+        lesson = scenario.lesson if scenario.lesson else result.get("lesson", "No lesson extracted")
         accumulated_memory.append(
             f"Scenario {i + 1} ({scenario.name}): {lesson}"
         )

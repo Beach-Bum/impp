@@ -31,6 +31,7 @@ def evaluate_agent(
     items: list[EvalItem] | None = None,
     memory: str = "",
     model: str = MODEL,
+    system_prompt_override: str = "",
 ) -> list[AssessmentResult]:
     """Evaluate an agent on a set of items.
 
@@ -43,6 +44,7 @@ def evaluate_agent(
         items: Items to evaluate (defaults to all items)
         memory: Optional memory/artifact content to inject
         model: Model to use
+        system_prompt_override: Optional full system prompt (bypasses memory injection)
 
     Returns:
         List of AssessmentResult for each item.
@@ -51,7 +53,7 @@ def evaluate_agent(
         items = domain.get_all_items()
 
     results = []
-    system_prompt = domain.get_assessment_system_prompt(memory=memory)
+    system_prompt = system_prompt_override or domain.get_assessment_system_prompt(memory=memory)
 
     for item in items:
         result = call_api_json(

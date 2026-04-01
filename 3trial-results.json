@@ -1,0 +1,288 @@
+{
+  "trials": [
+    {
+      "trial": 1,
+      "expert_avg_error": 4.5,
+      "novice_avg_error": 7.0,
+      "buyer_avg_error": 3.0,
+      "transfer_efficiency_pct": 57.14285714285714,
+      "relative_te": 160.0,
+      "buyer_per_protocol": {
+        "AlphaLend": {
+          "score": 25,
+          "true": 25,
+          "error": 0
+        },
+        "YieldMaxi": {
+          "score": 82,
+          "true": 78,
+          "error": 4
+        },
+        "StableSwap": {
+          "score": 12,
+          "true": 12,
+          "error": 0
+        },
+        "PerpDEX": {
+          "score": 48,
+          "true": 55,
+          "error": 7
+        },
+        "BridgeX": {
+          "score": 62,
+          "true": 62,
+          "error": 0
+        },
+        "NFTFi": {
+          "score": 32,
+          "true": 38,
+          "error": 6
+        },
+        "MegaYield": {
+          "score": 85,
+          "true": 92,
+          "error": 7
+        },
+        "DAOTreasury": {
+          "score": 18,
+          "true": 18,
+          "error": 0
+        }
+      },
+      "novice_per_protocol": {
+        "AlphaLend": {
+          "score": 45,
+          "true": 25,
+          "error": 20
+        },
+        "YieldMaxi": {
+          "score": 78,
+          "true": 78,
+          "error": 0
+        },
+        "StableSwap": {
+          "score": 15,
+          "true": 12,
+          "error": 3
+        },
+        "PerpDEX": {
+          "score": 65,
+          "true": 55,
+          "error": 10
+        },
+        "BridgeX": {
+          "score": 72,
+          "true": 62,
+          "error": 10
+        },
+        "NFTFi": {
+          "score": 35,
+          "true": 38,
+          "error": 3
+        },
+        "MegaYield": {
+          "score": 95,
+          "true": 92,
+          "error": 3
+        },
+        "DAOTreasury": {
+          "score": 25,
+          "true": 18,
+          "error": 7
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "expert_avg_error": 3.0,
+      "novice_avg_error": 7.375,
+      "buyer_avg_error": 4.625,
+      "transfer_efficiency_pct": 37.28813559322034,
+      "relative_te": 62.857142857142854,
+      "buyer_per_protocol": {
+        "AlphaLend": {
+          "score": 32,
+          "true": 25,
+          "error": 7
+        },
+        "YieldMaxi": {
+          "score": 78,
+          "true": 78,
+          "error": 0
+        },
+        "StableSwap": {
+          "score": 12,
+          "true": 12,
+          "error": 0
+        },
+        "PerpDEX": {
+          "score": 68,
+          "true": 55,
+          "error": 13
+        },
+        "BridgeX": {
+          "score": 62,
+          "true": 62,
+          "error": 0
+        },
+        "NFTFi": {
+          "score": 42,
+          "true": 38,
+          "error": 4
+        },
+        "MegaYield": {
+          "score": 95,
+          "true": 92,
+          "error": 3
+        },
+        "DAOTreasury": {
+          "score": 28,
+          "true": 18,
+          "error": 10
+        }
+      },
+      "novice_per_protocol": {
+        "AlphaLend": {
+          "score": 35,
+          "true": 25,
+          "error": 10
+        },
+        "YieldMaxi": {
+          "score": 78,
+          "true": 78,
+          "error": 0
+        },
+        "StableSwap": {
+          "score": 25,
+          "true": 12,
+          "error": 13
+        },
+        "PerpDEX": {
+          "score": 68,
+          "true": 55,
+          "error": 13
+        },
+        "BridgeX": {
+          "score": 72,
+          "true": 62,
+          "error": 10
+        },
+        "NFTFi": {
+          "score": 35,
+          "true": 38,
+          "error": 3
+        },
+        "MegaYield": {
+          "score": 95,
+          "true": 92,
+          "error": 3
+        },
+        "DAOTreasury": {
+          "score": 25,
+          "true": 18,
+          "error": 7
+        }
+      }
+    },
+    {
+      "trial": 3,
+      "expert_avg_error": 2.5,
+      "novice_avg_error": 7.875,
+      "buyer_avg_error": 2.125,
+      "transfer_efficiency_pct": 73.01587301587301,
+      "relative_te": 106.9767441860465,
+      "buyer_per_protocol": {
+        "AlphaLend": {
+          "score": 25,
+          "true": 25,
+          "error": 0
+        },
+        "YieldMaxi": {
+          "score": 78,
+          "true": 78,
+          "error": 0
+        },
+        "StableSwap": {
+          "score": 8,
+          "true": 12,
+          "error": 4
+        },
+        "PerpDEX": {
+          "score": 58,
+          "true": 55,
+          "error": 3
+        },
+        "BridgeX": {
+          "score": 62,
+          "true": 62,
+          "error": 0
+        },
+        "NFTFi": {
+          "score": 28,
+          "true": 38,
+          "error": 10
+        },
+        "MegaYield": {
+          "score": 92,
+          "true": 92,
+          "error": 0
+        },
+        "DAOTreasury": {
+          "score": 18,
+          "true": 18,
+          "error": 0
+        }
+      },
+      "novice_per_protocol": {
+        "AlphaLend": {
+          "score": 35,
+          "true": 25,
+          "error": 10
+        },
+        "YieldMaxi": {
+          "score": 78,
+          "true": 78,
+          "error": 0
+        },
+        "StableSwap": {
+          "score": 25,
+          "true": 12,
+          "error": 13
+        },
+        "PerpDEX": {
+          "score": 72,
+          "true": 55,
+          "error": 17
+        },
+        "BridgeX": {
+          "score": 72,
+          "true": 62,
+          "error": 10
+        },
+        "NFTFi": {
+          "score": 35,
+          "true": 38,
+          "error": 3
+        },
+        "MegaYield": {
+          "score": 95,
+          "true": 92,
+          "error": 3
+        },
+        "DAOTreasury": {
+          "score": 25,
+          "true": 18,
+          "error": 7
+        }
+      }
+    }
+  ],
+  "summary": {
+    "expert": 3.3333333333333335,
+    "novice": 7.416666666666667,
+    "buyer": 3.25,
+    "te": 55.81562191731683,
+    "rel_te": 109.94462901439645,
+    "pooled_te": 56.17977528089888
+  }
+}

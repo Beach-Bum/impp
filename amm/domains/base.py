@@ -21,6 +21,8 @@ class EvalItem:
     true_score: int  # Ground truth (0-100)
     category: str  # Type/category for the item
     is_training: bool = True  # Whether this item is in the training set
+    risk_factors: list[str] | None = None  # Ground truth risk factors for training feedback
+    mitigants: list[str] | None = None  # Ground truth mitigants for training feedback
 
 
 @dataclass
@@ -30,6 +32,7 @@ class Scenario:
     name: str
     description: str
     expected_impact: str  # Description of expected score change
+    lesson: str = ""  # Ground truth lesson to inject into training memory
 
 
 @dataclass
@@ -99,6 +102,13 @@ class Domain(ABC):
     def get_assessment_user_prompt(self, item: EvalItem) -> str:
         """Return the user prompt for assessing a specific item."""
         ...
+
+    def get_buyer_system_prompt(self, artifact_content: str) -> str:
+        """Return the system prompt for a buyer agent with an artifact.
+
+        Default: same as assessment prompt with memory. Override for custom framing.
+        """
+        return self.get_assessment_system_prompt(memory=artifact_content)
 
     @abstractmethod
     def get_export_prompt(self, accumulated_memory: list[str]) -> str:

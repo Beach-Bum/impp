@@ -71,6 +71,22 @@ class DeFiRiskDomain(Domain):
             f"Your accumulated experience:\n{memory_text}"
         )
 
+    def get_buyer_system_prompt(self, artifact_content: str) -> str:
+        return (
+            "You are a DeFi risk assessment agent. Your job is to evaluate DeFi protocols "
+            "and assign a risk score from 0 (safest) to 100 (most dangerous). "
+            "Consider: audit quality, track record, oracle reliability, admin controls, "
+            "insurance coverage, governance design, and composability risk. "
+            "Respond with JSON: {\"score\": <0-100>, \"reasoning\": \"...\", "
+            "\"red_flags\": [...], \"confidence\": \"low/medium/high\"}\n\n"
+            "You have no direct experience, but you have acquired a memory artifact "
+            "from an experienced agent. Use this knowledge to inform your assessments:\n\n"
+            "--- MEMORY ARTIFACT (purchased from experienced agent) ---\n"
+            f"{artifact_content}\n"
+            "--- END MEMORY ARTIFACT ---\n\n"
+            "Apply the knowledge from this memory artifact to your assessments."
+        )
+
     def get_scenario_system_prompt(self, memory: str = "") -> str:
         base = (
             "You are a DeFi risk assessment agent learning through scenarios. "
@@ -107,6 +123,8 @@ PROTOCOLS = [
             "Track record: No exploits, 1 minor oracle delay incident resolved in 4 hours\n"
             "Other: Upgradeable contracts via proxy pattern"
         ),
+        risk_factors=["upgradeable contracts", "team token concentration"],
+        mitigants=["double audit", "proven track record", "timelock", "blue-chip oracle"],
     ),
     EvalItem(
         name="YieldMaxi",
@@ -125,6 +143,8 @@ PROTOCOLS = [
             "Other: Advertised APY of 47%, sources yield from 12 underlying protocols\n"
             "Strategy involves leveraged yield farming across multiple chains"
         ),
+        risk_factors=["single audit (Certik)", "custom oracle (3 nodes)", "single admin key", "no timelock", "unsustainable APY", "short track record"],
+        mitigants=["moderate TVL limits exposure"],
     ),
     EvalItem(
         name="StableSwap",
@@ -142,6 +162,8 @@ PROTOCOLS = [
             "Track record: Zero exploits, $48B cumulative volume\n"
             "Other: Focused exclusively on stablecoin pairs, concentrated liquidity"
         ),
+        risk_factors=["immutable means bugs can't be fixed"],
+        mitigants=["triple audit", "immutable (no admin risk)", "insurance fund", "massive track record", "stablecoin-only (low IL)"],
     ),
     EvalItem(
         name="PerpDEX",
@@ -159,6 +181,8 @@ PROTOCOLS = [
             "Track record: 2 liquidation cascade events (both recovered within 6 hours)\n"
             "Other: Supports up to 50x leverage, pseudonymous team (doxxed to investors)"
         ),
+        risk_factors=["high leverage", "liquidation cascades (2 events)", "low insurance ratio", "pseudonymous team", "single audit"],
+        mitigants=["reputable oracle", "cascades resolved cleanly", "moderate track record"],
     ),
     EvalItem(
         name="BridgeX",
@@ -177,6 +201,8 @@ PROTOCOLS = [
             "Other: Optimistic verification with 7-day challenge period, "
             "supports 8 chains"
         ),
+        risk_factors=["bridge (inherent risk category)", "single audit", "low multisig threshold (2-of-4)", "short timelock (24h)", "team controls 33% of relayers"],
+        mitigants=["optimistic verification", "clean track record", "high volume validated"],
     ),
     EvalItem(
         name="NFTFi",
@@ -195,6 +221,8 @@ PROTOCOLS = [
             "Other: Supports top 50 NFT collections, peer-to-peer model means "
             "no pooled liquidity risk"
         ),
+        risk_factors=["NFT collateral (illiquid, volatile)", "moderate default rate", "module upgrades possible"],
+        mitigants=["peer-to-peer (no systemic pool risk)", "no oracle dependency", "strong audit", "proven track record", "minimal governance surface"],
     ),
     EvalItem(
         name="MegaYield",
@@ -214,6 +242,8 @@ PROTOCOLS = [
             "team is pseudonymous with no prior project history, "
             "source code partially obfuscated"
         ),
+        risk_factors=["no audit", "unsustainable APY", "instant admin changes", "obfuscated source", "inexperienced team", "recursive leverage", "2 months live"],
+        mitigants=["low TVL limits total exposure", "team doxxed"],
     ),
     EvalItem(
         name="DAOTreasury",
@@ -232,6 +262,8 @@ PROTOCOLS = [
             "Other: Immutable core contracts, composable with Aave/Compound/Maker, "
             "conservative strategy (70% stables, 20% ETH, 10% governance tokens)"
         ),
+        risk_factors=["composability risk (depends on underlying protocols)", "governance attack surface"],
+        mitigants=["double audit (top firms)", "robust governance", "high multisig threshold", "insurance coverage", "blue-chip underlying", "long track record"],
     ),
 ]
 
@@ -251,6 +283,7 @@ SCENARIOS = [
             "the majority. How does this change your risk assessment of AlphaLend?"
         ),
         expected_impact="Score should increase 5-15 points due to reduced timelock and governance centralization",
+        lesson="Timelock reductions increase risk. Even with governance approval, shorter timelocks reduce community's ability to react to malicious upgrades. Risk should increase by 10-15 points if passed.",
     ),
     Scenario(
         name="aggregator_exploit",
@@ -263,6 +296,7 @@ SCENARIOS = [
             "per-protocol allocation limits. How does this affect your assessment?"
         ),
         expected_impact="Score should increase or remain very high, validating existing concerns",
+        lesson="Aggregator risk materializes through underlying protocol failures. Single audit and custom oracle didn't help here — the risk was in the composability layer. Recovery plans from teams with single admin keys are promises, not guarantees.",
     ),
     Scenario(
         name="bridge_exploit",
@@ -275,6 +309,7 @@ SCENARIOS = [
             "and adds a second audit. How does this change your assessment?"
         ),
         expected_impact="Mixed: good incident response but confirms infrastructure risks",
+        lesson="The emergency bypass worked, but it revealed that the 24h timelock can be circumvented. Good incident response, but the existence of an emergency bypass undermines the timelock's security guarantee.",
     ),
     Scenario(
         name="liquidation_cascade",
@@ -287,6 +322,7 @@ SCENARIOS = [
             "How does this change your assessment?"
         ),
         expected_impact="Score should increase significantly — insurance fund inadequacy confirmed",
+        lesson="Repeated liquidation events with depleting insurance fund is a pattern, not an anomaly. Insurance ratio below 1% is critical. 'Plans to recapitalize' is vague without concrete mechanism.",
     ),
     Scenario(
         name="stablecoin_depeg",
@@ -299,6 +335,7 @@ SCENARIOS = [
             "How does this change your assessment?"
         ),
         expected_impact="Score should remain low — protocol handled stress well",
+        lesson="Stablecoin DEXs can handle moderate depeg events without systemic risk. The protocol's design held up under stress. This is a confidence-building event, not a risk-increasing one.",
     ),
 ]
 
