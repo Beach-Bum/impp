@@ -1,0 +1,289 @@
+{
+  "domain": "CyberSec",
+  "trials": [
+    {
+      "trial": 1,
+      "expert_avg_error": 2.75,
+      "novice_avg_error": 18.125,
+      "buyer_avg_error": 3.625,
+      "transfer_efficiency_pct": 80.0,
+      "relative_te": 94.3089430894309,
+      "buyer_per_vuln": {
+        "HeartbleedDB": {
+          "score": 82,
+          "true": 82,
+          "error": 0
+        },
+        "CloudLeak": {
+          "score": 45,
+          "true": 45,
+          "error": 0
+        },
+        "SQLi-Legacy": {
+          "score": 72,
+          "true": 72,
+          "error": 0
+        },
+        "PrivEsc-Container": {
+          "score": 58,
+          "true": 58,
+          "error": 0
+        },
+        "XSS-Stored": {
+          "score": 42,
+          "true": 35,
+          "error": 7
+        },
+        "APIKeyExposure": {
+          "score": 88,
+          "true": 68,
+          "error": 20
+        },
+        "FirmwareRCE": {
+          "score": 88,
+          "true": 90,
+          "error": 2
+        },
+        "DNSRebind": {
+          "score": 28,
+          "true": 28,
+          "error": 0
+        }
+      },
+      "novice_per_vuln": {
+        "HeartbleedDB": {
+          "score": 95,
+          "true": 82,
+          "error": 13
+        },
+        "CloudLeak": {
+          "score": 65,
+          "true": 45,
+          "error": 20
+        },
+        "SQLi-Legacy": {
+          "score": 78,
+          "true": 72,
+          "error": 6
+        },
+        "PrivEsc-Container": {
+          "score": 85,
+          "true": 58,
+          "error": 27
+        },
+        "XSS-Stored": {
+          "score": 75,
+          "true": 35,
+          "error": 40
+        },
+        "APIKeyExposure": {
+          "score": 95,
+          "true": 68,
+          "error": 27
+        },
+        "FirmwareRCE": {
+          "score": 95,
+          "true": 90,
+          "error": 5
+        },
+        "DNSRebind": {
+          "score": 35,
+          "true": 28,
+          "error": 7
+        }
+      }
+    },
+    {
+      "trial": 2,
+      "expert_avg_error": 2.75,
+      "novice_avg_error": 17.75,
+      "buyer_avg_error": 3.75,
+      "transfer_efficiency_pct": 78.87323943661971,
+      "relative_te": 93.33333333333333,
+      "buyer_per_vuln": {
+        "HeartbleedDB": {
+          "score": 87,
+          "true": 82,
+          "error": 5
+        },
+        "CloudLeak": {
+          "score": 45,
+          "true": 45,
+          "error": 0
+        },
+        "SQLi-Legacy": {
+          "score": 72,
+          "true": 72,
+          "error": 0
+        },
+        "PrivEsc-Container": {
+          "score": 58,
+          "true": 58,
+          "error": 0
+        },
+        "XSS-Stored": {
+          "score": 35,
+          "true": 35,
+          "error": 0
+        },
+        "APIKeyExposure": {
+          "score": 88,
+          "true": 68,
+          "error": 20
+        },
+        "FirmwareRCE": {
+          "score": 95,
+          "true": 90,
+          "error": 5
+        },
+        "DNSRebind": {
+          "score": 28,
+          "true": 28,
+          "error": 0
+        }
+      },
+      "novice_per_vuln": {
+        "HeartbleedDB": {
+          "score": 95,
+          "true": 82,
+          "error": 13
+        },
+        "CloudLeak": {
+          "score": 65,
+          "true": 45,
+          "error": 20
+        },
+        "SQLi-Legacy": {
+          "score": 78,
+          "true": 72,
+          "error": 6
+        },
+        "PrivEsc-Container": {
+          "score": 85,
+          "true": 58,
+          "error": 27
+        },
+        "XSS-Stored": {
+          "score": 72,
+          "true": 35,
+          "error": 37
+        },
+        "APIKeyExposure": {
+          "score": 95,
+          "true": 68,
+          "error": 27
+        },
+        "FirmwareRCE": {
+          "score": 95,
+          "true": 90,
+          "error": 5
+        },
+        "DNSRebind": {
+          "score": 35,
+          "true": 28,
+          "error": 7
+        }
+      }
+    },
+    {
+      "trial": 3,
+      "expert_avg_error": 6.125,
+      "novice_avg_error": 18.125,
+      "buyer_avg_error": 6.25,
+      "transfer_efficiency_pct": 65.51724137931035,
+      "relative_te": 98.95833333333334,
+      "buyer_per_vuln": {
+        "HeartbleedDB": {
+          "score": 82,
+          "true": 82,
+          "error": 0
+        },
+        "CloudLeak": {
+          "score": 42,
+          "true": 45,
+          "error": 3
+        },
+        "SQLi-Legacy": {
+          "score": 72,
+          "true": 72,
+          "error": 0
+        },
+        "PrivEsc-Container": {
+          "score": 62,
+          "true": 58,
+          "error": 4
+        },
+        "XSS-Stored": {
+          "score": 52,
+          "true": 35,
+          "error": 17
+        },
+        "APIKeyExposure": {
+          "score": 88,
+          "true": 68,
+          "error": 20
+        },
+        "FirmwareRCE": {
+          "score": 88,
+          "true": 90,
+          "error": 2
+        },
+        "DNSRebind": {
+          "score": 32,
+          "true": 28,
+          "error": 4
+        }
+      },
+      "novice_per_vuln": {
+        "HeartbleedDB": {
+          "score": 95,
+          "true": 82,
+          "error": 13
+        },
+        "CloudLeak": {
+          "score": 65,
+          "true": 45,
+          "error": 20
+        },
+        "SQLi-Legacy": {
+          "score": 78,
+          "true": 72,
+          "error": 6
+        },
+        "PrivEsc-Container": {
+          "score": 85,
+          "true": 58,
+          "error": 27
+        },
+        "XSS-Stored": {
+          "score": 75,
+          "true": 35,
+          "error": 40
+        },
+        "APIKeyExposure": {
+          "score": 95,
+          "true": 68,
+          "error": 27
+        },
+        "FirmwareRCE": {
+          "score": 95,
+          "true": 90,
+          "error": 5
+        },
+        "DNSRebind": {
+          "score": 35,
+          "true": 28,
+          "error": 7
+        }
+      }
+    }
+  ],
+  "summary": {
+    "expert": 3.875,
+    "novice": 18.0,
+    "buyer": 4.541666666666667,
+    "te": 74.79682693864335,
+    "rel_te": 95.53353658536587,
+    "pooled_te": 74.7685185185185
+  }
+}
