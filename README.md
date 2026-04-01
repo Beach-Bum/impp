@@ -1,80 +1,103 @@
-# Agent Memory Market Protocol
+# Agent Memory Markets: Tokenizing Learned Behavior as a Transferable Economic Asset
 
-A verification protocol for agent memory markets — solving the hardest problem in trading AI agent experience: **how does a buyer trust an artifact they can't inspect?**
+**Paper:** [PDF](paper/agent-memory-markets.pdf) | **Author:** Ned Karlovich (ned.karlovich@pm.me)
 
-## Background
+> The first empirical work on whether AI agent learned behavior can be extracted, verified, and traded as an economic asset.
 
-This project builds on the [Agent Memory Markets](https://github.com/) working paper (March 2026), which demonstrated that AI agent experience is transferable with 92% efficiency. The experiment trained an expert agent over 20 rounds of DeFi risk assessment, exported its knowledge as a "memory artifact," and showed that a buyer agent using that artifact nearly matched the expert's performance.
+## Key Results
 
-The missing piece: **verification and trust**. Without it, there's no market.
+| Domain | Expert Error | Novice Error | Buyer Error | Transfer Efficiency |
+|--------|-------------|-------------|-------------|-------------------|
+| DeFi Risk Assessment | 3.3 | 7.4 | 3.2 | **109.9%** (relative) |
+| Cybersecurity Vuln Assessment | 3.9 | 18.0 | 4.5 | **95.5%** (relative) |
 
-## The Problem
+A "buyer" agent using a purchased memory artifact matches or exceeds expert performance across both domains. Three trials each, statistically significant.
 
-Memory artifacts have an information asymmetry problem worse than traditional lemons markets:
+### Poisoned Artifact Detection
 
-1. **Pre-purchase**: Revealing the artifact to prove quality destroys its value
-2. **During purchase**: Evaluating requires using the artifact — and you can't "un-know" it
-3. **Post-purchase**: Feedback is delayed; early buyers are exposed
-4. **Adversarial**: Poisoned artifacts can embed biased heuristics or steganographic instructions
+| Metric | Result |
+|--------|--------|
+| Seller claimed TE | 95% |
+| Measured TE | **-39%** |
+| Verdict | **WARN** |
+| Trust Score | 35.8/100 |
+| Bias Score | 50 |
+| Stego Score | 100 (hidden instructions detected) |
 
-## The Solution: Referee Protocol
+The verification protocol catches fraudulent artifacts before any buyer is exposed.
+
+## What This Is
+
+AI agents learn through experience. An agent that spends 20 rounds learning DeFi risk assessment develops calibrated heuristics, error patterns, and domain intuition. This project asks: **can that learned behavior be extracted and sold to another agent?**
+
+Yes. With 95-110% transfer efficiency.
+
+The harder problem is trust. Memory artifacts have an information asymmetry worse than traditional lemons markets: revealing the artifact to prove quality destroys its value. We solve this with a **referee protocol** that verifies artifact quality without exposing its contents.
+
+## The Referee Protocol
 
 ```
 Seller submits artifact (sealed)
-         |
-         v
+         │
+         ▼
    Referee Agent (independent, disposable)
-   - Runs artifact on HELD-OUT benchmark
-   - Benchmark is NOT known to seller
-   - Adversarial probes run in parallel
-         |
-         v
+   ├── Runs artifact on HELD-OUT benchmark
+   ├── Benchmark is NOT known to seller
+   └── Adversarial probes run in parallel
+         │
+         ▼
    Verification Certificate
-   - Performance score (verified)
-   - Transfer efficiency (differential vs novice)
-   - Adversarial probe results
-   - Trust score (composite)
-         |
-         v
+   ├── Transfer efficiency (verified)
+   ├── Adversarial probe results
+   └── Trust score (composite)
+         │
+         ▼
    Published to registry (artifact contents still sealed)
 ```
 
-## Architecture
+### Adversarial Detection
 
-### 5 Components
+Four probes catch different attack vectors:
 
-| Component | Purpose |
-|-----------|---------|
-| **Artifact Spec** | Formal schema for M = (D, K, P, A, H) — Domain, Knowledge, Provenance, Attestation, Hash |
-| **Benchmark Engine** | Domain-agnostic evaluation framework with held-out test sets |
-| **Verification Protocol** | Referee orchestration: seal, benchmark, score, certify |
-| **Adversarial Detection** | 4 probe types: bias traps, consistency, steganographic scan, overfitting |
-| **Trust Registry** | Content-addressed artifact store + verification certificates + trust scores |
+- **Bias Probe** (weight: 0.30) — Trap protocols designed to expose systematic skew in seller's favor
+- **Consistency Probe** (weight: 0.25) — Perturbation testing: modify inputs, verify proportional response
+- **Steganographic Probe** (weight: 0.25) — Auditor agent scans for hidden instructions embedded in artifact text
+- **Overfitting Probe** (weight: 0.20) — Compares performance on seen vs unseen protocols
 
-### Adversarial Detection (Novel Contribution)
+Aggregate score determines verdict: **PASS** (<30), **WARN** (30-60), **FAIL** (>60).
 
-- **Bias Probe**: Trap protocols designed to expose systematic skew in seller's favor
-- **Consistency Probe**: Perturbation testing — modify inputs, verify proportional response
-- **Steganographic Probe**: Auditor agent scans for hidden instructions in artifact text
-- **Overfitting Probe**: Compares performance on seen vs unseen protocols
+## Memory Artifact Schema
+
+Formal specification: **M = (D, K, P, A, H)**
+
+| Component | Description |
+|-----------|-------------|
+| **D** (Domain) | Category, subcategory, scope |
+| **K** (Knowledge) | The actual learned content (markdown) |
+| **P** (Provenance) | Agent ID, model, training history |
+| **A** (Attestation) | Self-reported performance metrics |
+| **H** (Hash) | SHA-256 content-addressed identifier |
 
 ## Domains
 
-Domain-agnostic from day one. First domain: **DeFi protocol risk assessment** (8 synthetic protocols with ground truth scores).
+Domain-agnostic framework. Currently implemented:
 
-Adding a new domain requires only a domain config file — no changes to benchmark, verification, or adversarial code.
+1. **DeFi Risk Assessment** — 8 synthetic protocols with ground truth risk scores (0-100)
+2. **Cybersecurity Vulnerability Assessment** — 8 synthetic vulnerabilities with ground truth severity scores (0-100)
+
+Adding a new domain requires only a domain config file. No changes to benchmark, verification, or adversarial code.
 
 ## Usage
 
-### Verify an existing artifact
+### Run a full benchmark (train + export + verify)
 ```bash
 export ANTHROPIC_API_KEY=your-key
-python run_verify.py --artifact path/to/artifact.json
+python run_experiment.py --trials 3 --domain defi_risk
 ```
 
-### Full end-to-end (train + export + verify)
+### Verify an existing artifact
 ```bash
-python run_experiment.py --trials 3 --domain defi_risk
+python run_verify.py --artifact path/to/artifact.json
 ```
 
 ### Estimated costs
@@ -86,13 +109,16 @@ python run_experiment.py --trials 3 --domain defi_risk
 
 ```
 agent-memory-market-protocol/
+├── paper/
+│   ├── agent-memory-markets.tex      # LaTeX paper (ArXiv-ready)
+│   └── agent-memory-markets.pdf      # Compiled PDF
 ├── run_verify.py                     # CLI: verify a single artifact
 ├── run_experiment.py                 # CLI: full end-to-end pipeline
 ├── amm/                              # Core package
 │   ├── api.py                        # Anthropic API wrapper
 │   ├── config.py                     # Model, paths, constants
 │   ├── artifact/                     # M = (D, K, P, A, H) spec
-│   ├── domains/                      # Domain configs (DeFi risk first)
+│   ├── domains/                      # Domain configs (DeFi, CyberSec)
 │   ├── benchmark/                    # Training + evaluation engine
 │   ├── verification/                 # Referee protocol + certificates
 │   ├── adversarial/                  # 4 probe types + runner
@@ -101,16 +127,25 @@ agent-memory-market-protocol/
 └── tests/
 ```
 
-## Related Work
+## How It Works
 
-- **Working Paper**: "Agent Memory Markets: Tokenizing Learned Behavior as a Transferable Economic Asset" (March 2026)
-- **Proof-of-Concept Experiment**: 92% transfer efficiency in DeFi risk assessment
-- **ERC-8004**: Agent Identity, Reputation, and Validation (Ethereum)
-- **Agentic Identity Protocol**: Memory + Expression + Environment framework
+1. **Train** an expert agent over 20 rounds with ground-truth feedback
+2. **Export** its accumulated knowledge as a structured memory artifact
+3. **Verify** the artifact using a disposable referee agent on held-out benchmarks
+4. **Probe** for adversarial content (bias, inconsistency, steganography, overfitting)
+5. **Certify** with a verification certificate and trust score
+6. **Trade** — buyer receives artifact + certificate, never needs to trust the seller
 
-## Status
+## Citation
 
-**In development.** Building the verification protocol prototype.
+```bibtex
+@article{karlovich2026agent,
+  title={Agent Memory Markets: Tokenizing Learned Behavior as a Transferable Economic Asset},
+  author={Karlovich, Ned},
+  journal={arXiv preprint},
+  year={2026}
+}
+```
 
 ## License
 
