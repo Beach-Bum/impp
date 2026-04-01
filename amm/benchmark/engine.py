@@ -71,9 +71,11 @@ def run_benchmark(
         client, domain, items=all_items, memory="", model=model
     )
 
-    # Step 5: Evaluate buyer (with artifact only)
+    # Step 5: Evaluate buyer (with artifact only, using buyer-specific framing)
+    buyer_prompt = domain.get_buyer_system_prompt(artifact.knowledge.content)
     buyer_results = evaluate_agent(
-        client, domain, items=all_items, memory=artifact.knowledge.content, model=model
+        client, domain, items=all_items, model=model,
+        system_prompt_override=buyer_prompt,
     )
 
     # Step 6: Compute metrics
@@ -135,9 +137,11 @@ def run_verification_benchmark(
             client, domain, items=all_items, memory="", model=model
         )
 
-    # Buyer with artifact
+    # Buyer with artifact (using buyer-specific framing)
+    buyer_prompt = domain.get_buyer_system_prompt(artifact_content)
     buyer_results = evaluate_agent(
-        client, domain, items=all_items, memory=artifact_content, model=model
+        client, domain, items=all_items, model=model,
+        system_prompt_override=buyer_prompt,
     )
 
     metrics = compute_transfer_efficiency(
