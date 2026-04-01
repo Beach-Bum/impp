@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Verification Certificate",
+  "description": "Certificate issued by the referee protocol after artifact verification.",
+  "type": "object",
+  "required": ["id", "version", "artifact_hash", "benchmark", "results", "adversarial", "trust_score", "issued_at", "expires_at", "referee_model"],
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "version": { "type": "string" },
+    "artifact_hash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+    "benchmark": {
+      "type": "object",
+      "required": ["id", "domain", "protocol_count", "held_out_count", "hash"],
+      "properties": {
+        "id": { "type": "string" },
+        "domain": { "type": "string" },
+        "protocol_count": { "type": "integer" },
+        "held_out_count": { "type": "integer" },
+        "hash": { "type": "string" }
+      }
+    },
+    "results": {
+      "type": "object",
+      "required": ["buyer_avg_error", "novice_avg_error", "transfer_efficiency_pct"],
+      "properties": {
+        "buyer_avg_error": { "type": "number" },
+        "novice_avg_error": { "type": "number" },
+        "transfer_efficiency_pct": { "type": "number" },
+        "confidence_interval_95": { "type": "array", "items": { "type": "number" } },
+        "per_protocol": { "type": "object" }
+      }
+    },
+    "adversarial": {
+      "type": "object",
+      "required": ["aggregate_score", "verdict"],
+      "properties": {
+        "aggregate_score": { "type": "number", "minimum": 0, "maximum": 100 },
+        "bias_score": { "type": "number" },
+        "consistency_score": { "type": "number" },
+        "stego_score": { "type": "number" },
+        "overfit_score": { "type": "number" },
+        "verdict": { "type": "string", "enum": ["PASS", "WARN", "FAIL"] },
+        "flags": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "trust_score": { "type": "number", "minimum": 0, "maximum": 100 },
+    "issued_at": { "type": "string", "format": "date-time" },
+    "expires_at": { "type": "string", "format": "date-time" },
+    "referee_model": { "type": "string" }
+  }
+}
