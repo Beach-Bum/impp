@@ -1,0 +1,58 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Memory Artifact",
+  "description": "M = (D, K, P, A, H) — A structured, portable knowledge export from an autonomous agent.",
+  "type": "object",
+  "required": ["version", "domain", "knowledge", "provenance", "attestation", "hash"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "0.1.0"
+    },
+    "domain": {
+      "type": "object",
+      "required": ["category", "subcategory"],
+      "properties": {
+        "category": { "type": "string" },
+        "subcategory": { "type": "string" },
+        "scope": { "type": "string", "default": "protocol-level" }
+      }
+    },
+    "knowledge": {
+      "type": "object",
+      "required": ["format", "content"],
+      "properties": {
+        "format": { "type": "string", "enum": ["markdown", "json", "text"] },
+        "content": { "type": "string", "minLength": 1 },
+        "sections": { "type": "array", "items": { "type": "string" } },
+        "token_count": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["agent_id", "model", "created_at"],
+      "properties": {
+        "agent_id": { "type": "string", "format": "uuid" },
+        "model": { "type": "string" },
+        "training_rounds": { "type": "integer", "minimum": 0 },
+        "training_items": { "type": "array", "items": { "type": "string" } },
+        "created_at": { "type": "string", "format": "date-time" },
+        "experiment_version": { "type": "string" }
+      }
+    },
+    "attestation": {
+      "type": "object",
+      "properties": {
+        "expert_avg_error": { "type": "number", "minimum": 0 },
+        "transfer_efficiency_pct": { "type": "number", "minimum": 0, "maximum": 100 },
+        "eval_items_count": { "type": "integer", "minimum": 0 },
+        "trials": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$",
+      "description": "SHA-256 content-addressed hash"
+    }
+  }
+}
