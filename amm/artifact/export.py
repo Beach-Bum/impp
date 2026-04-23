@@ -77,7 +77,7 @@ def export_artifact(
         provenance=ArtifactProvenance(
             agent_id=agent_id or str(uuid.uuid4()),
             model=model,
-            training_rounds=20,  # TODO: make configurable
+            training_rounds=domain.training_rounds,
             training_items=[item.name for item in domain.get_training_items()],
         ),
         attestation=ArtifactAttestation(),  # Filled in after evaluation
@@ -92,6 +92,7 @@ def wrap_existing_artifact(
     model: str = MODEL,
     agent_id: str = "",
     attestation: dict | None = None,
+    training_rounds: int | None = None,
 ) -> MemoryArtifact:
     """Wrap an existing markdown artifact in the formal schema.
 
@@ -125,7 +126,7 @@ def wrap_existing_artifact(
         provenance=ArtifactProvenance(
             agent_id=agent_id or str(uuid.uuid4()),
             model=model,
-            training_rounds=20,
+            training_rounds=training_rounds or domain.training_rounds,
             training_items=[item.name for item in domain.get_training_items()],
         ),
         attestation=att,

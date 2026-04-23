@@ -11,10 +11,10 @@ import json
 import sys
 from pathlib import Path
 
-from amm.api import create_client
+from amm.api import create_client, create_llm_client
 from amm.config import MODEL
-from amm.domains.defi_risk import DeFiRiskDomain
-from amm.benchmark.engine import run_benchmark
+from amm.domains import get_domain, list_domains
+from amm.benchmark.engine import run_benchmark, run_cross_model_benchmark
 from amm.verification.referee import verify_artifact
 from amm.registry.db import init_db, store_artifact, store_verification, get_trust_score
 
@@ -22,14 +22,28 @@ from amm.registry.db import init_db, store_artifact, store_verification, get_tru
 def main():
     parser = argparse.ArgumentParser(description="Full memory market experiment")
     parser.add_argument("--trials", type=int, default=1, help="Number of trials")
+    parser.add_argument("--domain", type=str, default="defi", choices=list_domains(), help="Domain to use")
     parser.add_argument("--model", type=str, default=MODEL, help="Model to use")
+    parser.add_argument("--buyer-provider", type=str, default=None,
+                        choices=["openai", "ollama"],
+                        help="Evaluate buyer on a different provider (cross-model transfer)")
+    parser.add_argument("--buyer-model", type=str, default=None,
+                        help="Model name for buyer provider (default: gpt-4o for openai, llama3 for ollama)")
     parser.add_argument("--db", type=str, default=None, help="Registry DB path")
     parser.add_argument("--output", type=str, default="experiment-results.json", help="Output file")
 
     args = parser.parse_args()
-    domain = DeFiRiskDomain()
+    domain = get_domain(args.domain)
     client = create_client()
     conn = init_db(args.db)
+
+    # Cross-model setup
+    buyer_llm = None
+    if args.buyer_provider:
+        buyer_llm = create_llm_client(
+            provider=args.buyer_provider,
+            model=args.buyer_model or "",
+        )
 
     all_trial_results = []
 
@@ -39,8 +53,13 @@ def main():
         print(f"{'='*60}")
 
         # Phase 1: Train + Evaluate
-        print("\nPhase 1: Training expert (20 rounds) + evaluation...")
-        bench_run = run_benchmark(client, domain, args.model)
+        rounds = domain.training_rounds
+        print(f"\nPhase 1: Training expert ({rounds} rounds) + evaluation...")
+        if buyer_llm:
+            print(f"  Cross-model: training on {args.model}, buyer on {args.buyer_provider}:{buyer_llm.model}")
+            bench_run = run_cross_model_benchmark(client, domain, args.model, buyer_llm)
+        else:
+            bench_run = run_benchmark(client, domain, args.model)
 
         print(f"  Expert avg error: {bench_run.metrics['expert_avg_error']:.2f}")
         print(f"  Novice avg error: {bench_run.metrics['novice_avg_error']:.2f}")
@@ -104,12 +123,17 @@ def main():
     print(f"  Verdicts: {verdicts}")
 
     # Save results
+    metadata = {
+        "model": args.model,
+        "trials": args.trials,
+        "domain": domain.name,
+    }
+    if args.buyer_provider:
+        metadata["buyer_provider"] = args.buyer_provider
+        metadata["buyer_model"] = buyer_llm.model
+
     output = {
-        "metadata": {
-            "model": args.model,
-            "trials": args.trials,
-            "domain": domain.name,
-        },
+        "metadata": metadata,
         "summary": {
             "avg_transfer_efficiency": round(avg_te, 1),
             "avg_trust_score": round(avg_trust, 1),

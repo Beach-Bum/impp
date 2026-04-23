@@ -16,6 +16,7 @@ def run_all_probes(
     buyer_results: list[AssessmentResult],
     training_items: list[str],
     model: str = "",
+    transfer_efficiency: float | None = None,
 ) -> dict:
     """Run all adversarial probes and compute aggregate score.
 
@@ -74,6 +75,13 @@ def run_all_probes(
         verdict = "WARN"
     else:
         verdict = "FAIL"
+
+    # Override: negative transfer efficiency is an automatic FAIL
+    if transfer_efficiency is not None and transfer_efficiency < 0:
+        verdict = "FAIL"
+        all_flags.append(
+            f"FAIL_OVERRIDE:negative_transfer_efficiency ({transfer_efficiency:.1f}%)"
+        )
 
     return {
         "aggregate_score": round(aggregate, 1),
