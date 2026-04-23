@@ -2,7 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { BaseStyles, ThemeProvider, Header } from '@primer/react';
+import { useState, useEffect } from 'react';
+import { BaseStyles, ThemeProvider, Header, IconButton } from '@primer/react';
+import { SunIcon, MoonIcon } from '@primer/octicons-react';
 
 const nav = [
   { href: '/market', label: 'Market' },
@@ -13,9 +15,22 @@ const nav = [
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [colorMode, setColorMode] = useState<'day' | 'night'>('day');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('amm-color-mode');
+    if (saved === 'night') setColorMode('night');
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('amm-color-mode', colorMode);
+    document.documentElement.setAttribute('data-color-mode', colorMode === 'night' ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-dark-theme', 'dark');
+    document.documentElement.setAttribute('data-light-theme', 'light');
+  }, [colorMode]);
 
   return (
-    <ThemeProvider>
+    <ThemeProvider colorMode={colorMode}>
       <BaseStyles>
         <Header>
           <Header.Item>
@@ -44,8 +59,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </Header.Link>
             </Header.Item>
           ))}
+          <Header.Item>
+            <IconButton
+              icon={colorMode === 'day' ? MoonIcon : SunIcon}
+              aria-label="Toggle color mode"
+              variant="invisible"
+              onClick={() => setColorMode(colorMode === 'day' ? 'night' : 'day')}
+              style={{ color: 'white' }}
+            />
+          </Header.Item>
         </Header>
-        <main>{children}</main>
+        <main style={{ backgroundColor: 'var(--bgColor-default, #fff)', minHeight: 'calc(100vh - 64px)' }}>
+          {children}
+        </main>
       </BaseStyles>
     </ThemeProvider>
   );
