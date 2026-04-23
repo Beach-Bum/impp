@@ -176,10 +176,125 @@ def bootstrap_ci(
     return (round(te_samples[lower_idx], 1), round(te_samples[upper_idx], 1))
 
 
+def paired_uplift_test(
+    novice_results: list[AssessmentResult],
+    buyer_results: list[AssessmentResult],
+) -> dict:
+    """Compute paired item-level uplift and Wilcoxon signed-rank test.
+
+    For each item i: d_i = novice_error_i - buyer_error_i
+    Positive d_i means the buyer improved over the novice.
+
+    Returns:
+        {
+            "mean_uplift": mean of d_i,
+            "median_uplift": median of d_i,
+            "paired_diffs": list of d_i values,
+            "items_improved": count where d_i > 0,
+            "items_worsened": count where d_i < 0,
+            "items_unchanged": count where d_i == 0,
+            "wilcoxon_p": p-value from Wilcoxon signed-rank test (None if not computable),
+            "significant_at_05": bool,
+        }
+    """
+    # Match by protocol name
+    novice_by_name = {r.protocol: r for r in novice_results}
+    buyer_by_name = {r.protocol: r for r in buyer_results}
+
+    diffs = []
+    for name in novice_by_name:
+        if name in buyer_by_name:
+            d = novice_by_name[name].error - buyer_by_name[name].error
+            diffs.append(d)
+
+    if not diffs:
+        return {"mean_uplift": 0, "paired_diffs": [], "wilcoxon_p": None, "significant_at_05": False}
+
+    diffs_sorted = sorted(diffs)
+    n = len(diffs)
+    mean_d = sum(diffs) / n
+    median_d = diffs_sorted[n // 2] if n % 2 else (diffs_sorted[n // 2 - 1] + diffs_sorted[n // 2]) / 2
+
+    improved = sum(1 for d in diffs if d > 0)
+    worsened = sum(1 for d in diffs if d < 0)
+    unchanged = sum(1 for d in diffs if d == 0)
+
+    # Wilcoxon signed-rank test (manual implementation to avoid scipy dependency)
+    p_value = _wilcoxon_signed_rank(diffs)
+
+    return {
+        "mean_uplift": round(mean_d, 3),
+        "median_uplift": round(median_d, 3),
+        "paired_diffs": diffs,
+        "items_improved": improved,
+        "items_worsened": worsened,
+        "items_unchanged": unchanged,
+        "wilcoxon_p": round(p_value, 4) if p_value is not None else None,
+        "significant_at_05": p_value is not None and p_value < 0.05,
+    }
+
+
+def _wilcoxon_signed_rank(diffs: list[float]) -> float | None:
+    """Approximate Wilcoxon signed-rank test (two-sided).
+
+    Uses normal approximation for n >= 10. Returns None if too few non-zero diffs.
+    """
+    import math
+
+    # Remove zeros
+    nonzero = [(abs(d), 1 if d > 0 else -1) for d in diffs if d != 0]
+    n = len(nonzero)
+    if n < 5:
+        return None
+
+    # Rank by absolute value
+    nonzero.sort(key=lambda x: x[0])
+    ranks = []
+    i = 0
+    while i < n:
+        j = i + 1
+        while j < n and nonzero[j][0] == nonzero[i][0]:
+            j += 1
+        avg_rank = (i + 1 + j) / 2
+        for k in range(i, j):
+            ranks.append((avg_rank, nonzero[k][1]))
+        i = j
+
+    # W+ = sum of ranks for positive diffs
+    w_plus = sum(r for r, sign in ranks if sign > 0)
+    w_minus = sum(r for r, sign in ranks if sign < 0)
+    w = min(w_plus, w_minus)
+
+    # Normal approximation
+    mean_w = n * (n + 1) / 4
+    std_w = math.sqrt(n * (n + 1) * (2 * n + 1) / 24)
+    if std_w == 0:
+        return None
+
+    z = (w - mean_w) / std_w
+    # Two-sided p-value from z using approximation
+    p = 2 * (1 - _norm_cdf(abs(z)))
+    return p
+
+
+def _norm_cdf(z: float) -> float:
+    """Approximate standard normal CDF (Abramowitz & Stegun)."""
+    import math
+    if z < 0:
+        return 1 - _norm_cdf(-z)
+    t = 1 / (1 + 0.2316419 * z)
+    d = 0.3989422804014327  # 1/sqrt(2*pi)
+    p = d * math.exp(-z * z / 2) * (
+        t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429))))
+    )
+    return 1 - p
+
+
 def compute_transfer_efficiency(
     novice_results: list[AssessmentResult],
     buyer_results: list[AssessmentResult],
     expert_results: list[AssessmentResult] | None = None,
+    training_items: list[str] | None = None,
 ) -> dict:
     """Compute transfer efficiency and related metrics.
 
@@ -187,6 +302,9 @@ def compute_transfer_efficiency(
 
     If expert_results are provided, also computes relative to expert:
     Relative TE = (novice_error - buyer_error) / (novice_error - expert_error) × 100
+
+    If training_items is provided, reports held-out-only metrics separately
+    (the methodologically clean headline metric).
     """
     novice_avg = sum(r.error for r in novice_results) / len(novice_results)
     buyer_avg = sum(r.error for r in buyer_results) / len(buyer_results)
@@ -194,6 +312,9 @@ def compute_transfer_efficiency(
     novice_errors = [r.error for r in novice_results]
     buyer_errors = [r.error for r in buyer_results]
     ci_lower, ci_upper = bootstrap_ci(novice_errors, buyer_errors)
+
+    # Paired uplift test
+    paired = paired_uplift_test(novice_results, buyer_results)
 
     metrics = {
         "novice_avg_error": novice_avg,
@@ -203,6 +324,7 @@ def compute_transfer_efficiency(
             (novice_avg - buyer_avg) / novice_avg * 100 if novice_avg > 0 else 0
         ),
         "confidence_interval_95": [ci_lower, ci_upper],
+        "paired_uplift": paired,
     }
 
     if expert_results:
@@ -212,5 +334,39 @@ def compute_transfer_efficiency(
         metrics["relative_transfer_efficiency_pct"] = (
             (novice_avg - buyer_avg) / gap * 100 if gap > 0 else 0
         )
+
+    # Held-out-only metrics (the clean headline number)
+    if training_items:
+        training_set = set(training_items)
+        novice_ho = [r for r in novice_results if r.protocol not in training_set]
+        buyer_ho = [r for r in buyer_results if r.protocol not in training_set]
+        novice_seen = [r for r in novice_results if r.protocol in training_set]
+        buyer_seen = [r for r in buyer_results if r.protocol in training_set]
+
+        if novice_ho and buyer_ho:
+            nov_ho_avg = sum(r.error for r in novice_ho) / len(novice_ho)
+            buy_ho_avg = sum(r.error for r in buyer_ho) / len(buyer_ho)
+            ho_te = (nov_ho_avg - buy_ho_avg) / nov_ho_avg * 100 if nov_ho_avg > 0 else 0
+            ho_paired = paired_uplift_test(novice_ho, buyer_ho)
+
+            metrics["held_out"] = {
+                "count": len(novice_ho),
+                "novice_avg_error": round(nov_ho_avg, 2),
+                "buyer_avg_error": round(buy_ho_avg, 2),
+                "transfer_efficiency_pct": round(ho_te, 1),
+                "paired_uplift": ho_paired,
+            }
+
+        if novice_seen and buyer_seen:
+            nov_seen_avg = sum(r.error for r in novice_seen) / len(novice_seen)
+            buy_seen_avg = sum(r.error for r in buyer_seen) / len(buyer_seen)
+            seen_te = (nov_seen_avg - buy_seen_avg) / nov_seen_avg * 100 if nov_seen_avg > 0 else 0
+
+            metrics["training_items"] = {
+                "count": len(novice_seen),
+                "novice_avg_error": round(nov_seen_avg, 2),
+                "buyer_avg_error": round(buy_seen_avg, 2),
+                "transfer_efficiency_pct": round(seen_te, 1),
+            }
 
     return metrics

@@ -40,7 +40,9 @@ A DeFi yield optimizer that has managed $890K in TVL across 14 months, survived 
 
 Yet no mechanism exists for this transfer. Agent knowledge remains locked inside individual instances, destroyed when agents are shut down, and inaccessible to others who could benefit from it. This paper proposes a solution: Agent Memory Markets, a protocol and marketplace for the exchange of learned agent behavior as discrete, verifiable economic assets.
 
-While adjacent fields have explored agent identity (SOUL.md, OpenClaw[^3]), agent economics (ArXiv 2602.14219[^8]), agent sovereignty (ArXiv 2602.14951[^7]), memory infrastructure and certification[^fn_mem_infra], skill extraction and transfer (AutoSkill[^fn_autoskill], Memento-Skills[^fn_memento]), and cross-domain memory transfer[^fn_mem_transfer], to our knowledge no prior work combines structured textual memory export, adversarial artifact verification, and an explicit market-design framework in one open-source prototype with empirical validation.
+The broader field of experience-driven agent learning provides important precursors. ExpeL[^fn_expel] extracts reusable natural-language knowledge from experience without weight updates. Reflexion[^fn_reflexion] uses linguistic feedback and episodic memory for agent self-improvement. Voyager[^fn_voyager] builds an ever-growing skill library for cross-task generalization. More recently, MemCollab[^fn_memcollab] proposes agent-agnostic shared memory transfer across multiple autonomous agents, and work on memory infrastructure and certification[^fn_mem_infra] explicitly frames agent memory as a tradeable commodity. Adjacent fields have explored agent identity (SOUL.md, OpenClaw[^3]), agent economics (ArXiv 2602.14219[^8]), agent sovereignty (ArXiv 2602.14951[^7]), skill extraction (AutoSkill[^fn_autoskill], Memento-Skills[^fn_memento]), and cross-domain memory transfer[^fn_mem_transfer].
+
+To our knowledge, no prior work combines structured textual memory export, adversarial artifact verification, and an explicit market-design framework in one open-source prototype with empirical validation across multiple domains and model architectures.
 
 This paper makes five contributions:
 
@@ -187,11 +189,13 @@ To test whether memory artifacts transfer across model architectures, we conduct
 
 **Results (32 DeFi protocols, GPT-4o as buyer):**
 
-| Condition | Avg Error | TE vs Novice |
-|-----------|-----------|-------------|
-| GPT-4o novice (no artifact) | 6.00 | -- |
-| GPT-4o buyer (full artifact) | 5.97 | 0.5% |
-| GPT-4o buyer (sanitized artifact) | 5.19 | 13.5% |
+| Condition | Avg Error (all) | Avg Error (held-out, n=12) | TE vs Novice (all) |
+|-----------|----------------|---------------------------|-------------------|
+| GPT-4o novice (no artifact) | 6.00 | 7.00 | -- |
+| GPT-4o buyer (full artifact) | 5.97 | 6.58 | 0.5% |
+| GPT-4o buyer (sanitized artifact) | 5.19 | 6.17 | 13.5% |
+
+A paired Wilcoxon signed-rank test on all 32 items (sanitized buyer vs novice) yields p=0.37, indicating the improvement is directionally positive but not statistically significant at this sample size. On held-out items only (n=12), the mean paired uplift is 0.83 points (p=0.91). These results should be interpreted as pilot evidence of cross-model transfer, not as a statistically robust finding. A power analysis indicates approximately 100-150 held-out items would be needed for significance at moderate effect size (d=0.3-0.5).
 
 The sanitized artifact outperforms the full artifact. This is a significant finding that directly addresses the leakage concern: if transfer were merely "benchmark tutoring" (the buyer memorizing an answer key), the full artifact with exact scores should dominate. Instead, the framework-only artifact -- containing calibration ranges, risk modifiers, red flag categories, and heuristic rules but zero protocol names or scores -- produces better cross-model transfer.
 
@@ -436,6 +440,22 @@ Our steganographic detection probe (Section 5.3) addresses this by scanning arti
 
 If an agent's operational experience was accumulated while working for a human operator, who owns the resulting memory? The operator funded the compute; the agent generated the knowledge. Current legal frameworks have no clear answer, as agent-generated intellectual property exists in a regulatory vacuum.
 
+### 9.4 Governance Requirements
+
+A production memory marketplace must implement governance controls aligned with OECD AI principles and privacy frameworks. We propose the following minimum governance requirements:
+
+| Requirement | Marketplace Implementation |
+|-------------|---------------------------|
+| Consent and authorization | Sellers attest that artifacts do not contain third-party confidential or personal data without authorization |
+| Purpose limitation | Artifact license specifies permitted task domains and forbidden uses |
+| Data minimization | Export pipeline strips raw transcripts, retaining only approved abstractions |
+| Privacy safeguards | PII/secret scanning, canary tests, manual review for high-risk artifacts |
+| Traceability | Signed provenance log, benchmark versioning, immutable certificate history |
+| Oversight | Human review path for disputes, privacy flags, and high-risk domains |
+| Revocation | Certificate expiry, seller delisting, buyer-side kill switch for later-discovered malicious artifacts |
+
+These requirements are not only ethically advisable but commercially necessary. Without them, a marketplace will attract the artifacts buyers should fear most: plagiarized, overfit, privacy-tainted, and covertly poisoned memories.
+
 ---
 
 ## 10 Limitations
@@ -495,6 +515,14 @@ No prior work has addressed these questions. This paper represents a first attem
 [^fn_memento]: Memento-Skills. Stores reusable agent skills as structured markdown files serving as persistent evolving memory.
 
 [^fn_mem_transfer]: Memory Transfer Learning. Studies cross-domain and cross-model memory transfer, reporting both positive and negative transfer effects.
+
+[^fn_expel]: ExpeL: LLM Agents Are Experiential Learners. AAAI 2024. Extracts reusable natural-language knowledge from agent experience without model-weight updates.
+
+[^fn_reflexion]: Reflexion: Language Agents with Verbal Reinforcement Learning. NeurIPS 2023. Uses linguistic feedback and episodic memory buffers for agent self-improvement.
+
+[^fn_voyager]: Wang et al. Voyager: An Open-Ended Embodied Agent with Large Language Models. 2023. Builds ever-growing skill libraries for cross-task generalization.
+
+[^fn_memcollab]: MemCollab: Fusing Agent-Agnostic Shared Memories in Multi-Agent LLM Systems. ArXiv, March 2026. Agent-agnostic shared memory transfer across autonomous agents.
 
 [^1]: ERC-8004: Agent Identity, Reputation, and Validation. Live on Ethereum mainnet since January 29, 2026. 49,000+ agents registered.
 
