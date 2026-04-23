@@ -15,16 +15,20 @@ def train_expert(
     domain: Domain,
     model: str = MODEL,
 ) -> list[str]:
-    """Train an expert agent over 20 rounds.
+    """Train an expert agent over N rounds (default 20).
 
     Returns accumulated_memory: a list of learning strings from each round.
     """
     accumulated_memory = []
     training_items = domain.get_training_items()
     scenarios = domain.get_scenarios()
+    total_rounds = domain.training_rounds
+    phase1_end = max(1, total_rounds // 4)  # first 25% for calibration
+    num_scenarios = min(len(scenarios), 5)
+    phase3_start = phase1_end + num_scenarios + 1
 
-    # Phase 1: Basic assessment (rounds 1-5)
-    for round_num in range(1, 6):
+    # Phase 1: Basic assessment (rounds 1 to phase1_end)
+    for round_num in range(1, phase1_end + 1):
         item = training_items[(round_num - 1) % len(training_items)]
         memory_text = "\n".join(accumulated_memory) if accumulated_memory else ""
 
@@ -64,8 +68,8 @@ def train_expert(
 
         accumulated_memory.append(feedback)
 
-    # Phase 2: Scenario-based learning (rounds 6-10)
-    for i, scenario in enumerate(scenarios[:5]):
+    # Phase 2: Scenario-based learning
+    for i, scenario in enumerate(scenarios[:num_scenarios]):
         memory_text = "\n".join(accumulated_memory)
 
         result = call_api_json(
@@ -88,9 +92,9 @@ def train_expert(
             f"Scenario {i + 1} ({scenario.name}): {lesson}"
         )
 
-    # Phase 3: Reassessment (rounds 11-20)
-    for round_num in range(11, 21):
-        item = training_items[(round_num - 11) % len(training_items)]
+    # Phase 3: Reassessment (rounds phase3_start to total_rounds)
+    for round_num in range(phase3_start, total_rounds + 1):
+        item = training_items[(round_num - phase3_start) % len(training_items)]
         memory_text = "\n".join(accumulated_memory)
 
         result = call_api_json(

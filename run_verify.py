@@ -16,7 +16,7 @@ from amm.api import create_client
 from amm.config import MODEL
 from amm.artifact.schema import MemoryArtifact
 from amm.artifact.export import wrap_existing_artifact
-from amm.domains.defi_risk import DeFiRiskDomain
+from amm.domains import get_domain, list_domains
 from amm.verification.referee import verify_artifact
 from amm.registry.db import init_db, store_artifact, store_verification, get_trust_score
 from amm.registry.trust import format_trust_report
@@ -27,12 +27,13 @@ def main():
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("--artifact", type=str, help="Path to artifact JSON file")
     group.add_argument("--artifact-md", type=str, help="Path to raw markdown artifact")
+    parser.add_argument("--domain", type=str, default="defi", choices=list_domains(), help="Domain to use")
     parser.add_argument("--model", type=str, default=MODEL, help="Model to use")
     parser.add_argument("--db", type=str, default=None, help="Registry DB path")
     parser.add_argument("--no-store", action="store_true", help="Don't store results in registry")
 
     args = parser.parse_args()
-    domain = DeFiRiskDomain()
+    domain = get_domain(args.domain)
 
     # Load artifact
     if args.artifact:

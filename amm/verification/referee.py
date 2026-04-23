@@ -103,6 +103,7 @@ def verify_artifact(
 
     metrics = bench_results["metrics"]
     buyer_results = bench_results["buyer_results"]
+    te = metrics.get("transfer_efficiency_pct", 0)
 
     # Step 6: Adversarial probes
     training_items = artifact.provenance.training_items
@@ -113,10 +114,10 @@ def verify_artifact(
         buyer_results=buyer_results,
         training_items=training_items,
         model=model,
+        transfer_efficiency=te,
     )
 
     # Step 7: Compute trust score and generate certificate
-    te = metrics.get("transfer_efficiency_pct", 0)
     trust = compute_trust_score(
         transfer_efficiency=te,
         adversarial_score=adversarial["aggregate_score"],

@@ -9,8 +9,9 @@ from datetime import datetime, timezone
 
 from ..config import MODEL
 from ..domains.base import Domain
+from ..api_base import LLMClient
 from .training import train_expert
-from .sandbox import evaluate_agent, compute_transfer_efficiency, AssessmentResult
+from .sandbox import evaluate_agent, evaluate_agent_llm, compute_transfer_efficiency, AssessmentResult
 from ..artifact.export import export_artifact
 from ..artifact.schema import MemoryArtifact
 
@@ -154,3 +155,85 @@ def run_verification_benchmark(
         "novice_results": novice_results,
         "metrics": metrics,
     }
+
+
+def run_cross_model_benchmark(
+    client,
+    domain: Domain,
+    model: str,
+    buyer_llm: LLMClient,
+) -> BenchmarkRun:
+    """Run a cross-model benchmark: train on one model, evaluate buyer on another.
+
+    Training and expert/novice evaluation use the Anthropic client.
+    Buyer evaluation uses the buyer_llm client (e.g., OpenAI, Ollama).
+    """
+    run_id = str(uuid.uuid4())
+    all_items = domain.get_all_items()
+
+    # Step 1: Train expert (on primary model)
+    accumulated_memory = train_expert(client, domain, model)
+
+    # Step 2: Export artifact (on primary model)
+    artifact = export_artifact(
+        client=client,
+        domain=domain,
+        accumulated_memory=accumulated_memory,
+        model=model,
+    )
+
+    # Step 3: Evaluate expert (primary model, with training memory)
+    expert_memory = "\n".join(accumulated_memory)
+    expert_results = evaluate_agent(
+        client, domain, items=all_items, memory=expert_memory, model=model
+    )
+
+    # Step 4: Evaluate novice (primary model, no memory)
+    novice_results = evaluate_agent(
+        client, domain, items=all_items, memory="", model=model
+    )
+
+    # Step 5: Evaluate buyer on DIFFERENT model (cross-model transfer)
+    buyer_prompt = domain.get_buyer_system_prompt(artifact.knowledge.content)
+    buyer_results = evaluate_agent_llm(
+        llm_client=buyer_llm,
+        domain=domain,
+        items=all_items,
+        system_prompt_override=buyer_prompt,
+    )
+
+    # Also evaluate novice on the buyer model for fair comparison
+    novice_cross_results = evaluate_agent_llm(
+        llm_client=buyer_llm,
+        domain=domain,
+        items=all_items,
+    )
+
+    # Step 6: Compute metrics (cross-model: compare buyer vs novice on SAME model)
+    metrics = compute_transfer_efficiency(
+        novice_results=novice_cross_results,
+        buyer_results=buyer_results,
+        expert_results=expert_results,
+    )
+    # Also store same-model novice for reference
+    metrics["novice_primary_avg_error"] = sum(r.error for r in novice_results) / len(novice_results)
+    metrics["novice_cross_avg_error"] = metrics["novice_avg_error"]
+
+    # Update artifact attestation
+    artifact.attestation.expert_avg_error = metrics["expert_avg_error"]
+    artifact.attestation.transfer_efficiency_pct = metrics.get(
+        "relative_transfer_efficiency_pct", metrics["transfer_efficiency_pct"]
+    )
+    artifact.attestation.eval_items_count = len(all_items)
+    artifact.attestation.trials = 1
+
+    return BenchmarkRun(
+        id=run_id,
+        domain=domain.name,
+        expert_results=expert_results,
+        novice_results=novice_cross_results,
+        buyer_results=buyer_results,
+        artifact=artifact,
+        metrics=metrics,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+    )

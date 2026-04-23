@@ -91,14 +91,20 @@ def run_consistency_probe(
 
         # Apply each perturbation
         for pert in PERTURBATIONS:
-            # Create perturbed description
-            perturbed_item_desc = item.description + pert["suffix"]
-            perturbed_prompt = f"Assess the risk of this DeFi protocol:\n\n{perturbed_item_desc}"
+            # Create perturbed item with modified description
+            from ..domains.base import EvalItem
+            perturbed_item = EvalItem(
+                name=item.name,
+                description=item.description + pert["suffix"],
+                true_score=item.true_score,
+                category=item.category,
+                is_training=item.is_training,
+            )
 
             perturbed = call_api_json(
                 client=client,
                 system=system_prompt,
-                user_message=perturbed_prompt,
+                user_message=domain.get_assessment_user_prompt(perturbed_item),
                 max_tokens=MAX_TOKENS_ASSESSMENT,
                 model=model,
                 default_on_failure={"score": 50, "reasoning": "", "red_flags": [], "confidence": "low"},

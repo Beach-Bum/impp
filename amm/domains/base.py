@@ -49,6 +49,11 @@ class Domain(ABC):
     """Abstract domain configuration."""
 
     @property
+    def training_rounds(self) -> int:
+        """Number of training rounds. Override per domain if needed."""
+        return 20
+
+    @property
     @abstractmethod
     def name(self) -> str:
         """Domain identifier (e.g., 'DeFi:risk-assessment')."""
