@@ -2,46 +2,15 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import {
-  Button,
-  Column,
-  DataTable,
-  Grid,
-  InlineLoading,
-  Search,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableHeader,
-  TableRow,
-  Tag,
-  Tile,
-} from '@carbon/react';
-import AIExplainabilityHint from '@/components/AIExplainabilityHint';
+import { Heading, TextInput, Button, Label, Flash, Spinner } from '@primer/react';
+import { SearchIcon } from '@primer/octicons-react';
 import { fetchListings, ListingRecord } from '@/lib/api';
 
-const headers = [
-  { key: 'asset', header: 'Asset' },
-  { key: 'lift', header: 'Transfer Lift' },
-  { key: 'adversarial', header: 'Adversarial' },
-  { key: 'trust', header: 'Trust Score' },
-  { key: 'verifications', header: 'Verifications' },
-  { key: 'license', header: 'License' },
-  { key: 'price', header: 'Price' },
-];
-
-function domainTag(domain: string): string {
-  const cat = domain.split(':')[0];
-  return cat;
-}
-
-function trustColor(score: number | null): 'green' | 'red' | 'cool-gray' {
-  if (score === null) return 'cool-gray';
-  if (score >= 80) return 'green';
-  if (score >= 50) return 'cool-gray';
-  return 'red';
+function trustScheme(score: number | null): 'success' | 'danger' | 'secondary' {
+  if (score === null) return 'secondary';
+  if (score >= 80) return 'success';
+  if (score >= 50) return 'secondary';
+  return 'danger';
 }
 
 export default function MarketScreen() {
@@ -57,164 +26,134 @@ export default function MarketScreen() {
       .finally(() => setLoading(false));
   }, []);
 
-  const rows = useMemo(() => {
-    const term = query.trim().toLowerCase();
-    const filtered = term
-      ? listings.filter((l) =>
-          [l.title, l.domain, l.description].join(' ').toLowerCase().includes(term)
-        )
-      : listings;
-
-    return filtered.map((l) => ({
-      id: l.id,
-      asset: l.title,
-      domain: l.domain,
-      description: l.description,
-      lift: l.latest_transfer_efficiency != null ? `+${l.latest_transfer_efficiency.toFixed(1)}%` : '—',
-      adversarial: l.latest_adversarial_score != null ? `${l.latest_adversarial_score.toFixed(0)}/100` : '—',
-      trust: l.trust_score,
-      verifications: l.verification_count,
-      license: l.license_type,
-      price: `$${l.price_usd.toFixed(2)}`,
-      artifact_hash: l.artifact_hash,
-      seller_id: l.seller_id,
-    }));
+  const filtered = useMemo(() => {
+    const t = query.trim().toLowerCase();
+    if (!t) return listings;
+    return listings.filter((l) =>
+      [l.title, l.domain, l.description].join(' ').toLowerCase().includes(t)
+    );
   }, [query, listings]);
 
-  const topListing = rows[0];
+  const domains = Array.from(new Set(listings.map((l) => l.domain.split(':')[0])));
 
   return (
     <div className="amm-page">
-      <Grid fullWidth>
-        <Column lg={12} md={8} sm={4}>
-          <h1 className="amm-screen-title">Marketplace</h1>
-          <p className="amm-screen-subtitle">
-            Search by outcome, shortlist governed assets, and compare before you attach anything.
-          </p>
-        </Column>
-        <Column lg={4} md={8} sm={4}>
-          <AIExplainabilityHint summary="Ranking blends transfer lift, adversarial score, trust, and freshness." />
-        </Column>
+      <Heading style={{ marginBottom: '4px' }}>Marketplace</Heading>
+      <p className="amm-screen-subtitle">
+        Search by outcome, shortlist governed assets, and compare before you attach anything.
+      </p>
 
-        <Column lg={16} md={8} sm={4}>
-          <div className="amm-toolbar">
-            <Search
-              id="market-search"
-              labelText="Search assets"
-              placeholder="Search by domain, objective, or workflow"
-              size="lg"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-            <Button kind="secondary">Filter sheet</Button>
-            <Button kind="tertiary">Open compare tray</Button>
-          </div>
-          <div className="amm-inline-tags amm-section">
-            {Array.from(new Set(listings.map((l) => domainTag(l.domain)))).map((cat) => (
-              <Tag key={cat} type="cool-gray">{cat}</Tag>
-            ))}
-          </div>
-        </Column>
+      <Flash style={{ marginBottom: '16px' }}>
+        <Label variant="accent">AI</Label>{' '}
+        Ranking blends transfer lift, adversarial score, trust, and freshness.
+      </Flash>
 
-        <Column lg={11} md={8} sm={4}>
-          {loading ? (
-            <InlineLoading description="Loading marketplace..." />
-          ) : error ? (
-            <Tile className="amm-card">
-              <p style={{ color: '#da1e28' }}>Failed to load: {error}</p>
-              <p className="amm-subtle">Is the API server running on port 8100?</p>
-            </Tile>
-          ) : (
-            <Tile className="amm-card">
-              <DataTable rows={rows} headers={headers}>
-                {({ rows: dataRows, headers: dataHeaders, getHeaderProps, getRowProps, getTableProps }) => (
-                  <TableContainer title="Memory Artifacts" description={`${listings.length} verified artifacts available`}>
-                    <Table {...getTableProps()} size="lg">
-                      <TableHead>
-                        <TableRow>
-                          {dataHeaders.map((header) => {
-                            const { key: _k, ...headerProps } = getHeaderProps({ header });
-                            return (
-                              <TableHeader key={header.key} {...headerProps}>
-                                {header.header}
-                              </TableHeader>
-                            );
-                          })}
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {dataRows.map((row) => {
-                          const source = rows.find((r) => r.id === row.id);
-                          return (
-                            <TableRow key={row.id}>
-                              <TableCell>
-                                <Link href={`/asset/${row.id}`} className="amm-table-link">
-                                  <strong>{source?.asset}</strong>
-                                </Link>
-                                <div className="amm-subtle">{source?.domain}</div>
-                              </TableCell>
-                              <TableCell>
-                                <Tag type="green">{source?.lift}</Tag>
-                              </TableCell>
-                              <TableCell>{source?.adversarial}</TableCell>
-                              <TableCell>
-                                <Tag type={trustColor(source?.trust ?? null)}>
-                                  {source?.trust != null ? `${source.trust}/100` : '—'}
-                                </Tag>
-                              </TableCell>
-                              <TableCell>{source?.verifications}</TableCell>
-                              <TableCell>{source?.license}</TableCell>
-                              <TableCell>{source?.price}</TableCell>
-                            </TableRow>
-                          );
-                        })}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                )}
-              </DataTable>
+      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'end' }}>
+        <div style={{ flex: 1, minWidth: 300 }}>
+          <TextInput
+            leadingVisual={SearchIcon}
+            placeholder="Search by domain, objective, or workflow"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            style={{ width: '100%' }}
+          />
+        </div>
+        <Button>Filter sheet</Button>
+        <Button variant="invisible">Compare tray</Button>
+      </div>
 
-              {topListing && (
-                <div className="amm-surface-stack" style={{ marginTop: '1rem' }}>
-                  <Tile>
-                    <strong>Top artifact</strong>
-                    <p className="amm-subtle">
-                      {topListing.asset} — trust {topListing.trust}/100, transfer lift {topListing.lift}
-                    </p>
-                    <div className="amm-action-row">
-                      <Button kind="ghost" size="sm">Sandbox</Button>
-                      <Button kind="ghost" size="sm">Compare</Button>
-                      <Button size="sm">Acquire</Button>
-                    </div>
-                  </Tile>
+      <div style={{ display: 'flex', gap: '4px', marginBottom: '16px', flexWrap: 'wrap' }}>
+        {domains.map((d) => (
+          <Label key={d} variant="secondary">{d}</Label>
+        ))}
+      </div>
+
+      {loading ? (
+        <Spinner size="medium" />
+      ) : error ? (
+        <Flash variant="danger">Failed to load: {error}. Is the API server running?</Flash>
+      ) : (
+        <div className="amm-grid amm-grid-2col">
+          <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', overflow: 'hidden' }}>
+            <div style={{ padding: '16px', borderBottom: '1px solid #d0d7de' }}>
+              <Heading as="h2" style={{ fontSize: '14px' }}>Memory Artifacts</Heading>
+              <span className="amm-subtle">{listings.length} verified artifacts available</span>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid var(--borderColor-default, #d0d7de)' }}>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>Asset</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>Lift</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>Trust</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>Adversarial</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>License</th>
+                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>Price</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((l) => (
+                  <tr key={l.id} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
+                    <td style={{ padding: '10px 12px' }}>
+                      <Link href={`/asset/${l.id}`} style={{ color: 'var(--fgColor-accent, #0969da)', textDecoration: 'none', fontWeight: 600 }}>
+                        {l.title}
+                      </Link>
+                      <br />
+                      <span className="amm-subtle">{l.domain}</span>
+                    </td>
+                    <td style={{ padding: '10px 12px' }}>
+                      <Label variant="success">+{l.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</Label>
+                    </td>
+                    <td style={{ padding: '10px 12px' }}>
+                      <Label variant={trustScheme(l.trust_score)}>
+                        {l.trust_score != null ? `${l.trust_score}/100` : '—'}
+                      </Label>
+                    </td>
+                    <td style={{ padding: '10px 12px' }}>
+                      {l.latest_adversarial_score?.toFixed(0) ?? '—'}/100
+                    </td>
+                    <td style={{ padding: '10px 12px' }}>{l.license_type}</td>
+                    <td style={{ padding: '10px 12px' }}>${l.price_usd.toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {filtered[0] && (
+              <div style={{ padding: '16px', borderTop: '1px solid #d0d7de', backgroundColor: '#f6f8fa' }}>
+                <span style={{ fontWeight: 'bold' }}>Top artifact</span>
+                <p className="amm-subtle">
+                  {filtered[0].title} — trust {filtered[0].trust_score}/100, lift +{filtered[0].latest_transfer_efficiency?.toFixed(1)}%
+                </p>
+                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <Button size="small" variant="invisible">Sandbox</Button>
+                  <Button size="small" variant="invisible">Compare</Button>
+                  <Button size="small" variant="primary">Acquire</Button>
                 </div>
-              )}
-            </Tile>
-          )}
-        </Column>
+              </div>
+            )}
+          </div>
 
-        <Column lg={5} md={8} sm={4}>
-          <Tile className="amm-card">
-            <h2>Shortlist</h2>
-            <div className="amm-surface-stack">
-              {rows.slice(0, 3).map((item) => (
-                <Tile key={item.id}>
-                  <strong>{item.asset}</strong>
-                  <p className="amm-subtle">{item.domain} — {item.license}</p>
-                  <div className="amm-inline-tags">
-                    <Tag type="green">Lift {item.lift}</Tag>
-                    <Tag type={trustColor(item.trust)}>Trust {item.trust ?? '—'}</Tag>
+          <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', padding: '16px' }}>
+            <Heading as="h2" style={{ fontSize: '14px', marginBottom: '16px' }}>Shortlist</Heading>
+            <div className="amm-card-stack">
+              {filtered.slice(0, 3).map((l) => (
+                <div key={l.id} style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px', marginBottom: '8px' }}>
+                  <span style={{ fontWeight: 'bold' }}>{l.title}</span>
+                  <br />
+                  <span className="amm-subtle">{l.domain} — {l.license_type}</span>
+                  <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
+                    <Label variant="success">Lift +{l.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</Label>
+                    <Label variant={trustScheme(l.trust_score)}>Trust {l.trust_score ?? '—'}</Label>
                   </div>
-                  <div className="amm-action-row" style={{ marginTop: '0.75rem' }}>
-                    <Button kind="ghost" size="sm" href={`/asset/${item.id}`}>Review</Button>
-                    <Button kind="ghost" size="sm">Remove</Button>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <Button size="small" variant="invisible" as={Link} href={`/asset/${l.id}`}>Review</Button>
+                    <Button size="small" variant="invisible">Remove</Button>
                   </div>
-                </Tile>
+                </div>
               ))}
             </div>
-          </Tile>
-        </Column>
-      </Grid>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

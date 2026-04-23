@@ -1,59 +1,52 @@
 'use client';
 
-import {
-  Content,
-  Header,
-  HeaderGlobalAction,
-  HeaderGlobalBar,
-  HeaderMenuItem,
-  HeaderName,
-  HeaderNavigation,
-  SkipToContent,
-  Theme,
-} from '@carbon/react';
-import { Notification, UserAvatar } from '@carbon/react/icons';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { routes } from '@/lib/routes';
-import type { ReactNode } from 'react';
+import { BaseStyles, ThemeProvider, Header } from '@primer/react';
 
-export default function AppShell({ children }: { children: ReactNode }) {
+const nav = [
+  { href: '/market', label: 'Market' },
+  { href: '/portfolio', label: 'Portfolio' },
+  { href: '/policies', label: 'Policies' },
+  { href: '/incidents', label: 'Incidents' },
+];
+
+export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <Theme theme="g10">
-      <SkipToContent />
-      <Header aria-label="Agentic Memory Exchange">
-        <HeaderName href="/market" prefix="AMM">
-          Agentic Memory Exchange
-        </HeaderName>
-
-        <HeaderNavigation aria-label="Primary">
-          {routes.map((route) => {
-            const active = pathname.startsWith(route.href);
-            return (
-              <HeaderMenuItem
-                key={route.href}
-                href={route.href}
-                className={active ? 'amm-header-item is-active' : 'amm-header-item'}>
-                {route.label}
-              </HeaderMenuItem>
-            );
-          })}
-        </HeaderNavigation>
-
-        <HeaderGlobalBar>
-          <HeaderGlobalAction aria-label="Notifications" tooltipAlignment="end">
-            <Notification size={20} />
-          </HeaderGlobalAction>
-          <HeaderGlobalAction aria-label="User account" tooltipAlignment="end">
-            <UserAvatar size={20} />
-          </HeaderGlobalAction>
-        </HeaderGlobalBar>
-      </Header>
-
-      <Content id="main-content" className="amm-content">
-        {children}
-      </Content>
-    </Theme>
+    <ThemeProvider>
+      <BaseStyles>
+        <Header>
+          <Header.Item>
+            <Header.Link as={Link} href="/market" style={{ fontSize: '14px', fontWeight: 'bold' }}>
+              AMM
+            </Header.Link>
+          </Header.Item>
+          <Header.Item>
+            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>
+              Agentic Memory Exchange
+            </span>
+          </Header.Item>
+          <Header.Item full />
+          {nav.map((item) => (
+            <Header.Item key={item.href}>
+              <Header.Link
+                as={Link}
+                href={item.href}
+                style={{
+                  fontWeight: pathname === item.href ? 'bold' : 'normal',
+                  borderBottom: pathname === item.href ? '2px solid white' : 'none',
+                  paddingBottom: '2px',
+                }}
+              >
+                {item.label}
+              </Header.Link>
+            </Header.Item>
+          ))}
+        </Header>
+        <main>{children}</main>
+      </BaseStyles>
+    </ThemeProvider>
   );
 }

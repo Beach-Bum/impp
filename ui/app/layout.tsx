@@ -1,20 +1,16 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import './globals.scss';
+import './globals.css';
 import AppShell from '@/components/AppShell';
 
 export const metadata: Metadata = {
-  title: 'Agentic Memory Market',
-  description: 'Carbon scaffold for a governed agentic memory market.',
+  title: 'Agentic Memory Exchange',
+  description: 'Marketplace for verified AI agent memory artifacts.',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" data-color-mode="light" data-light-theme="light">
       <body>
         <AppShell>{children}</AppShell>
       </body>

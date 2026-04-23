@@ -1,57 +1,46 @@
 'use client';
 
-import { Accordion, AccordionItem, Button, CodeSnippet, Column, Grid, InlineNotification, Tile } from '@carbon/react';
-import { alerts } from '@/lib/mock-data';
+import { Heading, Button, Flash } from '@primer/react';
 
 export default function IncidentScreen() {
-  const critical = alerts[1];
-
   return (
     <div className="amm-page">
-      <Grid fullWidth>
-        <Column lg={16} md={8} sm={4}>
-          <h1 className="amm-screen-title">Incidents</h1>
-          <p className="amm-screen-subtitle">Handle revocations, failed sandbox runs, and evidence export.</p>
-        </Column>
+      <Heading style={{ marginBottom: '4px' }}>Incidents</Heading>
+      <p className="amm-screen-subtitle">Handle revocations, failed sandbox runs, and evidence export.</p>
 
-        <Column lg={16} md={8} sm={4}>
-          <InlineNotification
-            kind="error"
-            title={critical.title}
-            subtitle={critical.summary}
-            lowContrast
-            hideCloseButton
-          />
-        </Column>
+      <Flash variant="danger" style={{ marginBottom: '16px' }}>
+        <strong>Hostile replay sandbox failure</strong><br />
+        A hostile replay test triggered an unsafe path. The artifact has been auto-detached pending review.
+      </Flash>
 
-        <Column lg={8} md={8} sm={4}>
-          <Tile className="amm-card">
-            <h2>Rollback sequence</h2>
-            <Accordion align="start">
-              <AccordionItem title="1. Isolate agent">Stop new mounts and freeze autonomous actions.</AccordionItem>
-              <AccordionItem title="2. Detach memory">Detach the affected asset and preserve all state references.</AccordionItem>
-              <AccordionItem title="3. Replay sandbox">Run a replay with the hostile conditions that triggered the failure.</AccordionItem>
-              <AccordionItem title="4. Export evidence">Create the audit bundle for review and postmortem.</AccordionItem>
-            </Accordion>
-            <div className="amm-action-row" style={{ marginTop: '1rem' }}>
-              <Button kind="danger">Confirm rollback</Button>
-              <Button kind="secondary">Open postmortem</Button>
+      <div className="amm-grid amm-grid-2col">
+        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
+          <Heading as="h2" style={{ fontSize: '14px', marginBottom: '16px' }}>Rollback sequence</Heading>
+          {['1. Isolate agent — stop new mounts and freeze autonomous actions.',
+            '2. Detach memory — detach the affected asset and preserve all state references.',
+            '3. Replay sandbox — run a replay with the hostile conditions that triggered the failure.',
+            '4. Export evidence — create the audit bundle for review and postmortem.',
+          ].map((step) => (
+            <div key={step} style={{ padding: '8px', marginBottom: '4px', backgroundColor: '#f6f8fa', borderRadius: '3px', fontSize: '12px' }}>
+              {step}
             </div>
-          </Tile>
-        </Column>
+          ))}
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <Button variant="danger">Confirm rollback</Button>
+            <Button>Open postmortem</Button>
+          </div>
+        </div>
 
-        <Column lg={8} md={8} sm={4}>
-          <Tile className="amm-card">
-            <h2>Evidence export</h2>
-            <CodeSnippet type="multi">
+        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
+          <Heading as="h2" style={{ fontSize: '14px', marginBottom: '16px' }}>Evidence export</Heading>
+          <pre style={{ padding: '16px', backgroundColor: '#f6f8fa', borderRadius: '3px', fontSize: '11px' }}>
 {`incident: hostile-replay-failure
 asset: defi-incident-triage
 action: auto-detached
 review_state: pending`}
-            </CodeSnippet>
-          </Tile>
-        </Column>
-      </Grid>
+          </pre>
+        </div>
+      </div>
     </div>
   );
 }
