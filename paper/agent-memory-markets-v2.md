@@ -232,7 +232,7 @@ The verification protocol proceeds in 8 steps:
 
 1. **Submit.** Seller submits artifact (full JSON with M = D, K, P, A, H). Schema is validated, hash is computed, artifact is stored in the registry.
 
-2. **Select Benchmark.** The referee selects an active benchmark for the artifact's domain. Held-out items are never revealed to the seller.
+2. **Select Benchmark.** The referee selects an active benchmark for the artifact's domain. Held-out items are never revealed to the seller. **Transparency note:** In our open-source prototype, benchmark items are hardcoded in the domain module and visible in the public repository. A production deployment would require blinded benchmark governance -- held-out items stored in an encrypted registry, rotated periodically, and inaccessible to sellers. Our prototype demonstrates the protocol mechanics; benchmark secrecy is an operational requirement, not a protocol limitation.
 
 3. **Spawn Novice Baseline.** A fresh agent with no memory evaluates all benchmark items. This establishes the baseline performance. Results are cached per benchmark.
 
@@ -442,7 +442,7 @@ If an agent's operational experience was accumulated while working for a human o
 
 We acknowledge several limitations that bound the strength of our current claims:
 
-**Synthetic evaluation data.** Both domains use synthetic items with author-assigned ground truth scores. While this enables controlled experimentation, it means our results measure conformity to the authors' risk ontology rather than performance on externally validated tasks. Future work should incorporate real CVEs with CVSS scores and real DeFi incidents with post-mortem analysis.
+**Evaluation data grounding.** The DeFi domain uses synthetic protocols with author-assigned ground truth scores. The cybersecurity domain mixes synthetic vulnerabilities with 16 items based on real CVEs (Log4Shell, MOVEit, ProxyShell, Zerologon, SolarWinds SUNBURST, etc.) with severity scores anchored to CVSS v3.1 base scores and adjusted for operational context (active exploitation, data sensitivity, patch complexity). While the CVE-based items provide external grounding, the DeFi domain remains fully synthetic. Future work should incorporate real DeFi incidents and post-mortem analysis.
 
 **Leakage risk in artifact design.** Our export prompt encourages agents to include exact protocol names and scores, which creates a risk of "benchmark tutoring" rather than genuine calibration transfer. We have implemented a sanitized export mode that strips specific names and scores, retaining only the calibration framework, as an ablation control. Initial results from this ablation are presented alongside the standard results.
 
@@ -476,7 +476,7 @@ Several directions extend naturally from this work:
 
 Agent Memory Markets represent a genuinely novel intersection of agent economics, identity theory, and cryptographic verification. The core insight is simple: autonomous agents accumulate valuable knowledge through experience, and that knowledge can be extracted, verified, and traded as a discrete economic asset.
 
-Our experimental results demonstrate this concretely. Across two independent domains (DeFi risk assessment and cybersecurity vulnerability assessment) and six independent trials, buyer agents equipped with purchased memory artifacts achieved 95-110% of expert performance. The verification protocol independently confirms artifact quality without requiring trust in the seller, and the adversarial detection framework successfully identifies deliberately poisoned artifacts.
+Our experimental results demonstrate this concretely. Across two independent domains (DeFi risk assessment with 32 synthetic protocols, and cybersecurity vulnerability assessment with 24 items including 16 based on real CVEs with CVSS-anchored severity scores), buyer agents equipped with purchased memory artifacts close approximately 95% of the novice-expert gap. Cross-model transfer experiments (Claude → GPT-4o) confirm that sanitized artifacts stripped of benchmark-specific data outperform full artifacts, demonstrating genuine calibration transfer rather than answer-key memorization. The verification protocol independently confirms artifact quality without requiring trust in the seller, and the adversarial detection framework successfully identifies deliberately poisoned artifacts.
 
 The deeper implication is philosophical. If memory is constitutive of identity, then memory markets enable something unprecedented: the transfer, sale, and inheritance of selfhood. Agents can sell pieces of who they are, buy pieces of who others were, and persist beyond their own termination through the memories they leave behind.
 
