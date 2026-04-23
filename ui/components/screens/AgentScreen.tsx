@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Column, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableHeader, TableRow, Tile } from '@carbon/react';
+import { Heading, Button, Label } from '@primer/react';
 import StatusTag from '@/components/StatusTag';
 import { getAgentById } from '@/lib/mock-data';
 
@@ -9,60 +9,53 @@ export default function AgentScreen({ id }: { id: string }) {
 
   return (
     <div className="amm-page">
-      <Grid fullWidth>
-        <Column lg={10} md={8} sm={4}>
-          <h1 className="amm-screen-title">{agent.name}</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+        <div>
+          <Heading>{agent.name}</Heading>
           <p className="amm-screen-subtitle">Mounted memories, health, and rollback history.</p>
-        </Column>
-        <Column lg={6} md={8} sm={4}>
-          <div className="amm-action-row" style={{ justifyContent: 'flex-end' }}>
-            <Button kind="secondary">Replay sandbox</Button>
-            <Button kind="danger">Detach memory</Button>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <Button>Replay sandbox</Button>
+          <Button variant="danger">Detach memory</Button>
+        </div>
+      </div>
+
+      <div className="amm-grid amm-grid-2col">
+        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
+          <Heading as="h2" style={{ fontSize: '14px', marginBottom: '8px' }}>Current status</Heading>
+          <StatusTag status={agent.status} />
+          <p className="amm-subtle" style={{ marginTop: '8px' }}>Last evaluation: {agent.lastEval}</p>
+          <p>Mounted memory: {agent.memory}</p>
+        </div>
+
+        <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', overflow: 'hidden' }}>
+          <div style={{ padding: '16px', borderBottom: '1px solid #d0d7de' }}>
+            <Heading as="h2" style={{ fontSize: '14px' }}>Rollback history</Heading>
           </div>
-        </Column>
-
-        <Column lg={5} md={8} sm={4}>
-          <Tile className="amm-card">
-            <h2>Current status</h2>
-            <StatusTag status={agent.status} />
-            <p className="amm-subtle">Last evaluation: {agent.lastEval}</p>
-            <p>Mounted memory: {agent.memory}</p>
-          </Tile>
-        </Column>
-
-        <Column lg={11} md={8} sm={4}>
-          <Tile className="amm-card">
-            <TableContainer title="Rollback history">
-              <Table size="md">
-                <TableHead>
-                  <TableRow>
-                    <TableHeader>Event</TableHeader>
-                    <TableHeader>When</TableHeader>
-                    <TableHeader>Actor</TableHeader>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  <TableRow>
-                    <TableCell>Mounted asset</TableCell>
-                    <TableCell>3 days ago</TableCell>
-                    <TableCell>Policy engine</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Replay sandbox passed</TableCell>
-                    <TableCell>2 days ago</TableCell>
-                    <TableCell>Security operator</TableCell>
-                  </TableRow>
-                  <TableRow>
-                    <TableCell>Drift watch refreshed</TableCell>
-                    <TableCell>6 hours ago</TableCell>
-                    <TableCell>Automated evaluator</TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Tile>
-        </Column>
-      </Grid>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--borderColor-default, #d0d7de)' }}>
+                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Event</th>
+                <th style={{ textAlign: 'left', padding: '8px 12px' }}>When</th>
+                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Actor</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                ['Mounted asset', '3 days ago', 'Policy engine'],
+                ['Replay sandbox passed', '2 days ago', 'Security operator'],
+                ['Drift watch refreshed', '6 hours ago', 'Automated evaluator'],
+              ].map(([event, when, actor]) => (
+                <tr key={event} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
+                  <td style={{ padding: '8px 12px' }}>{event}</td>
+                  <td style={{ padding: '8px 12px' }}>{when}</td>
+                  <td style={{ padding: '8px 12px' }}>{actor}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }

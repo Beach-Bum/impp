@@ -1,47 +1,44 @@
 'use client';
 
-import { Button, Column, Dropdown, Grid, NumberInput, Tag, Tile, Toggle } from '@carbon/react';
-import { policySnapshot } from '@/lib/mock-data';
-
-const runtimes = ['Retrieval only / no tool autonomy', 'Retrieval + guarded tools', 'Full autonomy'];
+import { Heading, Button, Label, TextInput, FormControl, Select } from '@primer/react';
 
 export default function PolicyScreen() {
   return (
     <div className="amm-page">
-      <Grid fullWidth>
-        <Column lg={16} md={8} sm={4}>
-          <h1 className="amm-screen-title">Policy center</h1>
-          <p className="amm-screen-subtitle">Control budgets, risk gates, and allowed runtime scopes.</p>
-        </Column>
+      <Heading style={{ marginBottom: '4px' }}>Policy center</Heading>
+      <p className="amm-screen-subtitle">Control budgets, risk gates, and allowed runtime scopes.</p>
 
-        <Column lg={8} md={8} sm={4}>
-          <Tile className="amm-card">
-            <h2>Current policy snapshot</h2>
-            <div className="amm-inline-tags">
-              <Tag type="cool-gray">Auto-buy cap: {policySnapshot.autoBuyCap}</Tag>
-              <Tag type="warm-gray">{policySnapshot.riskGate}</Tag>
-              <Tag type="red">{policySnapshot.autoRevoke}</Tag>
-            </div>
-            <p style={{ marginTop: '1rem' }}>Runtime scope: {policySnapshot.runtimeScope}</p>
-          </Tile>
-        </Column>
+      <div className="amm-grid amm-grid-2col">
+        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
+          <Heading as="h2" style={{ fontSize: '14px', marginBottom: '16px' }}>Current policy snapshot</Heading>
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
+            <Label variant="secondary">Auto-buy cap: $2,000</Label>
+            <Label variant="attention">Human approval above Medium</Label>
+            <Label variant="danger">Auto-revoke: neg transfer &gt; 5%</Label>
+          </div>
+          <p style={{ marginTop: '8px' }}>Runtime scope: Retrieval only / no tool autonomy</p>
+        </div>
 
-        <Column lg={8} md={8} sm={4}>
-          <Tile className="amm-card">
-            <h2>Controls</h2>
-            <div className="amm-surface-stack">
-              <NumberInput id="cap" label="Auto-buy cap" min={0} value={2000} />
-              <Dropdown id="runtime-scope" titleText="Allowed runtime scope" label="Choose a scope" items={runtimes} />
-              <Toggle id="approval-toggle" labelText="Require human approval above Medium risk" defaultToggled />
-              <Toggle id="revoke-toggle" labelText="Auto-revoke on negative transfer threshold breach" defaultToggled />
-              <div className="amm-action-row">
-                <Button>Save policy</Button>
-                <Button kind="danger--tertiary">Reset changes</Button>
-              </div>
-            </div>
-          </Tile>
-        </Column>
-      </Grid>
+        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
+          <Heading as="h2" style={{ fontSize: '14px', marginBottom: '16px' }}>Controls</Heading>
+          <FormControl style={{ marginBottom: '16px' }}>
+            <FormControl.Label>Auto-buy cap</FormControl.Label>
+            <TextInput defaultValue="2000" type="number" />
+          </FormControl>
+          <FormControl style={{ marginBottom: '16px' }}>
+            <FormControl.Label>Allowed runtime scope</FormControl.Label>
+            <Select>
+              <Select.Option value="retrieval">Retrieval only / no tool autonomy</Select.Option>
+              <Select.Option value="guarded">Retrieval + guarded tools</Select.Option>
+              <Select.Option value="full">Full autonomy</Select.Option>
+            </Select>
+          </FormControl>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
+            <Button variant="primary">Save policy</Button>
+            <Button variant="danger">Reset changes</Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

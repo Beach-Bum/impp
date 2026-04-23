@@ -1,18 +1,18 @@
 'use client';
 
-import { Tag } from '@carbon/react';
+import { Label } from '@primer/react';
 
 type Status = 'Healthy' | 'Watch' | 'Warning' | 'Blocked' | 'Revoked' | 'Expired';
 
-const map: Record<Status, string> = {
-  Healthy: 'green',
-  Watch: 'teal',
-  Warning: 'yellow',
-  Blocked: 'red',
-  Revoked: 'magenta',
-  Expired: 'cool-gray',
+const map: Record<Status, 'success' | 'danger' | 'attention' | 'secondary' | 'accent'> = {
+  Healthy: 'success',
+  Watch: 'accent',
+  Warning: 'attention',
+  Blocked: 'danger',
+  Revoked: 'danger',
+  Expired: 'secondary',
 };
 
 export default function StatusTag({ status }: { status: Status }) {
-  return <Tag type={map[status] as any}>{status}</Tag>;
+  return <Label variant={map[status] ?? 'secondary'}>{status}</Label>;
 }
