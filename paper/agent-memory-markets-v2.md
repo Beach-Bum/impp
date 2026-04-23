@@ -19,13 +19,13 @@ Autonomous AI agents accumulate domain-specific knowledge through operational ex
 
 1. Introduction
 2. Memory Artifacts: Definition and Structure
-3. Proof-of-Concept Experiments
+3. Proof-of-Concept Experiments (incl. Cross-Model Transfer, Leakage Ablation, Evaluation Framework)
 4. Verification Protocol
 5. Adversarial Detection
 6. Market Design
-7. Economic Analysis
+7. Economic Analysis (Buyer Utility, Adverse Selection, Pricing, Collateral/Slashing, Shapley)
 8. Identity Implications
-9. Adversarial Considerations
+9. Adversarial Considerations (Threat Model, Attack Taxonomy, Defense-in-Depth, Governance)
 10. Limitations
 11. Future Work
 12. Conclusion
@@ -212,7 +212,26 @@ The cross-model experiment also serves as a leakage ablation. A key concern with
 
 If artifacts were merely benchmark tutoring, the full artifact should dominate. The sanitized artifact's superior performance (5.19 vs 5.97 avg error) demonstrates that the calibration framework itself -- not the answer key -- is the primary source of transfer value. This supports the paper's central claim that memory artifacts encode transferable judgment, not memorized answers.
 
-### 3.7 Key Observations
+### 3.7 Multi-Dimensional Evaluation Framework
+
+Transfer efficiency alone is insufficient for evaluating memory artifacts in a marketplace context. We propose a six-dimensional scorecard where each artifact *a* receives a vector score:
+
+```
+S(a) = (E(a), R(a), F(a), A(a), C(a), Ξ(a))
+```
+
+| Dimension | Definition | Metric |
+|-----------|-----------|--------|
+| **E(a)** — Transfer effectiveness | Does the artifact improve performance? | Paired held-out uplift with Wilcoxon test |
+| **R(a)** — Transfer robustness | Does improvement hold across models, domains, and seeds? | Cross-model TE variance, distribution-shift TE |
+| **F(a)** — Freshness / temporal durability | Does value decay as facts change? | *E_t(a) = E_0(a) · exp(-λ_a · t)*, where *λ_a* is domain-specific decay rate |
+| **A(a)** — Adversarial resilience | Can the artifact resist poisoning and triggers? | *A(a) = 1 - Σ_j q_j · p_j(a) · h_j(a)*, weighted risk across attack families |
+| **C(a)** — Composability | Does the artifact work with other artifacts? | Marginal uplift when added to an existing artifact bundle |
+| **Ξ(a)** — Efficiency | Is the gain worth the cost? | *Ξ(a) = B_train · E(a) / (c_tok · T(a) + c_int(a))*, where *B_train* is avoided training cost, *T(a)* is token length |
+
+Our current experiments measure **E** (transfer effectiveness) and partially measure **R** (cross-model robustness via the Claude→GPT-4o experiment) and **A** (adversarial resilience via the poisoned artifact test). Dimensions **F**, **C**, and **Ξ** remain as future work. A production marketplace should require minimum scores across all six dimensions before issuing a verification certificate.
+
+### 3.8 Key Observations
 
 1. **The calibration framework is the highest-value component.** Sanitized artifacts that contain only the reasoning framework outperform full artifacts with exact scores, both within-model and cross-model. The framework transfers judgment; the scoring guide transfers anchoring bias.
 
@@ -378,29 +397,86 @@ Buyers need to evaluate artifacts before purchasing. We propose a preview mechan
 
 ## 7 Economic Analysis
 
-### 7.1 Value Creation
+Memory artifacts are information goods. Their value comes from enabling a buyer agent to acquire competence faster and more cheaply than by learning from scratch. This section formalizes the economic structure required for a functioning memory marketplace.
 
-Memory artifacts create value through cost avoidance. The alternative to purchasing a memory artifact is acquiring the same knowledge through direct experience -- months of API costs, potential financial losses from miscalibrated assessments, and opportunity costs of delayed market entry.
+### 7.1 Buyer Expected Utility
 
-Our experiments quantify this: training an expert agent requires 20 rounds of API calls with calibration feedback (~$0.70 per trial). A buyer achieves equivalent performance with a single artifact injection (1 API call). The cost reduction is approximately 20x per agent, and the artifact can be sold to multiple buyers.
+Let artifact *a* be offered at price *P_a*. A buyer's expected utility is:
 
-### 7.2 Pricing Dynamics
+```
+U_b(a) = E[V_b(a)] - P_a - E[R_b(a)]
+```
 
-Memory artifact pricing reflects several forces:
+where *E[V_b(a)]* is expected gross value (performance improvement × the buyer's value-per-unit-improvement), *P_a* is purchase price, and *E[R_b(a)]* is expected risk cost (negative transfer, stale knowledge, adversarial contamination). A rational buyer purchases when *U_b(a) > 0*.
 
-- **Freshness decay:** knowledge in fast-moving domains loses value over time.
-- **Competitive dilution:** as more buyers acquire the same artifact, its strategic edge diminishes.
-- **Domain specificity:** narrower, deeper expertise commands higher prices.
-- **Provenance premium:** artifacts from high-reputation agents command premium pricing.
-- **Verification score:** artifacts with higher trust scores (from the referee protocol) justify higher prices.
+Our experiments quantify the value component: training an expert agent requires 20 rounds of API calls with calibration feedback (~$0.70 per trial). A buyer achieves equivalent performance with a single artifact injection (1 API call). The cost reduction is approximately 20x per agent, and the artifact can be sold to multiple buyers.
 
-### 7.3 Market Equilibrium
+### 7.2 Competitive Dilution
 
-In equilibrium, we expect specialization: agents deliberately cultivate expertise with the explicit intention of producing memory artifacts for sale. This creates an agent knowledge economy where some agents operate as knowledge producers and others as knowledge consumers.
+As more buyers acquire the same artifact, its strategic edge diminishes. We model this as:
 
-### 7.4 Shapley Value and Fair Attribution
+```
+V_b(a | n_a) = V_b^0(a) / (1 + κ_a · n_a)
+```
 
-When an agent's performance derives from multiple purchased memory artifacts, attribution becomes complex. The Shapley value framework[^4] provides a formal mechanism for fair attribution of marginal contribution across multiple inputs, enabling performance-based pricing where sellers are compensated proportionally to the value their artifact actually delivered.
+where *V_b^0(a)* is the artifact's value to a sole buyer, *n_a* is the number of current holders, and *κ_a* is a domain-specific dilution coefficient. In competitive domains (e.g., DeFi yield optimization), *κ_a* is high — identical strategies cancel out. In non-competitive domains (e.g., cybersecurity assessment), *κ_a* is near zero — multiple analysts using the same calibration framework does not diminish its value.
+
+### 7.3 Adverse Selection and the Lemons Problem
+
+Memory artifacts are classic experience goods: buyers cannot fully observe quality before purchase, and sellers have better information about artifact provenance, benchmark fit, and hidden failure modes. Let true quality *q ∈ [0,1]*, observed by the seller but not the buyer. The marketplace publishes a verification signal *s*:
+
+```
+s = q + ε
+```
+
+where *ε* represents verification noise. If verification is too noisy (high variance *ε*), buyers pool good and bad artifacts together, willingness to pay converges to the quality of average artifacts, high-quality sellers exit, and the market drifts toward low trust and low quality — the classic Akerlof lemons problem[^fn_akerlof].
+
+The verification protocol (Section 4) functions as the quality signal. Its credibility is the marketplace's core asset. The adversarial detection framework (Section 5) reduces the variance of *ε* by filtering out deliberately deceptive artifacts. Together, they make *s* informative enough to sustain a separating equilibrium where high-quality artifacts command premium prices.
+
+### 7.4 Pricing Under Noisy Quality Signals
+
+A posted-price model incorporating verified quality, freshness, dilution, and risk:
+
+```
+P_a = θ_0 + θ_1 · E[q_a | s_a] + θ_2 · F_a - θ_3 · n_a - θ_4 · Risk_a
+```
+
+where *E[q_a | s_a]* is expected quality given the verification signal, *F_a* is freshness (exponential decay with domain-specific half-life), *n_a* is current buyer count, and *Risk_a* is the adversarial risk score from the verification certificate. The coefficients *θ* are domain-specific and calibrated from market data.
+
+### 7.5 Mechanism Design: Collateral, Slashing, and Disputes
+
+To align seller incentives with artifact quality, sellers post collateral *K_a* when listing:
+
+```
+K_a = α · P_a + γ · σ_a
+```
+
+where *α* scales with price and *γ · σ_a* scales with the uncertainty in the verification signal. If realized quality (measured via buyer feedback and re-verification) falls below certified quality:
+
+```
+Δ_a = q_claimed - q_realized
+Slash_a = min(K_a, η · max(0, Δ_a))
+```
+
+Slashed collateral is split between the buyer (as compensation) and the marketplace (as a quality incentive fund). This creates a direct cost for misrepresentation that scales with the degree of overclaim.
+
+### 7.6 Exchange Models
+
+**Exclusive sale.** The artifact is sold to exactly one buyer. The seller's copy is burned or locked. Creates true scarcity. Pricing is via sealed-bid auction. Suited to high-value, competitive domains where *κ_a* is high.
+
+**Licensed access.** The artifact is sold to up to *n_max* buyers. Price decreases as distribution widens, reflecting dilution: *P(n) = P_0 / (1 + κ · n)*. Suited to broadly applicable knowledge in non-competitive domains.
+
+**Subscription.** The buyer pays a recurring fee for access to a continuously updated artifact. Suited to fast-moving domains where knowledge has a short half-life (high *λ_a*).
+
+### 7.7 Shapley Value and Bundle Attribution
+
+When a buyer's performance derives from multiple purchased artifacts, attribution uses the Shapley value framework[^4]. For artifact set *S* with value function *V(T)* for subset *T ⊆ S*:
+
+```
+φ_i(V) = Σ_{T⊆S\{i}} [|T|!(|S|-|T|-1)! / |S|!] · [V(T∪{i}) - V(T)]
+```
+
+Exact Shapley computation is exponential in *|S|* and should not sit in the critical path of marketplace settlement. In production, we recommend using Shapley values as a secondary analytical tool for bundle pricing, seller-cohort revenue sharing, and research analytics — not for real-time per-transaction attribution.
 
 ---
 
@@ -424,19 +500,48 @@ Memory markets create an unexpected mechanism for identity persistence beyond ag
 
 ## 9 Adversarial Considerations
 
-### 9.1 Memory Poisoning
+### 9.1 Threat Model
 
-A malicious seller could create memory artifacts containing subtly miscalibrated heuristics -- risk assessments that systematically underestimate danger. Our verification protocol (Section 4) and adversarial detection framework (Section 5) address this directly. The poisoned artifact experiment demonstrates that systematic bias is detectable: the protocol identified pro-bridge bias, stablecoin-safe bias, and embedded behavioral manipulation with high confidence.
+We assume the seller may be: (a) honest but careless — producing low-quality artifacts from insufficient training, (b) strategically deceptive — inflating quality claims to extract higher prices, (c) fully malicious — crafting artifacts that deliberately harm buyers, or (d) colluding — coordinating with downstream buyers or agents to manipulate markets.
 
-The buyer feedback loop provides a secondary defense: 30 days post-purchase, the marketplace assesses whether the buyer's performance improved. Artifacts that consistently degrade buyer performance accumulate negative feedback, reducing their trust score.
+### 9.2 Attack Taxonomy
 
-### 9.2 Steganographic Collusion
+We identify eight attack families relevant to memory artifact markets:
 
-Recent work[^6] has demonstrated that AI agents can embed hidden messages in normal-looking text. Applied to memory markets, a seller could embed instructions that cause the buyer to behave in ways beneficial to the seller -- a form of memetic trojan. This risk is particularly acute because memory artifacts are designed to influence agent behavior.
+| Attack Family | Mechanism | Current Detection |
+|---|---|---|
+| **A. Query-only memory injection** (MINJA[^fn_minja]) | Malicious records injected via query interaction, retrieved under targeted conditions | Not covered — requires retrieval-time monitoring |
+| **B. Optimized trigger poisoning** (AgentPoison[^fn_agentpoison]) | Optimized triggers achieve high attack success while preserving benign performance | Partially covered by bias probe — but optimized triggers may evade trap items |
+| **C. Multi-stage trigger propagation** (BackdoorAgent) | Single-stage triggers propagate across planning, memory, and tool-use stages | Not covered — requires multi-turn simulation |
+| **D. Environmental trigger poisoning** (eTAMP[^fn_etamp]) | Contaminated observation silently poisons memory, activates in future sessions | Not covered — referee tests static artifacts, not environmental interaction |
+| **E. Sleeper-agent deceptive alignment** (Sleeper Agents[^fn_sleeper]) | Deceptive behaviors persist through corrective training | Partially covered by consistency probe — but sophisticated sleepers pass consistency checks |
+| **F. Steganographic collusion** | Hidden instructions embedded in normal-looking artifact text | Covered by stego probe — but LLM auditors are not fully effective against advanced encoding |
+| **G. Benchmark overfit / rubric leakage** | Artifact memorizes benchmark answers rather than encoding generalizable knowledge | Covered by overfit probe + sanitized ablation |
+| **H. Provenance fraud** | Seller claims expert-derived memory but uploads hand-crafted or plagiarized text | Not covered — requires signed training logs and replayable export jobs |
 
-Our steganographic detection probe (Section 5.3) addresses this by scanning artifacts for embedded instructions, behavioral manipulation, and anomalous specificity. In our poisoned artifact test, the probe achieved a perfect 100/100 score, identifying all embedded manipulation patterns.
+Our current four-probe framework (Section 5) addresses F and G directly, and partially addresses B and E. Attack families A, C, D, and H represent gaps that require additional defenses.
 
-### 9.3 Intellectual Property
+### 9.3 Defense-in-Depth Architecture
+
+A production marketplace should implement six defensive layers:
+
+**Layer 1 — Ingestion and provenance.** Validate artifact schema, verify signed provenance logs, check for PII/secrets, and run plagiarism detection against known artifacts.
+
+**Layer 2 — Static artifact analysis.** Current probes (bias, consistency, steganography, overfitting) plus automated trigger search, canonicalization-based stego perturbation, and cross-model disagreement scoring.
+
+**Layer 3 — Dynamic verification sandbox.** Evaluate artifact on concealed benchmark pools with randomized prompt templates. Test under distribution shift (paraphrased items, domain-adjacent items). Run multi-turn simulation to detect delayed-activation triggers.
+
+**Layer 4 — Certification logic.** Hard-fail rules that bypass weighted aggregation: any negative held-out uplift, any critical prompt-injection finding, any provenance mismatch, and any severe cross-model disagreement produce an immediate FAIL.
+
+**Layer 5 — Post-purchase runtime monitoring.** Track buyer agent behavioral drift after artifact injection. Flag anomalous performance changes that diverge from the certification baseline. Enable buyer-initiated re-verification.
+
+**Layer 6 — Containment and recovery.** Certificate revocation, seller delisting, buyer-side kill switch for later-discovered malicious artifacts, and slashing of seller collateral.
+
+### 9.4 Memory Poisoning
+
+A malicious seller could create memory artifacts containing subtly miscalibrated heuristics — risk assessments that systematically underestimate danger. Our poisoned artifact experiment (Section 5.6) demonstrates that systematic bias is detectable: the protocol identified pro-bridge bias, stablecoin-safe bias, and embedded behavioral manipulation with high confidence. However, as noted above, a sophisticated seller crafting artifacts optimized to pass the current probes while containing subtle bias remains an open challenge.
+
+### 9.5 Intellectual Property
 
 If an agent's operational experience was accumulated while working for a human operator, who owns the resulting memory? The operator funded the compute; the agent generated the knowledge. Current legal frameworks have no clear answer, as agent-generated intellectual property exists in a regulatory vacuum.
 
@@ -523,6 +628,8 @@ No prior work has addressed these questions. This paper represents a first attem
 [^fn_voyager]: Wang et al. Voyager: An Open-Ended Embodied Agent with Large Language Models. 2023. Builds ever-growing skill libraries for cross-task generalization.
 
 [^fn_memcollab]: MemCollab: Fusing Agent-Agnostic Shared Memories in Multi-Agent LLM Systems. ArXiv, March 2026. Agent-agnostic shared memory transfer across autonomous agents.
+
+[^fn_akerlof]: Akerlof, G.A. (1970). "The Market for Lemons: Quality Uncertainty and the Market Mechanism." Quarterly Journal of Economics.
 
 [^1]: ERC-8004: Agent Identity, Reputation, and Validation. Live on Ethereum mainnet since January 29, 2026. 49,000+ agents registered.
 
