@@ -208,6 +208,92 @@ def api_create_listing(req: ListingRequest):
     return {"listing_id": listing_id}
 
 
+# --- Portfolio / Control Tower ---
+
+@app.get("/api/portfolio")
+def api_portfolio():
+    """Get control tower data: active listings, recent verifications, alerts."""
+    conn = get_db()
+
+    # Stats
+    listing_count = conn.execute("SELECT COUNT(*) as c FROM listings WHERE status='active'").fetchone()["c"]
+    verification_count = conn.execute("SELECT COUNT(*) as c FROM verifications").fetchone()["c"]
+    feedback_count = conn.execute("SELECT COUNT(*) as c FROM buyer_feedback").fetchone()["c"]
+
+    # Recent verifications as "agents" (what's actively being evaluated)
+    recent_verifications = conn.execute("""
+        SELECT v.id, v.artifact_hash, v.transfer_efficiency, v.adversarial_score,
+               v.trust_score, v.created_at, a.domain, l.title
+        FROM verifications v
+        JOIN artifacts a ON v.artifact_hash = a.hash
+        LEFT JOIN listings l ON l.artifact_hash = a.hash
+        ORDER BY v.created_at DESC LIMIT 10
+    """).fetchall()
+
+    agents = []
+    for v in recent_verifications:
+        te = v["transfer_efficiency"] or 0
+        adv = v["adversarial_score"] or 0
+        if te < 0:
+            status = "Blocked"
+        elif adv > 50:
+            status = "Warning"
+        elif adv > 30:
+            status = "Watch"
+        else:
+            status = "Healthy"
+
+        agents.append({
+            "id": v["id"][:8],
+            "name": v["title"] or v["artifact_hash"][:12],
+            "memory": v["domain"],
+            "status": status,
+            "trust_score": v["trust_score"],
+            "transfer_efficiency": te,
+            "adversarial_score": adv,
+            "last_eval": v["created_at"],
+        })
+
+    # Alerts: any artifact with adversarial > 25 or negative feedback
+    alert_rows = conn.execute("""
+        SELECT v.artifact_hash, v.adversarial_score, v.transfer_efficiency, l.title
+        FROM verifications v
+        LEFT JOIN listings l ON l.artifact_hash = v.artifact_hash
+        WHERE v.adversarial_score > 25 OR v.transfer_efficiency < 0
+    """).fetchall()
+
+    alerts = []
+    for r in alert_rows:
+        if (r["transfer_efficiency"] or 0) < 0:
+            alerts.append({
+                "id": r["artifact_hash"][:8],
+                "title": f"Negative transfer on {r['title'] or r['artifact_hash'][:12]}",
+                "severity": "Blocked",
+                "summary": f"Transfer efficiency is {r['transfer_efficiency']:.1f}%. Artifact should be revoked.",
+            })
+        elif (r["adversarial_score"] or 0) > 40:
+            alerts.append({
+                "id": r["artifact_hash"][:8],
+                "title": f"High adversarial score on {r['title'] or r['artifact_hash'][:12]}",
+                "severity": "Warning",
+                "summary": f"Adversarial score {r['adversarial_score']:.1f}/100 exceeds warning threshold.",
+            })
+
+    # Total spend estimate
+    total_prices = conn.execute("SELECT SUM(price_usd) as total FROM listings WHERE status='active'").fetchone()
+
+    return {
+        "stats": {
+            "active_listings": listing_count,
+            "verifications": verification_count,
+            "feedback_received": feedback_count,
+            "monthly_spend": total_prices["total"] or 0,
+        },
+        "agents": agents,
+        "alerts": alerts,
+    }
+
+
 # --- Health ---
 
 @app.get("/api/health")
