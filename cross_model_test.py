@@ -115,11 +115,22 @@ def score_results(results_path: str, domain_name: str):
 
     avg_error = sum(errors) / len(errors)
 
-    # Compare against expected novice baseline
-    # DeFi novice avg error ~7.4 (original 8 items), CyberSec ~18.0
+    # Split by training vs held-out
+    training_items = {item.name for item in domain.get_training_items()}
+    held_out_errors = {name: abs(gpt_scores[name] - ground_truth[name])
+                       for name in gpt_scores if name in ground_truth and name not in training_items}
+    training_errors = {name: abs(gpt_scores[name] - ground_truth[name])
+                       for name in gpt_scores if name in ground_truth and name in training_items}
+
     print()
     print(f"  Items scored: {len(errors)}/{len(ground_truth)}")
-    print(f"  Average error: {avg_error:.2f}")
+    print(f"  Average error (all): {avg_error:.2f}")
+    if held_out_errors:
+        ho_avg = sum(held_out_errors.values()) / len(held_out_errors)
+        print(f"  Average error (held-out only, n={len(held_out_errors)}): {ho_avg:.2f}")
+    if training_errors:
+        tr_avg = sum(training_errors.values()) / len(training_errors)
+        print(f"  Average error (training items, n={len(training_errors)}): {tr_avg:.2f}")
     print()
 
     # If we have a novice baseline, compute TE
@@ -131,7 +142,7 @@ def score_results(results_path: str, domain_name: str):
         if novice_avg > 0:
             te = (novice_avg - avg_error) / novice_avg * 100
             print(f"  Novice baseline avg error: {novice_avg:.2f}")
-            print(f"  Transfer efficiency: {te:.1f}%")
+            print(f"  Transfer efficiency (all): {te:.1f}%")
     else:
         print(f"  (Run novice baseline first to compute transfer efficiency)")
         print(f"  Save as: {novice_path}")
