@@ -18,6 +18,7 @@ def export_artifact(
     accumulated_memory: list[str],
     agent_id: str = "",
     model: str = MODEL,
+    sanitized: bool = False,
 ) -> MemoryArtifact:
     """Export a memory artifact from a trained agent.
 
@@ -34,7 +35,10 @@ def export_artifact(
     Returns:
         A complete MemoryArtifact with schema, provenance, and hash.
     """
-    export_prompt = domain.get_export_prompt(accumulated_memory)
+    if sanitized:
+        export_prompt = domain.get_sanitized_export_prompt(accumulated_memory)
+    else:
+        export_prompt = domain.get_export_prompt(accumulated_memory)
 
     content = call_api(
         client=client,

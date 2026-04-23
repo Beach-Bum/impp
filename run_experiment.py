@@ -29,6 +29,8 @@ def main():
                         help="Evaluate buyer on a different provider (cross-model transfer)")
     parser.add_argument("--buyer-model", type=str, default=None,
                         help="Model name for buyer provider (default: gpt-4o for openai, llama3 for ollama)")
+    parser.add_argument("--sanitized", action="store_true",
+                        help="Export sanitized artifact (no exact names/scores) for leakage ablation")
     parser.add_argument("--db", type=str, default=None, help="Registry DB path")
     parser.add_argument("--output", type=str, default="experiment-results.json", help="Output file")
 
@@ -59,7 +61,7 @@ def main():
             print(f"  Cross-model: training on {args.model}, buyer on {args.buyer_provider}:{buyer_llm.model}")
             bench_run = run_cross_model_benchmark(client, domain, args.model, buyer_llm)
         else:
-            bench_run = run_benchmark(client, domain, args.model)
+            bench_run = run_benchmark(client, domain, args.model, sanitized=args.sanitized)
 
         print(f"  Expert avg error: {bench_run.metrics['expert_avg_error']:.2f}")
         print(f"  Novice avg error: {bench_run.metrics['novice_avg_error']:.2f}")

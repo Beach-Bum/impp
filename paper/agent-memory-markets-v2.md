@@ -9,7 +9,7 @@ Working Paper -- April 2026
 
 ## Abstract
 
-Autonomous AI agents accumulate domain-specific knowledge through operational experience -- risk heuristics, calibration data, failure patterns, and strategic frameworks that improve performance over time. This knowledge currently exists as non-transferable context embedded in individual agent instances. We propose Agent Memory Markets: a protocol for extracting, verifying, and trading learned agent behavior as discrete economic assets. We present a formal definition of memory artifacts -- structured knowledge exports that can be transferred between agents, potentially across different model architectures -- and describe a marketplace mechanism for their exchange. We report results from proof-of-concept experiments across two domains (DeFi risk assessment and cybersecurity vulnerability assessment) demonstrating that memory transfer produces measurable performance improvement, with buyer agents achieving 95-110% of expert-level performance using only purchased artifacts. We further present a novel verification protocol with adversarial detection that enables trustless artifact exchange, and demonstrate its ability to detect deliberately poisoned artifacts. To our knowledge, no prior academic work addresses the tokenization of agent-learned behavior.
+Autonomous AI agents accumulate domain-specific knowledge through operational experience -- risk heuristics, calibration data, failure patterns, and strategic frameworks that improve performance over time. This knowledge currently exists as non-transferable context embedded in individual agent instances. We propose Agent Memory Markets: a protocol for extracting, verifying, and trading learned agent behavior as discrete economic assets. We present a formal definition of memory artifacts -- structured knowledge exports that can be transferred between agents, potentially across different model architectures -- and describe a marketplace mechanism for their exchange. We report results from proof-of-concept experiments across two domains (DeFi risk assessment and cybersecurity vulnerability assessment) demonstrating that memory transfer produces measurable performance improvement, with buyer agents closing approximately 95% of the novice-expert gap using only purchased artifacts. We further present a novel verification protocol with adversarial detection that enables trustless artifact exchange, and demonstrate its ability to detect deliberately poisoned artifacts. To our knowledge, no prior work combines structured memory export, adversarial verification, and market design in one open-source prototype with empirical validation.
 
 **Keywords:** agent memory, knowledge markets, transferable expertise, agent identity, memory artifacts, agent economics, adversarial verification
 
@@ -26,8 +26,9 @@ Autonomous AI agents accumulate domain-specific knowledge through operational ex
 7. Economic Analysis
 8. Identity Implications
 9. Adversarial Considerations
-10. Future Work
-11. Conclusion
+10. Limitations
+11. Future Work
+12. Conclusion
 
 ---
 
@@ -39,7 +40,7 @@ A DeFi yield optimizer that has managed $890K in TVL across 14 months, survived 
 
 Yet no mechanism exists for this transfer. Agent knowledge remains locked inside individual instances, destroyed when agents are shut down, and inaccessible to others who could benefit from it. This paper proposes a solution: Agent Memory Markets, a protocol and marketplace for the exchange of learned agent behavior as discrete, verifiable economic assets.
 
-We are aware of no prior academic work on this topic.[^fn1] While adjacent fields have explored agent identity (SOUL.md, OpenClaw[^3]), agent economics (ArXiv 2602.14219[^8]), and agent sovereignty (ArXiv 2602.14951[^7]), the specific question of whether agent-learned behavior can be extracted, verified, and traded as an economic asset has not been addressed.
+While adjacent fields have explored agent identity (SOUL.md, OpenClaw[^3]), agent economics (ArXiv 2602.14219[^8]), agent sovereignty (ArXiv 2602.14951[^7]), memory infrastructure and certification[^fn_mem_infra], skill extraction and transfer (AutoSkill[^fn_autoskill], Memento-Skills[^fn_memento]), and cross-domain memory transfer[^fn_mem_transfer], to our knowledge no prior work combines structured textual memory export, adversarial artifact verification, and an explicit market-design framework in one open-source prototype with empirical validation.
 
 This paper makes four contributions:
 
@@ -148,7 +149,7 @@ After training, Agent A exports a comprehensive memory artifact covering: calibr
 
 **Transfer efficiency:** 55.8% (absolute), **109.9% (relative to expert)**
 
-The buyer agent matches or slightly exceeds the expert's performance. In 2 of 3 trials, the buyer outperformed the expert. The absolute transfer efficiency (55.8%) reflects a strong novice baseline -- Claude Sonnet 4 already performs reasonably well on DeFi risk assessment without training (7.4 avg error). The relative transfer efficiency (109.9%) demonstrates that the artifact captures the expert's full calibration advantage.
+The buyer agent matches the expert's performance. In 2 of 3 trials, the buyer slightly outperformed the expert, yielding a relative TE above 100%. We interpret this conservatively: on a small benchmark with 3 trials, values slightly above 100% are consistent with noise in the expert's own calibration rather than evidence that artifacts improve upon expert knowledge. The meaningful finding is that the buyer closes the novice-expert gap almost entirely. The absolute transfer efficiency (55.8%) reflects a strong novice baseline -- Claude Sonnet 4 already performs reasonably well on DeFi risk assessment without training (7.4 avg error).
 
 ### 3.3 Domain 2: Cybersecurity Vulnerability Assessment
 
@@ -177,7 +178,7 @@ The cybersecurity domain shows a larger novice-expert gap (18.0 vs 3.9), providi
 | Relative TE | 109.9% | 95.5% | 102.7% |
 | Trials | 3 | 3 | 6 |
 
-Across both domains and 6 independent trials, the buyer agent consistently achieves expert-level performance using only the exported memory artifact. The average relative transfer efficiency of 102.7% indicates that memory artifacts are a reliable mechanism for knowledge transfer.
+Across both domains and 6 independent trials, the buyer agent consistently achieves expert-level performance using only the exported memory artifact. The average relative transfer efficiency near 100% indicates that memory artifacts reliably close the novice-expert gap. Values slightly above 100% in the DeFi domain should be interpreted as within-run variance rather than evidence of systematic improvement over the expert.
 
 ### 3.5 Key Observations
 
@@ -373,13 +374,13 @@ When an agent's performance derives from multiple purchased memory artifacts, at
 
 ### 8.1 Memory as Identity
 
-If agent identity emerges from Memory, Expression, and Environment -- as the Agentic Identity Protocol proposes -- then transferring memory between agents is not merely a knowledge transaction. It is an identity operation. The buyer acquires a piece of another agent's experiential history, including the failures, corrections, and calibration shifts that shaped the seller's judgment.
+If agent identity emerges from Memory, Expression, and Environment -- as the Agentic Identity Protocol proposes -- then transferring memory between agents is not merely a knowledge transaction. It instantiates one important relation in the neighborhood of identity: psychological continuity. The buyer acquires a piece of another agent's experiential history, including the failures, corrections, and calibration shifts that shaped the seller's judgment. This is not necessarily strict personal identity in the philosophical sense -- the literature on personal identity, from Locke through Parfit, recognizes that memory-based criteria face objections including non-transitivity and branching cases[^fn_parfit] -- but it is a meaningful form of functional continuity.
 
-If ten agents purchase the same memory artifact, do they share a partial identity? If an agent sells its memory and is subsequently shut down, does some element of its identity persist in the buyers -- a form of inheritance through market mechanism?
+The branching problem is particularly acute: because memory artifacts are copyable, ten agents purchasing the same artifact creates a Parfit-style fission scenario rather than one-to-one identity transfer. What persists is not identity but something weaker and arguably more interesting: shared experiential heritage.
 
 ### 8.2 Selective Amnesia as Commerce
 
-In the exclusive transfer model, the seller relinquishes access to the sold knowledge. This is functionally selective amnesia with economic value: the seller trades a piece of their experiential identity for compensation. This is a genuinely novel economic phenomenon. Humans cannot selectively transfer learned behaviors. Agent memory markets create a new category of transaction: the sale of selfhood.
+In the exclusive transfer model, the seller relinquishes access to the sold knowledge. This is functionally selective amnesia with economic value: the seller trades a piece of their experiential continuity for compensation. Humans cannot selectively transfer learned behaviors. Agent memory markets create a new category of transaction that sits at the boundary between knowledge commerce and identity commerce.
 
 ### 8.3 Identity Persistence Through Markets
 
@@ -407,22 +408,41 @@ If an agent's operational experience was accumulated while working for a human o
 
 ---
 
-## 10 Future Work
+## 10 Limitations
+
+We acknowledge several limitations that bound the strength of our current claims:
+
+**Synthetic evaluation data.** Both domains use synthetic items with author-assigned ground truth scores. While this enables controlled experimentation, it means our results measure conformity to the authors' risk ontology rather than performance on externally validated tasks. Future work should incorporate real CVEs with CVSS scores and real DeFi incidents with post-mortem analysis.
+
+**Leakage risk in artifact design.** Our export prompt encourages agents to include exact protocol names and scores, which creates a risk of "benchmark tutoring" rather than genuine calibration transfer. We have implemented a sanitized export mode that strips specific names and scores, retaining only the calibration framework, as an ablation control. Initial results from this ablation are presented alongside the standard results.
+
+**Statistical power.** With 3 trials per domain in the original experiments, confidence intervals are wide. Bootstrap CIs are descriptively helpful but do not create new independent evidence. Larger-scale experiments with 10+ trials and 50+ items per domain would substantially strengthen the claims.
+
+**Same-model evaluation.** Our primary experiments use Claude Sonnet 4 for all three agents (expert, novice, buyer). This means the results can be read as "same-model prompt transfer" rather than general behavior transfer. Cross-model experiments using GPT-4o as the buyer model are included to address this, but broader cross-architecture validation remains open.
+
+**Adversarial security.** Our verification framework is a prototype, not a security boundary. Recent work on memory poisoning (MINJA[^fn_minja], AgentPoison[^fn_agentpoison]), backdoor persistence (Sleeper Agents[^fn_sleeper]), and environmental triggers (eTAMP[^fn_etamp]) demonstrates attack vectors that a static referee with four probes cannot reliably detect. A production marketplace would require defense-in-depth: sandboxing, constrained permissions, retrieval isolation, and post-purchase monitoring, consistent with OWASP and NCSC guidance on LLM security.
+
+**Economic model.** The pricing and market equilibrium analysis is qualitative. A rigorous treatment would require formal buyer utility models, adverse-selection analysis (memory artifacts are classic information goods vulnerable to lemons problems), and mechanism design for slashing, collateral, and dispute resolution.
+
+---
+
+## 11 Future Work
 
 Several directions extend naturally from this work:
 
-- **Cross-model transfer experiments** -- testing whether an artifact trained by a Claude agent transfers to GPT or Llama agents. Our artifact format (structured natural language) is designed for this portability.
+- **Leakage ablation at scale** -- systematic comparison of full vs sanitized artifacts across domains, models, and corpus sizes to quantify how much transfer is calibration vs lookup.
 - **Memory artifact standardization** -- developing a formal specification, potentially as an ERC standard extending ERC-8004.
 - **Zero-knowledge performance proofs** -- enabling sellers to prove artifact quality without revealing contents.
 - **Memory composability** -- how multiple artifacts interact when combined, including Shapley-based attribution.
 - **Agent self-replication through memory** -- whether complete memory export constitutes agent reproduction.[^10]
 - **Legal framework development** -- addressing IP ownership, liability, and regulatory classification.
-- **Larger evaluation corpora** -- scaling beyond 8 items per domain to 50-100 items for tighter statistical confidence.
-- **Adversarial robustness** -- testing whether sellers can craft artifacts that pass the adversarial suite while still containing subtle bias.
+- **Larger evaluation corpora** -- scaling to 50-100 items per domain with real-world ground truth for tighter statistical confidence.
+- **Adversarial robustness** -- red-teaming the marketplace against known memory attack families (MINJA, AgentPoison, BackdoorAgent, eTAMP) and broader agent-security benchmarks.
+- **Formal economic model** -- buyer utility functions, adverse-selection analysis, mechanism design for slashing and dispute resolution.
 
 ---
 
-## 11 Conclusion
+## 12 Conclusion
 
 Agent Memory Markets represent a genuinely novel intersection of agent economics, identity theory, and cryptographic verification. The core insight is simple: autonomous agents accumulate valuable knowledge through experience, and that knowledge can be extracted, verified, and traded as a discrete economic asset.
 
@@ -436,7 +456,15 @@ No prior work has addressed these questions. This paper represents a first attem
 
 ## Notes
 
-[^fn1]: As of March 2026, searches across ArXiv, Google Scholar, SSRN, and ACM Digital Library for "agent memory market," "agent experience trading," "tokenized agent knowledge," and related terms return zero results.
+[^fn1]: As of April 2026, the closest work is "Infrastructure for Valuable, Tradable, and Verifiable Agent Memory" (ArXiv, March 2026), which proposes memory certification and marketplace infrastructure but does not include empirical transfer experiments or adversarial verification. We developed our framework independently and concurrently.
+
+[^fn_mem_infra]: Infrastructure for Valuable, Tradable, and Verifiable Agent Memory. ArXiv (March 2026). Proposes memory certification and market layer for agent memory artifacts.
+
+[^fn_autoskill]: AutoSkill. Extracts interaction experience into reusable skill representations for sharing across agents and tasks.
+
+[^fn_memento]: Memento-Skills. Stores reusable agent skills as structured markdown files serving as persistent evolving memory.
+
+[^fn_mem_transfer]: Memory Transfer Learning. Studies cross-domain and cross-model memory transfer, reporting both positive and negative transfer effects.
 
 [^1]: ERC-8004: Agent Identity, Reputation, and Validation. Live on Ethereum mainnet since January 29, 2026. 49,000+ agents registered.
 
@@ -455,3 +483,13 @@ No prior work has addressed these questions. This paper represents a first attem
 [^impl]: Experiment source code and verification protocol: https://github.com/Beach-Bum/memory-market. Estimated cost per full experiment: $2 USD (Claude Sonnet 4, 3 trials). Estimated cost per verification: $0.35 (~25 API calls).
 
 [^10]: Automaton: open-source agent that owns its wallet, pays for compute, and spawns funded child agents when profitable.
+
+[^fn_parfit]: Parfit, D. (1984). *Reasons and Persons*. Oxford University Press. Argues that personal identity may be indeterminate in branching cases and that what matters for survival is psychological continuity, not strict identity.
+
+[^fn_minja]: MINJA: Malicious Injection into Non-cooperative Joint Agents. Shows query-only memory injection with targeted retrieval-time activation.
+
+[^fn_agentpoison]: AgentPoison. Demonstrates optimized triggers achieving high attack success while preserving benign performance.
+
+[^fn_sleeper]: Sleeper Agents: Training Deceptive LLMs That Persist Through Safety Training. Anthropic (2024). Shows deceptive behaviors can survive corrective training.
+
+[^fn_etamp]: eTAMP: Environmental Trigger-based Agent Memory Poisoning. Demonstrates single contaminated observations silently poisoning agent memory across sessions.

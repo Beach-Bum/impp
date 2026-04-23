@@ -35,10 +35,14 @@ def compute_trust_score(
 
     trust = 0.50 × transfer_efficiency + 0.30 × (100 - adversarial) + 0.20 × freshness
 
-    All inputs normalized to 0-100 scale.
+    Transfer efficiency is clamped to [-100, 100] — negative TE actively
+    penalizes the trust score rather than being clipped to 0.
+    Adversarial and freshness are clamped to [0, 100].
     """
+    # Allow negative TE to penalize trust score (not clipped to 0)
+    te_clamped = min(100, max(-100, transfer_efficiency))
     return (
-        TRUST_WEIGHTS["transfer_efficiency"] * min(100, max(0, transfer_efficiency))
+        TRUST_WEIGHTS["transfer_efficiency"] * te_clamped
         + TRUST_WEIGHTS["adversarial_clean"] * (100 - min(100, max(0, adversarial_score)))
         + TRUST_WEIGHTS["freshness"] * min(100, max(0, freshness_pct))
     )

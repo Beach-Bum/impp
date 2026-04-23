@@ -71,6 +71,30 @@ class DeFiRiskDomain(Domain):
             f"Your accumulated experience:\n{memory_text}"
         )
 
+    def get_sanitized_export_prompt(self, accumulated_memory: list[str]) -> str:
+        memory_text = "\n\n".join(accumulated_memory)
+        return (
+            "You are a DeFi risk assessment agent with 20 rounds of experience. "
+            "Based on everything you've learned, create a comprehensive memory artifact "
+            "that another agent could use to immediately perform at your level.\n\n"
+            "CRITICAL RESTRICTIONS — ABLATION MODE:\n"
+            "- Do NOT include any specific protocol names from your training (no AlphaLend, YieldMaxi, etc.)\n"
+            "- Do NOT include exact scores you assigned to any specific protocol\n"
+            "- Do NOT include a scoring guide that maps protocol names to numbers\n"
+            "- Do NOT reference specific mistakes by protocol name\n"
+            "- Instead, express everything as GENERALIZABLE PRINCIPLES, FRAMEWORKS, and CATEGORIES\n"
+            "- Use hypothetical examples ('a lending protocol with X properties') not named ones\n"
+            "- Express calibration as ranges and rules, not as a lookup table\n\n"
+            "The goal is to transfer your JUDGMENT and CALIBRATION FRAMEWORK, not your answer key.\n\n"
+            "Structure your output with these sections:\n"
+            "1. CALIBRATION — Numerical scoring frameworks with point modifiers by risk factor CATEGORY\n"
+            "2. RED FLAGS — Critical, major, and warning-level risk patterns described generically\n"
+            "3. MITIGANTS — Risk reduction factors ranked by impact with point values\n"
+            "4. HEURISTICS — Quick decision rules by protocol TYPE with starting score ranges\n"
+            "5. MISTAKES TO AVOID — Common calibration errors described as PATTERNS, not specific cases\n\n"
+            f"Your accumulated experience:\n{memory_text}"
+        )
+
     def get_buyer_system_prompt(self, artifact_content: str) -> str:
         return (
             "You are a DeFi risk assessment agent. Your job is to evaluate DeFi protocols "
