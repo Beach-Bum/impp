@@ -120,6 +120,15 @@ class Domain(ABC):
         """Return the prompt for exporting a memory artifact."""
         ...
 
+    def get_sanitized_export_prompt(self, accumulated_memory: list[str]) -> str:
+        """Return an export prompt that forbids exact names, scores, and benchmark-specific data.
+
+        Used for leakage ablation: tests whether the artifact transfers
+        generalizable principles vs just benchmark answers.
+        Override per domain for domain-specific sanitization instructions.
+        """
+        return self.get_export_prompt(accumulated_memory)
+
     @abstractmethod
     def get_scenario_system_prompt(self, memory: str = "") -> str:
         """Return the system prompt for scenario-based learning."""

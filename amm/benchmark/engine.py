@@ -34,6 +34,7 @@ def run_benchmark(
     client,
     domain: Domain,
     model: str = MODEL,
+    sanitized: bool = False,
 ) -> BenchmarkRun:
     """Run a complete benchmark: train expert, evaluate all three agents.
 
@@ -59,6 +60,7 @@ def run_benchmark(
         domain=domain,
         accumulated_memory=accumulated_memory,
         model=model,
+        sanitized=sanitized,
     )
 
     # Step 3: Evaluate expert (with full training memory)
