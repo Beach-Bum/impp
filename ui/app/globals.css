@@ -12,7 +12,7 @@ a { color: inherit; }
 .amm-inline-tags { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
 .amm-metric-grid { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-.amm-metric-tile { border: 1px solid var(--borderColor-default, #d0d7de); border-radius: 6px; padding: 1rem 1.25rem; min-width: 11rem; }
+.amm-metric-tile { border: 1px solid var(--borderColor-default, #d0d7de); border-radius: 6px; padding: 1rem 1.25rem; min-width: 11rem; background: var(--bgColor-default, #fff); }
 .amm-metric-label { font-size: 0.75rem; color: var(--fgColor-muted, #656d76); text-transform: uppercase; letter-spacing: 0.04em; }
 .amm-metric-value { display: block; margin-top: 0.25rem; font-size: 1.75rem; font-weight: 600; }
 
