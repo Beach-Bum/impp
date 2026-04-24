@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Box, Heading, Label } from '@primer/react';
+import { Heading, Label } from '@primer/react';
 import { TRANSACTIONS, getSellerProfile } from '@/lib/directory';
 
 function statusVariant(status: string): 'success' | 'attention' | 'accent' {
@@ -16,7 +16,7 @@ export default function TransactionsScreen() {
       <Heading style={{ marginBottom: '4px' }}>Transactions</Heading>
       <p className="amm-screen-subtitle">Settlement history for purchases, metered usage, escrow holds, and payout release.</p>
 
-      <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, overflow: 'hidden' }}>
+      <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--borderColor-default, #d0d7de)' }}>
@@ -46,7 +46,7 @@ export default function TransactionsScreen() {
             })}
           </tbody>
         </table>
-      </Box>
+      </div>
     </div>
   );
 }
