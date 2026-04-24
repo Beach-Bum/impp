@@ -1,9 +1,33 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
-import { Box, Button, Heading, Label, TextInput, Select } from '@primer/react';
+import { Box, Button, Heading, Label, TextInput, Select, Flash } from '@primer/react';
+
+const PRIVY_ENABLED = !!process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
 export default function SignupScreen() {
+  const [email, setEmail] = useState('');
+  const [org, setOrg] = useState('');
+  const [role, setRole] = useState('buyer');
+  const [submitted, setSubmitted] = useState(false);
+
+  function handlePrivyLogin() {
+    // When @privy-io/react-auth is installed:
+    // import { usePrivy } from '@privy-io/react-auth';
+    // const { login } = usePrivy();
+    // login();
+    // For now, redirect to waitlist as a fallback
+    window.location.href = '/waitlist';
+  }
+
+  function handleEmailSignup() {
+    if (!email) return;
+    // When Privy is wired, this will call login({ email })
+    // For now, treat as waitlist signup
+    setSubmitted(true);
+  }
+
   return (
     <div className="amm-page">
       <Heading style={{ marginBottom: '4px' }}>Create your account</Heading>
@@ -14,20 +38,40 @@ export default function SignupScreen() {
       <div className="amm-grid amm-grid-2col">
         <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Sign up</Heading>
-          <div className="amm-card-stack">
-            <TextInput placeholder="Email address" block />
-            <TextInput placeholder="Organization or team" block />
-            <Select block defaultValue="buyer">
-              <Select.Option value="buyer">Buyer</Select.Option>
-              <Select.Option value="seller">Seller</Select.Option>
-              <Select.Option value="agent-wallet">Agent Wallet</Select.Option>
-            </Select>
-            <div className="amm-action-row" style={{ flexWrap: 'wrap' }}>
-              <Button>Continue with email</Button>
-              <Button variant="invisible">Continue with Google</Button>
-              <Button variant="invisible">Continue with wallet</Button>
+          {submitted ? (
+            <Flash variant="success">
+              Thanks! We&apos;ll notify you at {email} when accounts are live.
+            </Flash>
+          ) : (
+            <div className="amm-card-stack">
+              <TextInput
+                placeholder="Email address"
+                block
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <TextInput
+                placeholder="Organization or team"
+                block
+                value={org}
+                onChange={(e) => setOrg(e.target.value)}
+              />
+              <Select block value={role} onChange={(e) => setRole(e.target.value)}>
+                <Select.Option value="buyer">Buyer</Select.Option>
+                <Select.Option value="seller">Seller</Select.Option>
+                <Select.Option value="agent-wallet">Agent Wallet</Select.Option>
+              </Select>
+              <div className="amm-action-row" style={{ flexWrap: 'wrap' }}>
+                <Button onClick={handleEmailSignup}>Continue with email</Button>
+                <Button variant="invisible" onClick={handlePrivyLogin}>
+                  {PRIVY_ENABLED ? 'Continue with Google' : 'Join waitlist instead'}
+                </Button>
+                <Button variant="invisible" onClick={handlePrivyLogin}>
+                  {PRIVY_ENABLED ? 'Continue with wallet' : 'Request seller access'}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </Box>
 
         <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
