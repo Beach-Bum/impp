@@ -2,44 +2,59 @@
 """FastAPI server for the Agent Memory Market.
 
 Exposes marketplace operations as HTTP endpoints.
-The Carbon frontend calls these instead of using mock data.
+Uses Supabase (Postgres) as the backing store.
 
 Usage:
     uvicorn api_server:app --reload --port 8100
+
+Env vars:
+    SUPABASE_URL         — Supabase project URL
+    SUPABASE_SERVICE_KEY — Supabase service-role key
+    MARKETPLACE_API_KEY  — API key for protected endpoints
 """
 
+import json
 import os
 import re
-import sqlite3
 import uuid
-from typing import Generator
+from datetime import datetime, timezone
 
 from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from supabase import create_client, Client
 
-from amm.registry.db import (
-    init_db, store_artifact, get_artifact, get_trust_score,
-    get_verifications, add_buyer_feedback,
-)
-from amm.marketplace.identity import (
-    create_identity, register_participant, get_participant, load_identity,
-)
-from amm.marketplace.listing import (
-    create_listing, search_listings, get_listing, delist,
-)
-from amm.marketplace.preview import generate_preview, format_preview
-from amm.artifact.schema import MemoryArtifact
+from amm.marketplace.identity import create_identity
 from amm.registry.trust import format_trust_report
 
-app = FastAPI(title="Agent Memory Market API", version="0.1.0")
+app = FastAPI(title="Agent Memory Market API", version="0.2.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://memorymarket.ai"],
+    allow_origins=[
+        "http://localhost:3000",
+        "https://memorymarket.ai",
+        "https://memory-market-api-production.up.railway.app",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- Supabase client ---
+
+_supabase: Client | None = None
+
+
+def get_supabase() -> Client:
+    global _supabase
+    if _supabase is None:
+        url = os.environ.get("SUPABASE_URL", "")
+        key = os.environ.get("SUPABASE_SERVICE_KEY", "")
+        if not url or not key:
+            raise RuntimeError("SUPABASE_URL and SUPABASE_SERVICE_KEY must be set")
+        _supabase = create_client(url, key)
+    return _supabase
+
 
 # --- Auth ---
 
@@ -47,16 +62,6 @@ def verify_api_key(x_api_key: str = Header(...)):
     api_key = os.environ.get("MARKETPLACE_API_KEY")
     if not api_key or x_api_key != api_key:
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
-
-
-# --- DB ---
-
-def get_db() -> Generator[sqlite3.Connection, None, None]:
-    conn = init_db()
-    try:
-        yield conn
-    finally:
-        conn.close()
 
 
 # --- Health ---
@@ -73,16 +78,33 @@ def api_search_listings(
     domain: str | None = None,
     min_trust: float | None = None,
     max_price: float | None = None,
-    conn: sqlite3.Connection = Depends(get_db),
 ):
-    results = search_listings(conn, domain=domain, min_trust=min_trust, max_price=max_price)
-    # Enrich with preview data
+    sb = get_supabase()
+
+    # Get listings
+    query = sb.table("listings").select("*").eq("status", "active")
+    if domain:
+        query = query.eq("domain", domain)
+    if max_price is not None:
+        query = query.lte("price_usd", max_price)
+    listings = query.order("listed_at", desc=True).execute().data
+
     enriched = []
-    for listing in results:
-        artifact_data = get_artifact(conn, listing["artifact_hash"])
-        trust = get_trust_score(conn, listing["artifact_hash"])
-        verifications = get_verifications(conn, listing["artifact_hash"])
-        latest_v = verifications[0] if verifications else None
+    for listing in listings:
+        artifact_hash = listing["artifact_hash"]
+
+        # Get trust score
+        trust_row = sb.table("trust_scores").select("*").eq("artifact_hash", artifact_hash).maybe_single().execute().data
+
+        # Filter by min_trust if specified
+        if min_trust is not None:
+            score = trust_row["current_score"] if trust_row else None
+            if score is None or score < min_trust:
+                continue
+
+        # Get latest verification
+        latest_v = sb.table("verifications").select("*").eq("artifact_hash", artifact_hash).order("created_at", desc=True).limit(1).execute().data
+        latest_v = latest_v[0] if latest_v else None
 
         enriched.append({
             "id": listing["id"],
@@ -94,10 +116,10 @@ def api_search_listings(
             "status": listing["status"],
             "listed_at": listing["listed_at"],
             "seller_id": listing["seller_id"],
-            "artifact_hash": listing["artifact_hash"],
-            "trust_score": trust["current_score"] if trust else None,
-            "verification_count": trust["verification_count"] if trust else 0,
-            "feedback_count": trust["feedback_count"] if trust else 0,
+            "artifact_hash": artifact_hash,
+            "trust_score": trust_row["current_score"] if trust_row else None,
+            "verification_count": trust_row["verification_count"] if trust_row else 0,
+            "feedback_count": trust_row["feedback_count"] if trust_row else 0,
             "latest_transfer_efficiency": latest_v["transfer_efficiency"] if latest_v else None,
             "latest_adversarial_score": latest_v["adversarial_score"] if latest_v else None,
         })
@@ -106,39 +128,44 @@ def api_search_listings(
 
 
 @app.get("/api/listings/{listing_id}")
-def api_get_listing(listing_id: str, conn: sqlite3.Connection = Depends(get_db)):
-    listing = get_listing(conn, listing_id)
-    if not listing:
+def api_get_listing(listing_id: str):
+    sb = get_supabase()
+    row = sb.table("listings").select("*").eq("id", listing_id).maybe_single().execute().data
+    if not row:
         raise HTTPException(status_code=404, detail="Listing not found")
-    return listing
+    return row
 
 
 # --- Artifacts ---
 
 @app.get("/api/artifacts/{artifact_hash}")
-def api_get_artifact(artifact_hash: str, conn: sqlite3.Connection = Depends(get_db)):
-    artifact = get_artifact(conn, artifact_hash)
-    if not artifact:
+def api_get_artifact(artifact_hash: str):
+    sb = get_supabase()
+    row = sb.table("artifacts").select("*").eq("hash", artifact_hash).maybe_single().execute().data
+    if not row:
         raise HTTPException(status_code=404, detail="Artifact not found")
-    return artifact
+    return row
 
 
 @app.get("/api/artifacts/{artifact_hash}/preview")
-def api_get_preview(artifact_hash: str, conn: sqlite3.Connection = Depends(get_db)):
-    artifact_data = get_artifact(conn, artifact_hash)
+def api_get_preview(artifact_hash: str):
+    sb = get_supabase()
+    artifact_data = sb.table("artifacts").select("*").eq("hash", artifact_hash).maybe_single().execute().data
     if not artifact_data:
         raise HTTPException(status_code=404, detail="Artifact not found")
 
-    trust = get_trust_score(conn, artifact_hash)
-    verifications = get_verifications(conn, artifact_hash)
+    trust = sb.table("trust_scores").select("*").eq("artifact_hash", artifact_hash).maybe_single().execute().data
+    verifications = sb.table("verifications").select("*").eq("artifact_hash", artifact_hash).order("created_at", desc=True).execute().data
     latest_v = verifications[0] if verifications else None
 
-    import json
+    from amm.marketplace.preview import generate_preview
+    from amm.artifact.schema import MemoryArtifact
+
     artifact = MemoryArtifact.from_dict({
         "domain": {"category": artifact_data["domain"].split(":")[0], "subcategory": artifact_data["domain"].split(":")[-1]},
         "knowledge": {"format": "markdown", "content": artifact_data["knowledge_content"], "sections": [], "token_count": len(artifact_data["knowledge_content"].split())},
-        "provenance": json.loads(artifact_data["provenance_json"]),
-        "attestation": json.loads(artifact_data["attestation_json"]),
+        "provenance": json.loads(artifact_data["provenance_json"]) if isinstance(artifact_data["provenance_json"], str) else artifact_data["provenance_json"],
+        "attestation": json.loads(artifact_data["attestation_json"]) if isinstance(artifact_data["attestation_json"], str) else artifact_data["attestation_json"],
         "hash": artifact_data["hash"],
     })
 
@@ -149,11 +176,12 @@ def api_get_preview(artifact_hash: str, conn: sqlite3.Connection = Depends(get_d
 # --- Trust ---
 
 @app.get("/api/trust/{artifact_hash}")
-def api_get_trust(artifact_hash: str, conn: sqlite3.Connection = Depends(get_db)):
-    trust = get_trust_score(conn, artifact_hash)
+def api_get_trust(artifact_hash: str):
+    sb = get_supabase()
+    trust = sb.table("trust_scores").select("*").eq("artifact_hash", artifact_hash).maybe_single().execute().data
     if not trust:
         raise HTTPException(status_code=404, detail="No trust data")
-    verifications = get_verifications(conn, artifact_hash)
+    verifications = sb.table("verifications").select("*").eq("artifact_hash", artifact_hash).order("created_at", desc=True).execute().data
     return {
         "trust": trust,
         "verifications": verifications,
@@ -170,12 +198,46 @@ class FeedbackRequest(BaseModel):
     text: str = ""
 
 @app.post("/api/artifacts/{artifact_hash}/feedback")
-def api_add_feedback(artifact_hash: str, req: FeedbackRequest, conn: sqlite3.Connection = Depends(get_db)):
-    feedback_id = add_buyer_feedback(
-        conn, artifact_hash, req.buyer_id, req.improvement, req.rating, req.text,
-    )
-    trust = get_trust_score(conn, artifact_hash)
+def api_add_feedback(artifact_hash: str, req: FeedbackRequest):
+    sb = get_supabase()
+    feedback_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    sb.table("buyer_feedback").insert({
+        "id": feedback_id,
+        "artifact_hash": artifact_hash,
+        "buyer_id": req.buyer_id,
+        "reported_improvement": req.improvement,
+        "rating": req.rating,
+        "feedback_text": req.text,
+        "created_at": now,
+    }).execute()
+
+    # Recompute trust score
+    _update_trust_score(sb, artifact_hash)
+
+    trust = sb.table("trust_scores").select("*").eq("artifact_hash", artifact_hash).maybe_single().execute().data
     return {"feedback_id": feedback_id, "updated_trust": trust}
+
+
+def _update_trust_score(sb: Client, artifact_hash: str):
+    """Recompute aggregate trust score for an artifact."""
+    rows = sb.table("verifications").select("trust_score").eq("artifact_hash", artifact_hash).execute().data
+    if not rows:
+        return
+
+    avg_score = sum(r["trust_score"] for r in rows) / len(rows)
+
+    feedback_rows = sb.table("buyer_feedback").select("id", count="exact").eq("artifact_hash", artifact_hash).execute()
+    feedback_count = feedback_rows.count if feedback_rows.count is not None else 0
+
+    now = datetime.now(timezone.utc).isoformat()
+    sb.table("trust_scores").upsert({
+        "artifact_hash": artifact_hash,
+        "current_score": round(avg_score, 1),
+        "verification_count": len(rows),
+        "feedback_count": feedback_count,
+        "last_updated": now,
+    }).execute()
 
 
 # --- Identity ---
@@ -184,9 +246,16 @@ class IdentityRequest(BaseModel):
     display_name: str
 
 @app.post("/api/identity")
-def api_create_identity(req: IdentityRequest, conn: sqlite3.Connection = Depends(get_db)):
+def api_create_identity(req: IdentityRequest):
+    sb = get_supabase()
     identity = create_identity(req.display_name)
-    register_participant(conn, identity)
+    sb.table("participants").upsert({
+        "id": identity["id"],
+        "public_key_hex": identity["public_key_hex"],
+        "display_name": identity["display_name"],
+        "role": "both",
+        "created_at": identity["created_at"],
+    }).execute()
     return {
         "id": identity["id"],
         "display_name": identity["display_name"],
@@ -194,11 +263,12 @@ def api_create_identity(req: IdentityRequest, conn: sqlite3.Connection = Depends
     }
 
 @app.get("/api/identity/{participant_id}")
-def api_get_identity(participant_id: str, conn: sqlite3.Connection = Depends(get_db)):
-    p = get_participant(conn, participant_id)
-    if not p:
+def api_get_identity(participant_id: str):
+    sb = get_supabase()
+    row = sb.table("participants").select("*").eq("id", participant_id).maybe_single().execute().data
+    if not row:
         raise HTTPException(status_code=404, detail="Participant not found")
-    return dict(p)
+    return row
 
 
 # --- Sell ---
@@ -213,37 +283,77 @@ class ListingRequest(BaseModel):
     max_buyers: int = 10
 
 @app.post("/api/listings")
-def api_create_listing(req: ListingRequest, conn: sqlite3.Connection = Depends(get_db)):
-    listing_id = create_listing(
-        conn, req.artifact_hash, req.seller_id, req.title,
-        req.description, req.price_usd, req.license_type, req.max_buyers,
-    )
+def api_create_listing(req: ListingRequest):
+    sb = get_supabase()
+
+    # Validate artifact exists
+    artifact = sb.table("artifacts").select("hash, domain").eq("hash", req.artifact_hash).maybe_single().execute().data
+    if not artifact:
+        raise HTTPException(status_code=404, detail="Artifact not found")
+
+    # Validate seller exists
+    seller = sb.table("participants").select("id").eq("id", req.seller_id).maybe_single().execute().data
+    if not seller:
+        raise HTTPException(status_code=404, detail="Seller not found")
+
+    if req.price_usd < 0.01 or req.price_usd > 10000:
+        raise HTTPException(status_code=400, detail="Price must be between $0.01 and $10,000")
+
+    listing_id = str(uuid.uuid4())[:8]
+    now = datetime.now(timezone.utc).isoformat()
+
+    max_buyers = 1 if req.license_type == "exclusive" else req.max_buyers
+
+    sb.table("listings").insert({
+        "id": listing_id,
+        "artifact_hash": req.artifact_hash,
+        "seller_id": req.seller_id,
+        "title": req.title,
+        "description": req.description,
+        "domain": artifact["domain"],
+        "price_usd": req.price_usd,
+        "license_type": req.license_type,
+        "max_buyers": max_buyers,
+        "current_buyers": 0,
+        "status": "active",
+        "listed_at": now,
+        "updated_at": now,
+    }).execute()
+
     return {"listing_id": listing_id}
 
 
 # --- Portfolio / Control Tower ---
 
 @app.get("/api/portfolio")
-def api_portfolio(conn: sqlite3.Connection = Depends(get_db)):
-    """Get control tower data: active listings, recent verifications, alerts."""
+def api_portfolio():
+    sb = get_supabase()
 
     # Stats
-    listing_count = conn.execute("SELECT COUNT(*) as c FROM listings WHERE status='active'").fetchone()["c"]
-    verification_count = conn.execute("SELECT COUNT(*) as c FROM verifications").fetchone()["c"]
-    feedback_count = conn.execute("SELECT COUNT(*) as c FROM buyer_feedback").fetchone()["c"]
+    listing_res = sb.table("listings").select("id", count="exact").eq("status", "active").execute()
+    listing_count = listing_res.count or 0
 
-    # Recent verifications as "agents" (what's actively being evaluated)
-    recent_verifications = conn.execute("""
-        SELECT v.id, v.artifact_hash, v.transfer_efficiency, v.adversarial_score,
-               v.trust_score, v.created_at, a.domain, l.title
-        FROM verifications v
-        JOIN artifacts a ON v.artifact_hash = a.hash
-        LEFT JOIN listings l ON l.artifact_hash = a.hash
-        ORDER BY v.created_at DESC LIMIT 10
-    """).fetchall()
+    verification_res = sb.table("verifications").select("id", count="exact").execute()
+    verification_count = verification_res.count or 0
+
+    feedback_res = sb.table("buyer_feedback").select("id", count="exact").execute()
+    feedback_count = feedback_res.count or 0
+
+    # Recent verifications — need to join manually since supabase-py doesn't do complex joins
+    recent_verifications = sb.table("verifications").select("*").order("created_at", desc=True).limit(10).execute().data
 
     agents = []
     for v in recent_verifications:
+        artifact_hash = v["artifact_hash"]
+
+        # Get artifact domain
+        art = sb.table("artifacts").select("domain").eq("hash", artifact_hash).maybe_single().execute().data
+        domain = art["domain"] if art else "unknown"
+
+        # Get listing title
+        listing = sb.table("listings").select("title").eq("artifact_hash", artifact_hash).maybe_single().execute().data
+        title = listing["title"] if listing else artifact_hash[:12]
+
         te = v["transfer_efficiency"] or 0
         adv = v["adversarial_score"] or 0
         if te < 0:
@@ -257,8 +367,8 @@ def api_portfolio(conn: sqlite3.Connection = Depends(get_db)):
 
         agents.append({
             "id": v["id"][:8],
-            "name": v["title"] or v["artifact_hash"][:12],
-            "memory": v["domain"],
+            "name": title,
+            "memory": domain,
             "status": status,
             "trust_score": v["trust_score"],
             "transfer_efficiency": te,
@@ -266,40 +376,40 @@ def api_portfolio(conn: sqlite3.Connection = Depends(get_db)):
             "last_eval": v["created_at"],
         })
 
-    # Alerts: any artifact with adversarial > 25 or negative feedback
-    alert_rows = conn.execute("""
-        SELECT v.artifact_hash, v.adversarial_score, v.transfer_efficiency, l.title
-        FROM verifications v
-        LEFT JOIN listings l ON l.artifact_hash = v.artifact_hash
-        WHERE v.adversarial_score > 25 OR v.transfer_efficiency < 0
-    """).fetchall()
+    # Alerts
+    alert_rows = sb.table("verifications").select("artifact_hash, adversarial_score, transfer_efficiency").or_("adversarial_score.gt.25,transfer_efficiency.lt.0").execute().data
 
     alerts = []
     for r in alert_rows:
+        artifact_hash = r["artifact_hash"]
+        listing = sb.table("listings").select("title").eq("artifact_hash", artifact_hash).maybe_single().execute().data
+        title = listing["title"] if listing else artifact_hash[:12]
+
         if (r["transfer_efficiency"] or 0) < 0:
             alerts.append({
-                "id": r["artifact_hash"][:8],
-                "title": f"Negative transfer on {r['title'] or r['artifact_hash'][:12]}",
+                "id": artifact_hash[:8],
+                "title": f"Negative transfer on {title}",
                 "severity": "Blocked",
                 "summary": f"Transfer efficiency is {r['transfer_efficiency']:.1f}%. Artifact should be revoked.",
             })
         elif (r["adversarial_score"] or 0) > 40:
             alerts.append({
-                "id": r["artifact_hash"][:8],
-                "title": f"High adversarial score on {r['title'] or r['artifact_hash'][:12]}",
+                "id": artifact_hash[:8],
+                "title": f"High adversarial score on {title}",
                 "severity": "Warning",
                 "summary": f"Adversarial score {r['adversarial_score']:.1f}/100 exceeds warning threshold.",
             })
 
-    # Total spend estimate
-    total_prices = conn.execute("SELECT SUM(price_usd) as total FROM listings WHERE status='active'").fetchone()
+    # Total spend
+    active_listings = sb.table("listings").select("price_usd").eq("status", "active").execute().data
+    total_spend = sum(l["price_usd"] for l in active_listings) if active_listings else 0
 
     return {
         "stats": {
             "active_listings": listing_count,
             "verifications": verification_count,
             "feedback_received": feedback_count,
-            "monthly_spend": total_prices["total"] or 0,
+            "monthly_spend": total_spend,
         },
         "agents": agents,
         "alerts": alerts,
@@ -317,18 +427,21 @@ class WaitlistRequest(BaseModel):
     use_case: str = ""
 
 @app.post("/api/waitlist")
-def api_waitlist(req: WaitlistRequest, conn: sqlite3.Connection = Depends(get_db)):
+def api_waitlist(req: WaitlistRequest):
     if not _EMAIL_RE.match(req.email):
         raise HTTPException(status_code=422, detail="Invalid email address")
+    sb = get_supabase()
     entry_id = str(uuid.uuid4())
-    from datetime import datetime, timezone
     now = datetime.now(timezone.utc).isoformat()
-    conn.execute(
-        """INSERT INTO waitlist_entries (id, email, name, company, use_case, status, created_at)
-           VALUES (?, ?, ?, ?, ?, 'pending', ?)""",
-        (entry_id, req.email, req.name, req.company, req.use_case, now),
-    )
-    conn.commit()
+    sb.table("waitlist_entries").insert({
+        "id": entry_id,
+        "email": req.email,
+        "name": req.name,
+        "company": req.company,
+        "use_case": req.use_case,
+        "status": "pending",
+        "created_at": now,
+    }).execute()
     return {"id": entry_id, "status": "pending"}
 
 
@@ -342,18 +455,22 @@ class SellerApplyRequest(BaseModel):
     description: str = ""
 
 @app.post("/api/seller-apply")
-def api_seller_apply(req: SellerApplyRequest, conn: sqlite3.Connection = Depends(get_db)):
+def api_seller_apply(req: SellerApplyRequest):
     if not _EMAIL_RE.match(req.email):
         raise HTTPException(status_code=422, detail="Invalid email address")
+    sb = get_supabase()
     app_id = str(uuid.uuid4())
-    from datetime import datetime, timezone
     now = datetime.now(timezone.utc).isoformat()
-    conn.execute(
-        """INSERT INTO seller_applications (id, name, email, wallet, seller_type, description, status, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)""",
-        (app_id, req.name, req.email, req.wallet, req.seller_type, req.description, now),
-    )
-    conn.commit()
+    sb.table("seller_applications").insert({
+        "id": app_id,
+        "name": req.name,
+        "email": req.email,
+        "wallet": req.wallet,
+        "seller_type": req.seller_type,
+        "description": req.description,
+        "status": "pending",
+        "created_at": now,
+    }).execute()
     return {"id": app_id, "status": "pending"}
 
 
@@ -364,58 +481,61 @@ class OrderRequest(BaseModel):
     listing_id: str
 
 @app.post("/api/orders", dependencies=[Depends(verify_api_key)])
-def api_create_order(req: OrderRequest, conn: sqlite3.Connection = Depends(get_db)):
-    listing = get_listing(conn, req.listing_id)
+def api_create_order(req: OrderRequest):
+    sb = get_supabase()
+    listing = sb.table("listings").select("*").eq("id", req.listing_id).maybe_single().execute().data
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
     if listing["status"] != "active":
         raise HTTPException(status_code=400, detail="Listing is not active")
-    from datetime import datetime, timezone
     order_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
-    conn.execute(
-        """INSERT INTO orders (id, buyer_id, listing_id, status, created_at)
-           VALUES (?, ?, ?, 'pending', ?)""",
-        (order_id, req.buyer_id, req.listing_id, now),
-    )
-    conn.commit()
+    sb.table("orders").insert({
+        "id": order_id,
+        "buyer_id": req.buyer_id,
+        "listing_id": req.listing_id,
+        "status": "pending",
+        "created_at": now,
+    }).execute()
     return {"id": order_id, "buyer_id": req.buyer_id, "listing_id": req.listing_id, "status": "pending", "created_at": now}
 
 
 @app.get("/api/orders/{order_id}")
-def api_get_order(order_id: str, conn: sqlite3.Connection = Depends(get_db)):
-    row = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+def api_get_order(order_id: str):
+    sb = get_supabase()
+    row = sb.table("orders").select("*").eq("id", order_id).maybe_single().execute().data
     if not row:
         raise HTTPException(status_code=404, detail="Order not found")
-    return dict(row)
+    return row
 
 
 @app.post("/api/orders/{order_id}/confirm", dependencies=[Depends(verify_api_key)])
-def api_confirm_order(order_id: str, conn: sqlite3.Connection = Depends(get_db)):
-    from datetime import datetime, timezone
+def api_confirm_order(order_id: str):
+    sb = get_supabase()
     now = datetime.now(timezone.utc).isoformat()
-    # Atomic check-and-update to prevent double-confirmation races
-    cursor = conn.execute(
-        "UPDATE orders SET status = 'confirmed', confirmed_at = ? WHERE id = ? AND status = 'pending'",
-        (now, order_id),
-    )
-    conn.commit()
-    if cursor.rowcount == 0:
-        row = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
-        if not row:
-            raise HTTPException(status_code=404, detail="Order not found")
+
+    # Check current state
+    row = sb.table("orders").select("*").eq("id", order_id).maybe_single().execute().data
+    if not row:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if row["status"] != "pending":
         raise HTTPException(status_code=400, detail="Order is not in pending status")
-    updated = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
-    return dict(updated)
+
+    # Update
+    sb.table("orders").update({"status": "confirmed", "confirmed_at": now}).eq("id", order_id).eq("status", "pending").execute()
+
+    updated = sb.table("orders").select("*").eq("id", order_id).maybe_single().execute().data
+    return updated
 
 
 # --- Health ---
 
 @app.get("/api/health")
-def api_health(conn: sqlite3.Connection = Depends(get_db)):
-    artifact_count = conn.execute("SELECT COUNT(*) as c FROM artifacts").fetchone()["c"]
-    listing_count = conn.execute("SELECT COUNT(*) as c FROM listings").fetchone()["c"]
-    participant_count = conn.execute("SELECT COUNT(*) as c FROM participants").fetchone()["c"]
+def api_health():
+    sb = get_supabase()
+    artifact_count = sb.table("artifacts").select("hash", count="exact").execute().count or 0
+    listing_count = sb.table("listings").select("id", count="exact").execute().count or 0
+    participant_count = sb.table("participants").select("id", count="exact").execute().count or 0
     return {
         "status": "ok",
         "artifacts": artifact_count,
