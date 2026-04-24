@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Box, Button, Flash, Heading, Label, Link as PrimerLink, Spinner } from '@primer/react';
+import { Button, Flash, Heading, Label, Link as PrimerLink, Spinner } from '@primer/react';
 import { fetchListings, type ListingRecord } from '@/lib/api';
 import { getSellerListings, getSellerProfile } from '@/lib/directory';
 
@@ -34,7 +34,7 @@ export default function SellerProfileScreen({ sellerId }: { sellerId: string }) 
 
       <div className="amm-grid amm-grid-2col">
         <div className="amm-card-stack">
-          <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+          <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', padding: '16px' }}>
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
               <Label variant={tierVariant(seller.verifiedTier)}>{seller.verifiedTier}</Label>
               <Label variant="secondary">Rep {seller.reputation}</Label>
@@ -48,10 +48,10 @@ export default function SellerProfileScreen({ sellerId }: { sellerId: string }) 
               <span className="amm-subtle">Joined: {seller.joinedAt}</span>
               {seller.website ? <PrimerLink href={seller.website}>{seller.website}</PrimerLink> : null}
             </div>
-          </Box>
+          </div>
 
-          <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
-            <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Trust posture</Heading>
+          <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', padding: '16px' }}>
+            <Heading as="h2" style={{ fontSize: '16px', marginBottom: '8px' }}>Trust posture</Heading>
             <div className="amm-metric-grid" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
               <div className="amm-metric-tile"><span className="amm-metric-label">Deliveries</span><span className="amm-metric-value">{seller.successfulDeliveries}</span></div>
               <div className="amm-metric-tile"><span className="amm-metric-label">Dispute rate</span><span className="amm-metric-value">{seller.disputeRatePct}%</span></div>
@@ -60,7 +60,7 @@ export default function SellerProfileScreen({ sellerId }: { sellerId: string }) 
             <div className="amm-inline-tags" style={{ marginTop: '12px' }}>
               {seller.categories.map((category) => <Label key={category} variant="secondary">{category}</Label>)}
             </div>
-          </Box>
+          </div>
         </div>
 
         <div className="amm-card-stack">
@@ -71,8 +71,8 @@ export default function SellerProfileScreen({ sellerId }: { sellerId: string }) 
               ? 'Agent-wallet sellers need spend caps, signed allowances, and slower payout release.'
               : 'Seller identity and signing keys have passed listing review.'}
           </Flash>
-          <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
-            <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Commercial controls</Heading>
+          <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', padding: '16px' }}>
+            <Heading as="h2" style={{ fontSize: '16px', marginBottom: '8px' }}>Commercial controls</Heading>
             <span className="amm-subtle" style={{ display: 'block' }}>Escrow release after sandbox pass</span>
             <span className="amm-subtle" style={{ display: 'block' }}>Stake can be slashed on fraud or rights breach</span>
             <span className="amm-subtle" style={{ display: 'block' }}>Royalty splits supported for co-signers and marketplaces</span>
@@ -80,13 +80,13 @@ export default function SellerProfileScreen({ sellerId }: { sellerId: string }) 
               <Button as="a" href="/payments">Payment rails</Button>
               <Button as="a" href="/transactions" variant="invisible">Transactions</Button>
             </div>
-          </Box>
+          </div>
         </div>
       </div>
 
-      <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, overflow: 'hidden', mt: 3 }}>
+      <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', overflow: 'hidden', marginTop: '16px' }}>
         <div style={{ padding: '16px', borderBottom: '1px solid var(--borderColor-default, #d0d7de)' }}>
-          <Heading as="h2" sx={{ fontSize: 2 }}>Listed artifacts</Heading>
+          <Heading as="h2" style={{ fontSize: '16px' }}>Listed artifacts</Heading>
         </div>
         {loading ? (
           <div style={{ padding: '24px' }}><Spinner size="medium" /></div>
@@ -114,7 +114,7 @@ export default function SellerProfileScreen({ sellerId }: { sellerId: string }) 
             </tbody>
           </table>
         )}
-      </Box>
+      </div>
     </div>
   );
 }
