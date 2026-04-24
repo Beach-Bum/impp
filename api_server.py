@@ -363,7 +363,7 @@ class OrderRequest(BaseModel):
     buyer_id: str
     listing_id: str
 
-@app.post("/api/orders", dependencies=[Depends(verify_api_key)])
+@app.post("/api/orders")
 def api_create_order(req: OrderRequest, conn: sqlite3.Connection = Depends(get_db)):
     listing = get_listing(conn, req.listing_id)
     if not listing:
@@ -390,7 +390,7 @@ def api_get_order(order_id: str, conn: sqlite3.Connection = Depends(get_db)):
     return dict(row)
 
 
-@app.post("/api/orders/{order_id}/confirm", dependencies=[Depends(verify_api_key)])
+@app.post("/api/orders/{order_id}/confirm")
 def api_confirm_order(order_id: str, conn: sqlite3.Connection = Depends(get_db)):
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc).isoformat()
