@@ -104,6 +104,29 @@ def init_db(db_path: Path | str | None = None) -> sqlite3.Connection:
             payment_method TEXT DEFAULT 'mock',
             purchased_at TEXT NOT NULL
         );
+
+        -- Onboarding tables
+
+        CREATE TABLE IF NOT EXISTS waitlist_entries (
+            id TEXT PRIMARY KEY,
+            email TEXT NOT NULL,
+            name TEXT NOT NULL,
+            company TEXT DEFAULT '',
+            use_case TEXT DEFAULT '',
+            status TEXT DEFAULT 'pending',
+            created_at TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS seller_applications (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            email TEXT NOT NULL,
+            wallet TEXT DEFAULT '',
+            seller_type TEXT DEFAULT '',
+            description TEXT DEFAULT '',
+            status TEXT DEFAULT 'pending',
+            created_at TEXT NOT NULL
+        );
     """)
 
     return conn
