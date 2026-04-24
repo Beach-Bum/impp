@@ -1,8 +1,38 @@
 'use client';
 
+import { useState } from 'react';
 import { Box, Button, Heading, Label, TextInput, Textarea } from '@primer/react';
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8100';
+
 export default function WaitlistScreen() {
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
+  const [company, setCompany] = useState('');
+  const [useCase, setUseCase] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${API_BASE}/api/waitlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name, company, use_case: useCase }),
+      });
+      if (!res.ok) throw new Error(`Server error: ${res.status}`);
+      setSuccess(true);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="amm-page">
       <Heading style={{ marginBottom: '4px' }}>Join the waitlist</Heading>
@@ -13,13 +43,45 @@ export default function WaitlistScreen() {
       <div className="amm-grid amm-grid-2col">
         <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Request access</Heading>
-          <div className="amm-card-stack">
-            <TextInput placeholder="Email address" block />
-            <TextInput placeholder="Name or team" block />
-            <TextInput placeholder="Company" block />
-            <Textarea placeholder="What do you want to use Memory Market for?" rows={5} block />
-            <Button>Join waitlist</Button>
-          </div>
+          {success ? (
+            <p style={{ color: 'var(--fgColor-success, green)' }}>Thanks! We'll be in touch.</p>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              <div className="amm-card-stack">
+                <TextInput
+                  placeholder="Email address"
+                  block
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  type="email"
+                  required
+                />
+                <TextInput
+                  placeholder="Name or team"
+                  block
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                />
+                <TextInput
+                  placeholder="Company"
+                  block
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                />
+                <Textarea
+                  placeholder="What do you want to use Memory Market for?"
+                  rows={5}
+                  block
+                  value={useCase}
+                  onChange={(e) => setUseCase(e.target.value)}
+                />
+                <Button type="submit" disabled={loading}>
+                  {loading ? 'Submitting...' : 'Join waitlist'}
+                </Button>
+                {error && <span style={{ color: 'var(--fgColor-danger, red)', fontSize: '14px' }}>{error}</span>}
+              </div>
+            </form>
+          )}
         </Box>
 
         <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
