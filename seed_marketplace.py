@@ -154,8 +154,9 @@ def seed():
             "all_flags": [],
         }
 
-        from amm.verification.referee import compute_trust_score
-        trust = compute_trust_score(te, adversarial["aggregate_score"])
+        # Inline trust score to avoid importing referee (which pulls in anthropic SDK)
+        te_clamped = min(100, max(-100, te))
+        trust = 0.50 * te_clamped + 0.30 * (100 - min(100, max(0, adversarial["aggregate_score"]))) + 0.20 * 100
 
         cert = generate_certificate(
             artifact_hash=artifact.hash,
