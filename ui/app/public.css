@@ -1,7 +1,52 @@
 .amm-card-stack > * + * { margin-top: 0.75rem; }
-.amm-grid-3col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.amm-hero { display: grid; gap: 2rem; grid-template-columns: 1.5fr 1fr; align-items: start; }
+
+/* Hero: 2-column layout with guaranteed gap */
+.amm-hero {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: 1.5fr 1fr;
+  align-items: start;
+  margin-bottom: 2.5rem;
+}
+
+/* 3-column grid for "how it works" cards */
+.amm-grid-3col {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-bottom: 2rem;
+}
+
+/* 2-column grid for the bottom section — mirrors globals.css .amm-grid-2col,
+   defined here so landing-page layout is self-contained */
+.amm-grid-2col {
+  grid-template-columns: 2fr 1fr;
+}
+
+/* landing-page variant with section spacing */
+.amm-landing-2col {
+  display: grid;
+  gap: 2rem;
+  grid-template-columns: 2fr 1fr;
+  margin-bottom: 2rem;
+}
+
+/* Action row: consistent button gap and wrap */
+.amm-action-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+
 @media (max-width: 960px) {
   .amm-grid-3col { grid-template-columns: 1fr; }
-  .amm-hero { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 768px) {
+  .amm-hero {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .amm-landing-2col { grid-template-columns: 1fr; }
 }
