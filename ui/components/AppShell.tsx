@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { BaseStyles, ThemeProvider, Header, IconButton } from '@primer/react';
 import { SunIcon, MoonIcon } from '@primer/octicons-react';
 import { routes } from '@/lib/routes';
+import MemoryMarketLogo from '@/components/MemoryMarketLogo';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -28,8 +29,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <BaseStyles>
         <Header>
           <Header.Item>
-            <Header.Link as={Link} href="/market" style={{ fontSize: '14px', fontWeight: 'bold' }}>
-              AMM
+            <Header.Link as={Link} href="/market" style={{ fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <MemoryMarketLogo inverse size={24} />
+              <span>AMM</span>
             </Header.Link>
           </Header.Item>
           <Header.Item>
