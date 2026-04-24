@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Heading, TextInput, Button, Label, Flash, Spinner } from '@primer/react';
 import { SearchIcon } from '@primer/octicons-react';
 import { fetchListings, ListingRecord } from '@/lib/api';
+import { getSellerProfile } from '@/lib/directory';
 
 function trustScheme(score: number | null): 'success' | 'danger' | 'secondary' {
   if (score === null) return 'secondary';
@@ -59,7 +60,7 @@ export default function MarketScreen() {
           />
         </div>
         <Button>Filter sheet</Button>
-        <Button variant="invisible">Compare tray</Button>
+        <Button as={Link} href="/compare" variant="invisible">Compare tray</Button>
       </div>
 
       <div style={{ display: 'flex', gap: '4px', marginBottom: '16px', flexWrap: 'wrap' }}>
@@ -91,30 +92,37 @@ export default function MarketScreen() {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((l) => (
-                  <tr key={l.id} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
-                    <td style={{ padding: '10px 12px' }}>
-                      <Link href={`/asset/${l.id}`} style={{ color: 'var(--fgColor-accent, #0969da)', textDecoration: 'none', fontWeight: 600 }}>
-                        {l.title}
-                      </Link>
-                      <br />
-                      <span className="amm-subtle">{l.domain}</span>
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <Label variant="success">+{l.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</Label>
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <Label variant={trustScheme(l.trust_score)}>
-                        {l.trust_score != null ? `${l.trust_score}/100` : '—'}
-                      </Label>
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      {l.latest_adversarial_score?.toFixed(0) ?? '—'}/100
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>{l.license_type}</td>
-                    <td style={{ padding: '10px 12px' }}>${l.price_usd.toFixed(2)}</td>
-                  </tr>
-                ))}
+                {filtered.map((l) => {
+                  const seller = getSellerProfile(l.seller_id);
+                  return (
+                    <tr key={l.id} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Link href={`/asset/${l.id}`} style={{ color: 'var(--fgColor-accent, #0969da)', textDecoration: 'none', fontWeight: 600 }}>
+                          {l.title}
+                        </Link>
+                        <br />
+                        <span className="amm-subtle">{l.domain}</span>
+                        <br />
+                        <Link href={`/sellers/${l.seller_id}`} className="amm-subtle">
+                          {seller?.name || l.seller_id}
+                        </Link>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Label variant="success">+{l.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</Label>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        <Label variant={trustScheme(l.trust_score)}>
+                          {l.trust_score != null ? `${l.trust_score}/100` : '—'}
+                        </Label>
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>
+                        {l.latest_adversarial_score?.toFixed(0) ?? '—'}/100
+                      </td>
+                      <td style={{ padding: '10px 12px' }}>{l.license_type}</td>
+                      <td style={{ padding: '10px 12px' }}>${l.price_usd.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             {filtered[0] && (
@@ -124,8 +132,8 @@ export default function MarketScreen() {
                   {filtered[0].title} — trust {filtered[0].trust_score}/100, lift +{filtered[0].latest_transfer_efficiency?.toFixed(1)}%
                 </p>
                 <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                  <Button size="small" variant="invisible">Sandbox</Button>
-                  <Button size="small" variant="invisible">Compare</Button>
+                  <Button size="small" as={Link} href={`/audit/${filtered[0].id}`} variant="invisible">Audit</Button>
+                  <Button size="small" as={Link} href="/compare" variant="invisible">Compare</Button>
                   <Button size="small" variant="primary">Acquire</Button>
                 </div>
               </div>
@@ -146,7 +154,7 @@ export default function MarketScreen() {
                   </div>
                   <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
                     <Button size="small" variant="invisible" as={Link} href={`/asset/${l.id}`}>Review</Button>
-                    <Button size="small" variant="invisible">Remove</Button>
+                    <Button size="small" variant="invisible" as={Link} href={`/sellers/${l.seller_id}`}>Seller</Button>
                   </div>
                 </div>
               ))}
