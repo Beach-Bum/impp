@@ -9,31 +9,21 @@ export default function MemoryMarketLogo({
   size?: number;
   style?: CSSProperties;
 }) {
-  const fg = inverse ? '#ffffff' : '#0f172a';
+  const fill = inverse ? '#ffffff' : '#020202';
 
   return (
     <svg
       aria-hidden="true"
-      viewBox="0 0 32 32"
+      viewBox="0 0 307.93 329.85"
       width={size}
       height={size}
-      fill="none"
       style={{ display: 'block', flexShrink: 0, ...style }}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* Hexagon outline */}
       <path
-        d="M16 2L28.5 9.5V24.5L16 32L3.5 24.5V9.5L16 2Z"
-        stroke={fg}
-        strokeWidth="2.5"
-        strokeLinejoin="round"
+        d="M169.48,263.15l-116.03-.03-.03-78.29-53.42-.13,43.64-103.73C69.07,20.52,135.57-10.58,199.2,3.25c61.18,13.29,108.36,67.69,108.45,132.03l.28,194.54-138.42.02-.03-66.7ZM187.86,215.57l.11-53.94,46.94,27,18.2-31.64-46.78-27.23,46.78-27.08-18.1-31.65-46.99,26.9-.22-54.16-36.48.02-.13,54.26-47-27.02-18.29,31.6,46.96,27.2-46.95,27.17,18.25,31.65,47.02-27.05.12,54.24,36.54-.25Z"
+        fill={fill}
       />
-      {/* Memory node connections — asterisk pattern */}
-      <line x1="16" y1="9" x2="16" y2="23" stroke={fg} strokeWidth="2" strokeLinecap="round" />
-      <line x1="10" y1="12.5" x2="22" y2="19.5" stroke={fg} strokeWidth="2" strokeLinecap="round" />
-      <line x1="22" y1="12.5" x2="10" y2="19.5" stroke={fg} strokeWidth="2" strokeLinecap="round" />
-      {/* Center node */}
-      <circle cx="16" cy="16" r="2.5" fill={fg} />
     </svg>
   );
 }
