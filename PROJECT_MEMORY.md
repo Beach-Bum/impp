@@ -146,11 +146,15 @@ A research paper + working protocol + marketplace UI for trading verified AI age
 
 ### 2. What is still left to build
 - runtime QA on the deployed site after the latest pushes
-- CSS/layout polish for the new landing page helpers (`amm-hero`, `amm-grid-3col`, card spacing)
-- real Privy auth wiring instead of placeholder signup UI
-- waitlist and seller-application form submission handlers / backend endpoints
-- `/sandbox/[runId]` detail page for saved evaluation runs
-- actual purchase / checkout flow from Acquire buttons
+- ~~CSS/layout polish for the new landing page helpers~~ **DONE** — responsive hero, 3col, 2col grids
+- ~~real Privy auth wiring~~ **DONE** — PrivyWrapper added, conditional on NEXT_PUBLIC_PRIVY_APP_ID. Install @privy-io/react-auth and set env var to activate.
+- ~~waitlist and seller-application form submission handlers~~ **DONE** — POST /api/waitlist and POST /api/seller-apply with SQLite storage
+- ~~`/sandbox/[runId]` detail page~~ **DONE** — scorecard, accuracy comparison, recommendation. Uses mock data until API endpoint exists.
+- ~~actual purchase / checkout flow~~ **DONE** — CheckoutDialog component, POST /api/orders + confirm flow, orders table in SQLite
+- Wire Compare page to real API (still uses mock data)
+- Wire Transactions/Payments pages to real API
+- More experiment trials for statistical power
+- Deploy backend to Railway/Fly.io (API runs locally only)
 
 ### 3. Decisions the next developer needs to know
 - Keep the public site split from the product app: `/` is now marketing / onboarding, `/market` is the product entry
@@ -161,4 +165,20 @@ A research paper + working protocol + marketplace UI for trading verified AI age
   - `/seller-apply` for seller onboarding
   - `/sandbox` for pre-purchase evaluation
 - Privy is the preferred auth/wallet direction for humans; x402 / A2A wallets remain the advanced rail
-- The current public screens are UI scaffolds first. They need backend wiring, but the intended information architecture is now established.
+- PrivyWrapper is a passthrough until NEXT_PUBLIC_PRIVY_APP_ID is set. When ready: install @privy-io/react-auth, uncomment the provider code in PrivyWrapper.tsx, set env var.
+- Order confirmation uses atomic UPDATE WHERE status='pending' to prevent double-confirm races.
+- The frontend forms (waitlist, seller-apply) post to the FastAPI backend. They gracefully degrade when the API is unreachable (show error message).
+
+## Update — form wiring, purchase flow, and polish (2026-04-24 evening)
+
+### What was completed
+- CSS/layout polish: responsive hero grid, 3-column cards, section spacing in public.css
+- Privy auth scaffolding: PrivyWrapper component, privy.ts config, conditional provider in layout.tsx
+- Signup screen: controlled form state, Privy-ready auth buttons, fallback to waitlist
+- Waitlist form: wired to POST /api/waitlist with loading/success/error states
+- Seller-apply form: wired to POST /api/seller-apply with loading/success/error states
+- Backend: waitlist_entries and seller_applications tables + endpoints with email validation
+- Backend: orders table + POST /api/orders, GET /api/orders/{id}, POST /api/orders/{id}/confirm
+- Sandbox detail page: /sandbox/[runId] with scorecard, accuracy comparison, recommendation
+- Checkout dialog: modal with create→confirm order flow, wired to Acquire button on asset pages
+- Review fixes: Next.js 15 params await, atomic order confirmation
