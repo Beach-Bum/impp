@@ -27,6 +27,16 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   const isDark = colorMode === 'night';
   const activeIndicatorColor = isDark ? '#f0f6fc' : '#1f2328';
 
+  if (pathname === '/') {
+    return (
+      <ThemeProvider colorMode={colorMode}>
+        <BaseStyles>
+          {children}
+        </BaseStyles>
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider colorMode={colorMode}>
       <BaseStyles>
