@@ -11,6 +11,8 @@ export default function SignupScreen() {
   const [org, setOrg] = useState('');
   const [role, setRole] = useState('buyer');
   const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
   function handlePrivyLogin() {
     // When @privy-io/react-auth is installed:
@@ -21,11 +23,31 @@ export default function SignupScreen() {
     window.location.href = '/waitlist';
   }
 
-  function handleEmailSignup() {
+  async function handleEmailSignup() {
     if (!email) return;
-    // When Privy is wired, this will call login({ email })
-    // For now, treat as waitlist signup
-    setSubmitted(true);
+    if (PRIVY_ENABLED) {
+      // When Privy is wired, this will call login({ email })
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, name: org || email, company: org, use_case: role }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.detail || 'Something went wrong. Please try again.');
+      } else {
+        setSubmitted(true);
+      }
+    } catch {
+      setError('Could not reach the server. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -44,6 +66,7 @@ export default function SignupScreen() {
             </Flash>
           ) : (
             <div className="amm-card-stack">
+              {error && <Flash variant="danger">{error}</Flash>}
               <TextInput
                 placeholder="Email address"
                 block
@@ -62,7 +85,9 @@ export default function SignupScreen() {
                 <Select.Option value="agent-wallet">Agent Wallet</Select.Option>
               </Select>
               <div className="amm-action-row" style={{ flexWrap: 'wrap' }}>
-                <Button onClick={handleEmailSignup}>Continue with email</Button>
+                <Button onClick={handleEmailSignup} disabled={loading}>
+                  {loading ? 'Submitting…' : 'Continue with email'}
+                </Button>
                 <Button variant="invisible" onClick={handlePrivyLogin}>
                   {PRIVY_ENABLED ? 'Continue with Google' : 'Join waitlist instead'}
                 </Button>
