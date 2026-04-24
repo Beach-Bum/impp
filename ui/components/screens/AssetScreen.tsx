@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Heading, Button, Label, Flash, Spinner } from '@primer/react';
 import { fetchListings, fetchPreview, fetchTrust, ListingRecord } from '@/lib/api';
+import CheckoutDialog from '@/components/CheckoutDialog';
 
 const tabList = ['overview', 'provenance', 'safety', 'trust', 'payload'] as const;
 
@@ -12,6 +14,8 @@ export default function AssetScreen({ slug }: { slug: string }) {
   const [trust, setTrust] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState('overview');
+  const [showCheckout, setShowCheckout] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     async function load() {
@@ -48,7 +52,7 @@ export default function AssetScreen({ slug }: { slug: string }) {
         <div style={{ display: 'flex', gap: '8px' }}>
           <Button variant="invisible">Sandbox</Button>
           <Button variant="invisible">Compare</Button>
-          <Button variant="primary">Acquire</Button>
+          <Button variant="primary" onClick={() => setShowCheckout(true)}>Acquire</Button>
         </div>
       </div>
 
@@ -152,6 +156,16 @@ domain: ${listing.domain}
 license: ${listing.license_type}`}
           </pre>
         </div>
+      )}
+      {showCheckout && (
+        <CheckoutDialog
+          listingId={listing.id}
+          title={listing.title}
+          priceUsd={listing.price_usd}
+          domain={listing.domain}
+          onClose={() => setShowCheckout(false)}
+          onSuccess={() => router.push('/portfolio')}
+        />
       )}
     </div>
   );
