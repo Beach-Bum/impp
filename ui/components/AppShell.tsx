@@ -24,6 +24,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     document.documentElement.setAttribute('data-light-theme', 'light');
   }, [colorMode]);
 
+  const isDark = colorMode === 'night';
+  const activeIndicatorColor = isDark ? '#f0f6fc' : 'white';
+
   return (
     <ThemeProvider colorMode={colorMode}>
       <BaseStyles>
@@ -35,7 +38,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </Header.Link>
           </Header.Item>
           <Header.Item>
-            <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>
+            <span style={{ opacity: 0.7, fontSize: '0.85rem' }}>
               Agentic Memory Exchange
             </span>
           </Header.Item>
@@ -47,7 +50,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 href={item.href}
                 style={{
                   fontWeight: pathname === item.href ? 'bold' : 'normal',
-                  borderBottom: pathname === item.href ? '2px solid white' : 'none',
+                  borderBottom: pathname === item.href ? `2px solid ${activeIndicatorColor}` : 'none',
                   paddingBottom: '2px',
                 }}
               >
@@ -61,11 +64,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               aria-label="Toggle color mode"
               variant="invisible"
               onClick={() => setColorMode(colorMode === 'day' ? 'night' : 'day')}
-              style={{ color: 'white' }}
+              style={{ color: 'inherit' }}
             />
           </Header.Item>
         </Header>
-        <main style={{ backgroundColor: 'var(--bgColor-default, #fff)', minHeight: 'calc(100vh - 64px)' }}>
+        <main style={{ minHeight: 'calc(100vh - 64px)' }}>
           {children}
         </main>
       </BaseStyles>
