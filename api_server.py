@@ -388,18 +388,19 @@ def api_get_order(order_id: str):
 @app.post("/api/orders/{order_id}/confirm")
 def api_confirm_order(order_id: str):
     conn = get_db()
-    row = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
-    if not row:
-        raise HTTPException(status_code=404, detail="Order not found")
-    if row["status"] != "pending":
-        raise HTTPException(status_code=400, detail="Order is not in pending status")
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc).isoformat()
-    conn.execute(
-        "UPDATE orders SET status = 'confirmed', confirmed_at = ? WHERE id = ?",
+    # Atomic check-and-update to prevent double-confirmation races
+    cursor = conn.execute(
+        "UPDATE orders SET status = 'confirmed', confirmed_at = ? WHERE id = ? AND status = 'pending'",
         (now, order_id),
     )
     conn.commit()
+    if cursor.rowcount == 0:
+        row = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail="Order not found")
+        raise HTTPException(status_code=400, detail="Order is not in pending status")
     updated = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
     return dict(updated)
 

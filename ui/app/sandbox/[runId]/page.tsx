@@ -1,5 +1,10 @@
 import SandboxDetailScreen from '@/components/screens/SandboxDetailScreen';
 
-export default function SandboxRunPage({ params }: { params: { runId: string } }) {
-  return <SandboxDetailScreen runId={params.runId} />;
+export default async function SandboxRunPage({
+  params,
+}: {
+  params: Promise<{ runId: string }>;
+}) {
+  const { runId } = await params;
+  return <SandboxDetailScreen runId={runId} />;
 }
