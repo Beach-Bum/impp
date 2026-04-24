@@ -8,10 +8,11 @@ Usage:
     uvicorn api_server:app --reload --port 8100
 """
 
+import os
 import re
 import uuid
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -37,6 +38,14 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- Auth ---
+
+def verify_api_key(x_api_key: str = Header(...)):
+    api_key = os.environ.get("MARKETPLACE_API_KEY")
+    if not api_key or x_api_key != api_key:
+        raise HTTPException(status_code=401, detail="Invalid or missing API key")
+
 
 # Global DB connection
 _conn = None
@@ -356,7 +365,7 @@ class OrderRequest(BaseModel):
     buyer_id: str
     listing_id: str
 
-@app.post("/api/orders")
+@app.post("/api/orders", dependencies=[Depends(verify_api_key)])
 def api_create_order(req: OrderRequest):
     conn = get_db()
     listing = get_listing(conn, req.listing_id)
@@ -385,7 +394,7 @@ def api_get_order(order_id: str):
     return dict(row)
 
 
-@app.post("/api/orders/{order_id}/confirm")
+@app.post("/api/orders/{order_id}/confirm", dependencies=[Depends(verify_api_key)])
 def api_confirm_order(order_id: str):
     conn = get_db()
     from datetime import datetime, timezone
