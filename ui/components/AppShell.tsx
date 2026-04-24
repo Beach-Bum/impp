@@ -25,7 +25,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   }, [colorMode]);
 
   const isDark = colorMode === 'night';
-  const activeIndicatorColor = isDark ? '#f0f6fc' : 'white';
+  const activeIndicatorColor = isDark ? '#f0f6fc' : '#1f2328';
 
   return (
     <ThemeProvider colorMode={colorMode}>
@@ -33,12 +33,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <Header>
           <Header.Item>
             <Header.Link as={Link} href="/market" style={{ fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <MemoryMarketLogo inverse size={28} />
+              <MemoryMarketLogo inverse={isDark} size={28} />
               <span>AMM</span>
             </Header.Link>
           </Header.Item>
           <Header.Item>
-            <span style={{ opacity: 0.7, fontSize: '0.85rem' }}>
+            <span style={{ opacity: 0.6, fontSize: '0.85rem' }}>
               Agentic Memory Exchange
             </span>
           </Header.Item>
@@ -64,7 +64,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               aria-label="Toggle color mode"
               variant="invisible"
               onClick={() => setColorMode(colorMode === 'day' ? 'night' : 'day')}
-              style={{ color: 'inherit' }}
+              style={{ color: isDark ? '#f0f6fc' : '#1f2328' }}
             />
           </Header.Item>
         </Header>

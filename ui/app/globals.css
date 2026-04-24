@@ -2,20 +2,22 @@ html, body { min-height: 100%; margin: 0; }
 * { box-sizing: border-box; }
 a { color: inherit; }
 
-/* Header: light mode = dark bar, dark mode = lighter bar */
+/* Header: light mode = white bar with dark text, dark mode = dark bar with light text */
 [data-color-mode="light"] [class*="Header-Header"] {
-  background-color: #24292f !important;
-  color: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #1f2328 !important;
+  border-bottom: 1px solid #d0d7de !important;
 }
 [data-color-mode="light"] [class*="Header-HeaderLink"] {
-  color: rgba(255,255,255,0.85) !important;
+  color: #1f2328 !important;
 }
 [data-color-mode="light"] [class*="Header-HeaderLink"]:hover {
-  color: #ffffff !important;
+  color: #0969da !important;
 }
 [data-color-mode="dark"] [class*="Header-Header"] {
   background-color: #161b22 !important;
   color: #f0f6fc !important;
+  border-bottom: 1px solid #30363d !important;
 }
 [data-color-mode="dark"] [class*="Header-HeaderLink"] {
   color: rgba(240,246,252,0.85) !important;
