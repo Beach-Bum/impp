@@ -21,7 +21,7 @@ export default function IncidentScreen() {
             '3. Replay sandbox — run a replay with the hostile conditions that triggered the failure.',
             '4. Export evidence — create the audit bundle for review and postmortem.',
           ].map((step) => (
-            <div key={step} style={{ padding: '8px', marginBottom: '4px', backgroundColor: '#f6f8fa', borderRadius: '3px', fontSize: '12px' }}>
+            <div key={step} className="amm-step">
               {step}
             </div>
           ))}
@@ -33,7 +33,7 @@ export default function IncidentScreen() {
 
         <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
           <Heading as="h2" style={{ fontSize: '14px', marginBottom: '16px' }}>Evidence export</Heading>
-          <pre style={{ padding: '16px', backgroundColor: '#f6f8fa', borderRadius: '3px', fontSize: '11px' }}>
+          <pre className="amm-code">
 {`incident: hostile-replay-failure
 asset: defi-incident-triage
 action: auto-detached
