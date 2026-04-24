@@ -23,7 +23,7 @@ export default function SandboxScreen() {
 
       <div className="amm-grid amm-grid-2col">
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Run evaluation</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Run evaluation</Heading>
           <div className="amm-card-stack">
             <TextInput placeholder="Artifact id or title" block />
             <Select block defaultValue="gpt-4o">
@@ -44,7 +44,7 @@ export default function SandboxScreen() {
         </div>
 
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Example scorecard</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Example scorecard</Heading>
           <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
             <Label variant="success">Ready to attach</Label>
             <Label variant="accent">Scoped deployment</Label>

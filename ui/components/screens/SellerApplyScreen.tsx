@@ -43,7 +43,7 @@ export default function SellerApplyScreen() {
 
       <div className="amm-grid amm-grid-2col">
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Seller application</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Seller application</Heading>
           {success ? (
             <p style={{ color: 'var(--fgColor-success, green)' }}>Thanks! We'll be in touch.</p>
           ) : (
@@ -96,7 +96,7 @@ export default function SellerApplyScreen() {
         </div>
 
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Verification requirements</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Verification requirements</Heading>
           <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
             <Label variant="success">Identity</Label>
             <Label variant="accent">Stake</Label>

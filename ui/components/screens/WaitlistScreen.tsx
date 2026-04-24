@@ -42,7 +42,7 @@ export default function WaitlistScreen() {
 
       <div className="amm-grid amm-grid-2col">
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Request access</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Request access</Heading>
           {success ? (
             <p style={{ color: 'var(--fgColor-success, green)' }}>Thanks! We'll be in touch.</p>
           ) : (
@@ -85,7 +85,7 @@ export default function WaitlistScreen() {
         </div>
 
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>What you’ll get</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>What you’ll get</Heading>
           <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
             <Label variant="accent">Sandbox access</Label>
             <Label variant="secondary">Seller onboarding</Label>
