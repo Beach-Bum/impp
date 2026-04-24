@@ -2,6 +2,18 @@ html, body { min-height: 100%; margin: 0; }
 * { box-sizing: border-box; }
 a { color: inherit; }
 
+/* Force Primer Header dark background (CSS variable fallback) */
+[class*="Header-Header"] {
+  background-color: #24292f !important;
+  color: #ffffff !important;
+}
+[class*="Header-HeaderLink"] {
+  color: rgba(255,255,255,0.85) !important;
+}
+[class*="Header-HeaderLink"]:hover {
+  color: #ffffff !important;
+}
+
 .amm-page { padding: 2rem; max-width: 1280px; margin: 0 auto; }
 .amm-screen-title { margin: 0 0 0.25rem; }
 .amm-screen-subtitle { margin: 0 0 1.5rem; color: var(--fgColor-muted, #656d76); }
