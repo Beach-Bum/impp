@@ -10,7 +10,9 @@ Usage:
 
 import os
 import re
+import sqlite3
 import uuid
+from typing import Generator
 
 from fastapi import FastAPI, HTTPException, Header, Depends
 from fastapi.middleware.cors import CORSMiddleware
@@ -47,14 +49,14 @@ def verify_api_key(x_api_key: str = Header(...)):
         raise HTTPException(status_code=401, detail="Invalid or missing API key")
 
 
-# Global DB connection
-_conn = None
+# --- DB ---
 
-def get_db():
-    global _conn
-    if _conn is None:
-        _conn = init_db()
-    return _conn
+def get_db() -> Generator[sqlite3.Connection, None, None]:
+    conn = init_db()
+    try:
+        yield conn
+    finally:
+        conn.close()
 
 
 # --- Listings ---
@@ -64,8 +66,8 @@ def api_search_listings(
     domain: str | None = None,
     min_trust: float | None = None,
     max_price: float | None = None,
+    conn: sqlite3.Connection = Depends(get_db),
 ):
-    conn = get_db()
     results = search_listings(conn, domain=domain, min_trust=min_trust, max_price=max_price)
     # Enrich with preview data
     enriched = []
@@ -97,8 +99,7 @@ def api_search_listings(
 
 
 @app.get("/api/listings/{listing_id}")
-def api_get_listing(listing_id: str):
-    conn = get_db()
+def api_get_listing(listing_id: str, conn: sqlite3.Connection = Depends(get_db)):
     listing = get_listing(conn, listing_id)
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
@@ -108,8 +109,7 @@ def api_get_listing(listing_id: str):
 # --- Artifacts ---
 
 @app.get("/api/artifacts/{artifact_hash}")
-def api_get_artifact(artifact_hash: str):
-    conn = get_db()
+def api_get_artifact(artifact_hash: str, conn: sqlite3.Connection = Depends(get_db)):
     artifact = get_artifact(conn, artifact_hash)
     if not artifact:
         raise HTTPException(status_code=404, detail="Artifact not found")
@@ -117,8 +117,7 @@ def api_get_artifact(artifact_hash: str):
 
 
 @app.get("/api/artifacts/{artifact_hash}/preview")
-def api_get_preview(artifact_hash: str):
-    conn = get_db()
+def api_get_preview(artifact_hash: str, conn: sqlite3.Connection = Depends(get_db)):
     artifact_data = get_artifact(conn, artifact_hash)
     if not artifact_data:
         raise HTTPException(status_code=404, detail="Artifact not found")
@@ -143,8 +142,7 @@ def api_get_preview(artifact_hash: str):
 # --- Trust ---
 
 @app.get("/api/trust/{artifact_hash}")
-def api_get_trust(artifact_hash: str):
-    conn = get_db()
+def api_get_trust(artifact_hash: str, conn: sqlite3.Connection = Depends(get_db)):
     trust = get_trust_score(conn, artifact_hash)
     if not trust:
         raise HTTPException(status_code=404, detail="No trust data")
@@ -165,8 +163,7 @@ class FeedbackRequest(BaseModel):
     text: str = ""
 
 @app.post("/api/artifacts/{artifact_hash}/feedback")
-def api_add_feedback(artifact_hash: str, req: FeedbackRequest):
-    conn = get_db()
+def api_add_feedback(artifact_hash: str, req: FeedbackRequest, conn: sqlite3.Connection = Depends(get_db)):
     feedback_id = add_buyer_feedback(
         conn, artifact_hash, req.buyer_id, req.improvement, req.rating, req.text,
     )
@@ -180,9 +177,8 @@ class IdentityRequest(BaseModel):
     display_name: str
 
 @app.post("/api/identity")
-def api_create_identity(req: IdentityRequest):
+def api_create_identity(req: IdentityRequest, conn: sqlite3.Connection = Depends(get_db)):
     identity = create_identity(req.display_name)
-    conn = get_db()
     register_participant(conn, identity)
     return {
         "id": identity["id"],
@@ -191,8 +187,7 @@ def api_create_identity(req: IdentityRequest):
     }
 
 @app.get("/api/identity/{participant_id}")
-def api_get_identity(participant_id: str):
-    conn = get_db()
+def api_get_identity(participant_id: str, conn: sqlite3.Connection = Depends(get_db)):
     p = get_participant(conn, participant_id)
     if not p:
         raise HTTPException(status_code=404, detail="Participant not found")
@@ -211,8 +206,7 @@ class ListingRequest(BaseModel):
     max_buyers: int = 10
 
 @app.post("/api/listings")
-def api_create_listing(req: ListingRequest):
-    conn = get_db()
+def api_create_listing(req: ListingRequest, conn: sqlite3.Connection = Depends(get_db)):
     listing_id = create_listing(
         conn, req.artifact_hash, req.seller_id, req.title,
         req.description, req.price_usd, req.license_type, req.max_buyers,
@@ -223,9 +217,8 @@ def api_create_listing(req: ListingRequest):
 # --- Portfolio / Control Tower ---
 
 @app.get("/api/portfolio")
-def api_portfolio():
+def api_portfolio(conn: sqlite3.Connection = Depends(get_db)):
     """Get control tower data: active listings, recent verifications, alerts."""
-    conn = get_db()
 
     # Stats
     listing_count = conn.execute("SELECT COUNT(*) as c FROM listings WHERE status='active'").fetchone()["c"]
@@ -317,10 +310,9 @@ class WaitlistRequest(BaseModel):
     use_case: str = ""
 
 @app.post("/api/waitlist")
-def api_waitlist(req: WaitlistRequest):
+def api_waitlist(req: WaitlistRequest, conn: sqlite3.Connection = Depends(get_db)):
     if not _EMAIL_RE.match(req.email):
         raise HTTPException(status_code=422, detail="Invalid email address")
-    conn = get_db()
     entry_id = str(uuid.uuid4())
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc).isoformat()
@@ -343,10 +335,9 @@ class SellerApplyRequest(BaseModel):
     description: str = ""
 
 @app.post("/api/seller-apply")
-def api_seller_apply(req: SellerApplyRequest):
+def api_seller_apply(req: SellerApplyRequest, conn: sqlite3.Connection = Depends(get_db)):
     if not _EMAIL_RE.match(req.email):
         raise HTTPException(status_code=422, detail="Invalid email address")
-    conn = get_db()
     app_id = str(uuid.uuid4())
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc).isoformat()
@@ -366,8 +357,7 @@ class OrderRequest(BaseModel):
     listing_id: str
 
 @app.post("/api/orders", dependencies=[Depends(verify_api_key)])
-def api_create_order(req: OrderRequest):
-    conn = get_db()
+def api_create_order(req: OrderRequest, conn: sqlite3.Connection = Depends(get_db)):
     listing = get_listing(conn, req.listing_id)
     if not listing:
         raise HTTPException(status_code=404, detail="Listing not found")
@@ -386,8 +376,7 @@ def api_create_order(req: OrderRequest):
 
 
 @app.get("/api/orders/{order_id}")
-def api_get_order(order_id: str):
-    conn = get_db()
+def api_get_order(order_id: str, conn: sqlite3.Connection = Depends(get_db)):
     row = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
     if not row:
         raise HTTPException(status_code=404, detail="Order not found")
@@ -395,8 +384,7 @@ def api_get_order(order_id: str):
 
 
 @app.post("/api/orders/{order_id}/confirm", dependencies=[Depends(verify_api_key)])
-def api_confirm_order(order_id: str):
-    conn = get_db()
+def api_confirm_order(order_id: str, conn: sqlite3.Connection = Depends(get_db)):
     from datetime import datetime, timezone
     now = datetime.now(timezone.utc).isoformat()
     # Atomic check-and-update to prevent double-confirmation races
@@ -417,8 +405,7 @@ def api_confirm_order(order_id: str):
 # --- Health ---
 
 @app.get("/api/health")
-def api_health():
-    conn = get_db()
+def api_health(conn: sqlite3.Connection = Depends(get_db)):
     artifact_count = conn.execute("SELECT COUNT(*) as c FROM artifacts").fetchone()["c"]
     listing_count = conn.execute("SELECT COUNT(*) as c FROM listings").fetchone()["c"]
     participant_count = conn.execute("SELECT COUNT(*) as c FROM participants").fetchone()["c"]
