@@ -59,7 +59,7 @@ export default function SignupScreen() {
 
       <div className="amm-grid amm-grid-2col">
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Sign up</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Sign up</Heading>
           {submitted ? (
             <Flash variant="success">
               Thanks! We&apos;ll notify you at {email} when accounts are live.
@@ -100,7 +100,7 @@ export default function SignupScreen() {
         </div>
 
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Recommended auth model</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Recommended auth model</Heading>
           <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
             <Label variant="accent">Privy</Label>
             <Label variant="secondary">Embedded wallet</Label>

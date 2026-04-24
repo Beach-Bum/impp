@@ -93,7 +93,7 @@ export default function SandboxDetailScreen({ runId }: { runId: string }) {
       <div className="amm-grid amm-grid-2col">
         {/* Scorecard */}
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Evaluation scorecard</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Evaluation scorecard</Heading>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
             <tbody>
               {scorecard(run.metrics).map(([label, value]) => (
@@ -113,7 +113,7 @@ export default function SandboxDetailScreen({ runId }: { runId: string }) {
         <div className="amm-card-stack" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Training vs held-out accuracy */}
           <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-            <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Accuracy comparison</Heading>
+            <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Accuracy comparison</Heading>
             <div className="amm-metric-grid" style={{ marginBottom: '12px' }}>
               <div className="amm-metric-tile" style={{ flex: 1 }}>
                 <div className="amm-metric-label">Training</div>
@@ -141,7 +141,7 @@ export default function SandboxDetailScreen({ runId }: { runId: string }) {
               backgroundColor: 'var(--bgColor-success-subtle, #dafbe1)',
             }}
           >
-            <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Recommendation</Heading>
+            <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Recommendation</Heading>
             <p style={{ margin: '0 0 12px', fontSize: '13px' }}>{run.recommendation}</p>
             <div className="amm-action-row">
               <Button variant="primary" size="small">Attach artifact</Button>
