@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation';
+import LandingScreen from '@/components/screens/LandingScreen';
 
 export default function Home() {
-  redirect('/market');
+  return <LandingScreen />;
 }
