@@ -1,0 +1,7 @@
+.amm-card-stack > * + * { margin-top: 0.75rem; }
+.amm-grid-3col { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.amm-hero { display: grid; gap: 2rem; grid-template-columns: 1.5fr 1fr; align-items: start; }
+@media (max-width: 960px) {
+  .amm-grid-3col { grid-template-columns: 1fr; }
+  .amm-hero { grid-template-columns: 1fr; }
+}
