@@ -8,6 +8,9 @@ Usage:
     uvicorn api_server:app --reload --port 8100
 """
 
+import re
+import uuid
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -292,6 +295,59 @@ def api_portfolio():
         "agents": agents,
         "alerts": alerts,
     }
+
+
+# --- Waitlist ---
+
+_EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+
+class WaitlistRequest(BaseModel):
+    email: str
+    name: str
+    company: str = ""
+    use_case: str = ""
+
+@app.post("/api/waitlist")
+def api_waitlist(req: WaitlistRequest):
+    if not _EMAIL_RE.match(req.email):
+        raise HTTPException(status_code=422, detail="Invalid email address")
+    conn = get_db()
+    entry_id = str(uuid.uuid4())
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        """INSERT INTO waitlist_entries (id, email, name, company, use_case, status, created_at)
+           VALUES (?, ?, ?, ?, ?, 'pending', ?)""",
+        (entry_id, req.email, req.name, req.company, req.use_case, now),
+    )
+    conn.commit()
+    return {"id": entry_id, "status": "pending"}
+
+
+# --- Seller Apply ---
+
+class SellerApplyRequest(BaseModel):
+    name: str
+    email: str
+    wallet: str = ""
+    seller_type: str = ""
+    description: str = ""
+
+@app.post("/api/seller-apply")
+def api_seller_apply(req: SellerApplyRequest):
+    if not _EMAIL_RE.match(req.email):
+        raise HTTPException(status_code=422, detail="Invalid email address")
+    conn = get_db()
+    app_id = str(uuid.uuid4())
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        """INSERT INTO seller_applications (id, name, email, wallet, seller_type, description, status, created_at)
+           VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)""",
+        (app_id, req.name, req.email, req.wallet, req.seller_type, req.description, now),
+    )
+    conn.commit()
+    return {"id": app_id, "status": "pending"}
 
 
 # --- Health ---
