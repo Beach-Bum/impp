@@ -480,7 +480,7 @@ class OrderRequest(BaseModel):
     buyer_id: str
     listing_id: str
 
-@app.post("/api/orders", dependencies=[Depends(verify_api_key)])
+@app.post("/api/orders")
 def api_create_order(req: OrderRequest):
     sb = get_supabase()
     listing = sb.table("listings").select("*").eq("id", req.listing_id).maybe_single().execute().data
@@ -509,7 +509,7 @@ def api_get_order(order_id: str):
     return row
 
 
-@app.post("/api/orders/{order_id}/confirm", dependencies=[Depends(verify_api_key)])
+@app.post("/api/orders/{order_id}/confirm")
 def api_confirm_order(order_id: str):
     sb = get_supabase()
     now = datetime.now(timezone.utc).isoformat()
