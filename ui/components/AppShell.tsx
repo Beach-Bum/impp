@@ -30,7 +30,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <Header>
           <Header.Item>
             <Header.Link as={Link} href="/market" style={{ fontSize: '14px', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <MemoryMarketLogo inverse size={24} />
+              <MemoryMarketLogo inverse size={28} />
               <span>AMM</span>
             </Header.Link>
           </Header.Item>
