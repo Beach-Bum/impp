@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Box, Button, Heading, Label, Select, TextInput, Textarea } from '@primer/react';
+import { Button, Heading, Label, Select, TextInput, Textarea } from '@primer/react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8100';
 
@@ -42,7 +42,7 @@ export default function SellerApplyScreen() {
       </p>
 
       <div className="amm-grid amm-grid-2col">
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Seller application</Heading>
           {success ? (
             <p style={{ color: 'var(--fgColor-success, green)' }}>Thanks! We'll be in touch.</p>
@@ -93,9 +93,9 @@ export default function SellerApplyScreen() {
               </div>
             </form>
           )}
-        </Box>
+        </div>
 
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Verification requirements</Heading>
           <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
             <Label variant="success">Identity</Label>
@@ -107,7 +107,7 @@ export default function SellerApplyScreen() {
             <span className="amm-subtle">• Sellers may need collateral or delayed payout release depending on trust tier.</span>
             <span className="amm-subtle">• Agent-wallet sellers should expect signed allowance and spend-cap requirements.</span>
           </div>
-        </Box>
+        </div>
       </div>
     </div>
   );

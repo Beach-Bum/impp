@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Box, Button, Heading, Label } from '@primer/react';
+import { Button, Heading, Label } from '@primer/react';
 
 type RunMetrics = {
   transfer_efficiency: number;
@@ -92,7 +92,7 @@ export default function SandboxDetailScreen({ runId }: { runId: string }) {
 
       <div className="amm-grid amm-grid-2col">
         {/* Scorecard */}
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Evaluation scorecard</Heading>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
             <tbody>
@@ -107,12 +107,12 @@ export default function SandboxDetailScreen({ runId }: { runId: string }) {
               ))}
             </tbody>
           </table>
-        </Box>
+        </div>
 
         {/* Right column: accuracy comparison + recommendation */}
         <div className="amm-card-stack" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Training vs held-out accuracy */}
-          <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+          <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
             <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Accuracy comparison</Heading>
             <div className="amm-metric-grid" style={{ marginBottom: '12px' }}>
               <div className="amm-metric-tile" style={{ flex: 1 }}>
@@ -130,16 +130,15 @@ export default function SandboxDetailScreen({ runId }: { runId: string }) {
                 {parseFloat(accuracyGap) <= 5 ? 'Low generalization risk' : 'Monitor generalization'}
               </span>
             </div>
-          </Box>
+          </div>
 
           {/* Recommendation */}
-          <Box
-            sx={{
-              border: '1px solid',
-              borderColor: 'success.emphasis',
-              borderRadius: 2,
-              p: 3,
-              bg: 'success.subtle',
+          <div
+            style={{
+              border: '1px solid var(--borderColor-success-emphasis, #2da44e)',
+              borderRadius: '6px',
+              padding: '16px',
+              backgroundColor: 'var(--bgColor-success-subtle, #dafbe1)',
             }}
           >
             <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Recommendation</Heading>
@@ -148,7 +147,7 @@ export default function SandboxDetailScreen({ runId }: { runId: string }) {
               <Button variant="primary" size="small">Attach artifact</Button>
               <Button variant="invisible" size="small">Export report</Button>
             </div>
-          </Box>
+          </div>
         </div>
       </div>
     </div>

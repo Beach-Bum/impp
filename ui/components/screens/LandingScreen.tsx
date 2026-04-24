@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { Box, Button, Heading, Label } from '@primer/react';
+import { Button, Heading, Label } from '@primer/react';
 
 const trustPoints = [
   'Verified sellers',
@@ -51,7 +51,7 @@ export default function LandingScreen() {
             <Button as={Link} href="/sandbox" variant="invisible">Open sandbox</Button>
           </div>
         </div>
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 3, p: 3, backgroundColor: 'canvas.subtle' }}>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '8px', padding: '16px', backgroundColor: 'var(--bgColor-muted, #f6f8fa)' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Why buyers trust it</Heading>
           <div className="amm-inline-tags" style={{ marginBottom: '1rem' }}>
             <Label variant="success">Verified</Label>
@@ -63,35 +63,35 @@ export default function LandingScreen() {
               <span key={point} className="amm-subtle">• {point}</span>
             ))}
           </div>
-        </Box>
+        </div>
       </div>
 
       <div className="amm-grid amm-grid-3col" style={{ marginTop: '2rem' }}>
         {howItWorks.map((item) => (
-          <Box key={item.title} sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+          <div key={item.title} style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
             <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>{item.title}</Heading>
             <p style={{ margin: 0 }}>{item.body}</p>
-          </Box>
+          </div>
         ))}
       </div>
 
       <div className="amm-grid amm-grid-2col" style={{ marginTop: '2rem' }}>
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>How Memory Market makes money</Heading>
           <div className="amm-card-stack">
             {businessModel.map((line) => (
               <span key={line} className="amm-subtle">• {line}</span>
             ))}
           </div>
-        </Box>
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+        </div>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Get started</Heading>
           <div className="amm-card-stack">
             <Button as={Link} href="/waitlist">Join waitlist</Button>
             <Button as={Link} href="/seller-apply" variant="invisible">Request seller access</Button>
             <Button as={Link} href="/payments" variant="invisible">View payment rails</Button>
           </div>
-        </Box>
+        </div>
       </div>
     </div>
   );
