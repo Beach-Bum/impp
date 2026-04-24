@@ -350,6 +350,60 @@ def api_seller_apply(req: SellerApplyRequest):
     return {"id": app_id, "status": "pending"}
 
 
+# --- Orders ---
+
+class OrderRequest(BaseModel):
+    buyer_id: str
+    listing_id: str
+
+@app.post("/api/orders")
+def api_create_order(req: OrderRequest):
+    conn = get_db()
+    listing = get_listing(conn, req.listing_id)
+    if not listing:
+        raise HTTPException(status_code=404, detail="Listing not found")
+    if listing["status"] != "active":
+        raise HTTPException(status_code=400, detail="Listing is not active")
+    from datetime import datetime, timezone
+    order_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        """INSERT INTO orders (id, buyer_id, listing_id, status, created_at)
+           VALUES (?, ?, ?, 'pending', ?)""",
+        (order_id, req.buyer_id, req.listing_id, now),
+    )
+    conn.commit()
+    return {"id": order_id, "buyer_id": req.buyer_id, "listing_id": req.listing_id, "status": "pending", "created_at": now}
+
+
+@app.get("/api/orders/{order_id}")
+def api_get_order(order_id: str):
+    conn = get_db()
+    row = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Order not found")
+    return dict(row)
+
+
+@app.post("/api/orders/{order_id}/confirm")
+def api_confirm_order(order_id: str):
+    conn = get_db()
+    row = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Order not found")
+    if row["status"] != "pending":
+        raise HTTPException(status_code=400, detail="Order is not in pending status")
+    from datetime import datetime, timezone
+    now = datetime.now(timezone.utc).isoformat()
+    conn.execute(
+        "UPDATE orders SET status = 'confirmed', confirmed_at = ? WHERE id = ?",
+        (now, order_id),
+    )
+    conn.commit()
+    updated = conn.execute("SELECT * FROM orders WHERE id = ?", (order_id,)).fetchone()
+    return dict(updated)
+
+
 # --- Health ---
 
 @app.get("/api/health")

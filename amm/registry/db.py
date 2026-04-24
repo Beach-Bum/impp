@@ -127,6 +127,15 @@ def init_db(db_path: Path | str | None = None) -> sqlite3.Connection:
             status TEXT DEFAULT 'pending',
             created_at TEXT NOT NULL
         );
+
+        CREATE TABLE IF NOT EXISTS orders (
+            id TEXT PRIMARY KEY,
+            buyer_id TEXT NOT NULL,
+            listing_id TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            created_at TEXT NOT NULL,
+            confirmed_at TEXT
+        );
     """)
 
     return conn
