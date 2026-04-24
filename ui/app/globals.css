@@ -57,6 +57,101 @@ a { color: inherit; }
   color: #e6edf3 !important;
 }
 
+/* Card and panel overrides for dark mode */
+.amm-card {
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  padding: 16px;
+}
+.amm-card-bordered {
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  overflow: hidden;
+}
+.amm-card-section {
+  padding: 16px;
+  border-bottom: 1px solid #d0d7de;
+}
+.amm-step {
+  padding: 8px;
+  margin-bottom: 4px;
+  background-color: #f6f8fa;
+  border-radius: 3px;
+  font-size: 12px;
+}
+.amm-code {
+  padding: 16px;
+  background-color: #f6f8fa;
+  border-radius: 3px;
+  font-size: 11px;
+  font-family: monospace;
+  white-space: pre-wrap;
+}
+.amm-selected {
+  padding: 16px;
+  border-top: 1px solid #d0d7de;
+  background-color: #f6f8fa;
+}
+.amm-shortlist-item {
+  padding: 16px;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+[data-color-mode="dark"] .amm-card {
+  border-color: #30363d !important;
+  background-color: #161b22 !important;
+}
+[data-color-mode="dark"] .amm-card-bordered {
+  border-color: #30363d !important;
+  background-color: #0d1117 !important;
+}
+[data-color-mode="dark"] .amm-card-section {
+  border-color: #30363d !important;
+}
+[data-color-mode="dark"] .amm-step {
+  background-color: #21262d !important;
+  color: #e6edf3 !important;
+}
+[data-color-mode="dark"] .amm-code {
+  background-color: #161b22 !important;
+  color: #e6edf3 !important;
+}
+[data-color-mode="dark"] .amm-selected {
+  border-color: #30363d !important;
+  background-color: #161b22 !important;
+}
+[data-color-mode="dark"] .amm-shortlist-item {
+  border-color: #30363d !important;
+  background-color: #161b22 !important;
+}
+
+/* Global dark mode overrides for all inline-styled borders and backgrounds */
+[data-color-mode="dark"] div[style*="#d0d7de"] {
+  border-color: #30363d !important;
+}
+[data-color-mode="dark"] div[style*="#f6f8fa"] {
+  background-color: #21262d !important;
+  color: #e6edf3 !important;
+}
+[data-color-mode="dark"] tr[style*="#d0d7de"],
+[data-color-mode="dark"] tr[style*="borderColor-default"] {
+  border-color: #30363d !important;
+}
+[data-color-mode="dark"] code[style*="#f6f8fa"] {
+  background-color: #161b22 !important;
+  color: #e6edf3 !important;
+}
+[data-color-mode="dark"] button[style*="#d0d7de"] {
+  border-color: #30363d !important;
+}
+
+/* Links in dark mode */
+[data-color-mode="dark"] a[style*="#0969da"] {
+  color: #58a6ff !important;
+}
+
 .amm-page { padding: 2rem; max-width: 1280px; margin: 0 auto; }
 .amm-screen-title { margin: 0 0 0.25rem; }
 .amm-screen-subtitle { margin: 0 0 1.5rem; color: var(--fgColor-muted, #656d76); }

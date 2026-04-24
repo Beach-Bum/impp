@@ -126,7 +126,7 @@ export default function MarketScreen() {
               </tbody>
             </table>
             {filtered[0] && (
-              <div style={{ padding: '16px', borderTop: '1px solid #d0d7de', backgroundColor: '#f6f8fa' }}>
+              <div className="amm-selected">
                 <span style={{ fontWeight: 'bold' }}>Top artifact</span>
                 <p className="amm-subtle">
                   {filtered[0].title} — trust {filtered[0].trust_score}/100, lift +{filtered[0].latest_transfer_efficiency?.toFixed(1)}%
