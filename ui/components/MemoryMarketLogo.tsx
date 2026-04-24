@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react';
 
+let counter = 0;
+
 export default function MemoryMarketLogo({
   inverse = false,
   size = 28,
@@ -10,32 +12,33 @@ export default function MemoryMarketLogo({
   style?: CSSProperties;
 }) {
   const fill = inverse ? '#ffffff' : '#0f172a';
+  const id = `mm-mask-${++counter}`;
 
   return (
     <svg
       aria-hidden="true"
-      viewBox="0 0 309 330"
+      viewBox="0 0 320 340"
       width={size}
       height={size}
-      style={{ display: 'block', ...style }}
+      style={{ display: 'block', flexShrink: 0, ...style }}
       xmlns="http://www.w3.org/2000/svg"
     >
       <defs>
-        <mask id={`mm-cut-${inverse ? 'inv' : 'std'}`} maskUnits="userSpaceOnUse" x="0" y="0" width="309" height="330">
-          <rect width="309" height="330" fill="white" />
-          <rect x="0" y="184" width="53" height="146" fill="black" />
-          <rect x="0" y="252" width="108" height="78" fill="black" />
-          <g transform="translate(154 110)" fill="black">
-            <rect x="-16" y="-66" width="32" height="132" />
-            <rect x="-16" y="-66" width="32" height="132" transform="rotate(60)" />
-            <rect x="-16" y="-66" width="32" height="132" transform="rotate(120)" />
+        <mask id={id} maskUnits="userSpaceOnUse" x="0" y="0" width="320" height="340">
+          <rect width="320" height="340" fill="white" />
+          <rect x="0" y="190" width="56" height="150" fill="black" />
+          <rect x="0" y="258" width="112" height="82" fill="black" />
+          <g transform="translate(160 115)" fill="black">
+            <rect x="-14" y="-62" width="28" height="124" rx="4" />
+            <rect x="-14" y="-62" width="28" height="124" rx="4" transform="rotate(60)" />
+            <rect x="-14" y="-62" width="28" height="124" rx="4" transform="rotate(120)" />
           </g>
         </mask>
       </defs>
       <path
-        d="M0 184C18 134 39 94 72 51C102 12 133 0 170 0H309V330H0V184Z"
+        d="M5 190C22 138 44 96 78 54C108 14 140 2 176 2H314C317 2 318 3 318 6V332C318 335 317 336 314 336H6C3 336 2 335 2 332V194C2 193 3 191 5 190Z"
         fill={fill}
-        mask={`url(#mm-cut-${inverse ? 'inv' : 'std'})`}
+        mask={`url(#${id})`}
       />
     </svg>
   );
