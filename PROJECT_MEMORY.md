@@ -134,3 +134,31 @@ A research paper + working protocol + marketplace UI for trading verified AI age
 ├── artifact-sanitized-defi-v2.md   # Sanitized (framework-only) artifact
 └── gpt-*-scores.json       # Cross-model experiment results
 ```
+
+## Update — public landing and onboarding pass (2026-04-24 later)
+
+### 1. What was just completed
+- `/` now renders a public landing page instead of redirecting to `/market`
+- Added public landing content with hero, trust strip, how-it-works, business-model, and CTA sections
+- Added onboarding screens/components for signup, waitlist, seller application, and sandbox scorecard
+- Wired public routes for `/signup`, `/waitlist`, `/seller-apply`, and `/sandbox`
+- Added `PROJECT_MEMORY.md` handoff updates so the next developer can see the current state quickly
+
+### 2. What is still left to build
+- runtime QA on the deployed site after the latest pushes
+- CSS/layout polish for the new landing page helpers (`amm-hero`, `amm-grid-3col`, card spacing)
+- real Privy auth wiring instead of placeholder signup UI
+- waitlist and seller-application form submission handlers / backend endpoints
+- `/sandbox/[runId]` detail page for saved evaluation runs
+- actual purchase / checkout flow from Acquire buttons
+
+### 3. Decisions the next developer needs to know
+- Keep the public site split from the product app: `/` is now marketing / onboarding, `/market` is the product entry
+- The homepage one-liner is: **The marketplace for verified agent memory.**
+- Public onboarding direction is:
+  - `/signup` for account creation
+  - `/waitlist` for general interest capture
+  - `/seller-apply` for seller onboarding
+  - `/sandbox` for pre-purchase evaluation
+- Privy is the preferred auth/wallet direction for humans; x402 / A2A wallets remain the advanced rail
+- The current public screens are UI scaffolds first. They need backend wiring, but the intended information architecture is now established.
