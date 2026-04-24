@@ -5,13 +5,7 @@ import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { BaseStyles, ThemeProvider, Header, IconButton } from '@primer/react';
 import { SunIcon, MoonIcon } from '@primer/octicons-react';
-
-const nav = [
-  { href: '/market', label: 'Market' },
-  { href: '/portfolio', label: 'Portfolio' },
-  { href: '/policies', label: 'Policies' },
-  { href: '/incidents', label: 'Incidents' },
-];
+import { routes } from '@/lib/routes';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -44,7 +38,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </Header.Item>
           <Header.Item full />
-          {nav.map((item) => (
+          {routes.map((item) => (
             <Header.Item key={item.href}>
               <Header.Link
                 as={Link}
