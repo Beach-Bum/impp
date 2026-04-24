@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Box, Button, Heading, Label, Spinner } from '@primer/react';
+import { Button, Heading, Label, Spinner } from '@primer/react';
 import { fetchListings, type ListingRecord } from '@/lib/api';
 import { getSellerProfile } from '@/lib/directory';
 
@@ -23,7 +23,7 @@ export default function CompareScreen() {
       <Heading style={{ marginBottom: '4px' }}>Compare artifacts</Heading>
       <p className="amm-screen-subtitle">Compare trust, transfer, seller quality, and price before you attach or buy.</p>
 
-      <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, overflow: 'hidden' }}>
+      <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--borderColor-default, #d0d7de)' }}>
@@ -44,7 +44,7 @@ export default function CompareScreen() {
               ['License', (i: ListingRecord) => i.license_type],
             ].map(([label, getter]) => (
               <tr key={String(label)} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
-                <td style={{ padding: '8px 12px', fontWeight: 600 }}>{label}</td>
+                <td style={{ padding: '8px 12px', fontWeight: 600 }}>{label as string}</td>
                 {selected.map((item) => <td key={`${item.id}-${label}`} style={{ padding: '8px 12px' }}>{(getter as any)(item)}</td>)}
               </tr>
             ))}
@@ -61,7 +61,7 @@ export default function CompareScreen() {
             </tr>
           </tbody>
         </table>
-      </Box>
+      </div>
 
       <div className="amm-inline-tags" style={{ marginTop: '16px' }}>
         <Label variant="accent">Best for shortlist decisions</Label>
