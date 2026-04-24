@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Button, Heading, Label, Select, TextInput } from '@primer/react';
+import { Button, Heading, Label, Select, TextInput } from '@primer/react';
 
 const scorecard = [
   ['Transfer lift', '+14.2%'],
@@ -22,7 +22,7 @@ export default function SandboxScreen() {
       </p>
 
       <div className="amm-grid amm-grid-2col">
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Run evaluation</Heading>
           <div className="amm-card-stack">
             <TextInput placeholder="Artifact id or title" block />
@@ -41,9 +41,9 @@ export default function SandboxScreen() {
               <Button variant="invisible">Save config</Button>
             </div>
           </div>
-        </Box>
+        </div>
 
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Example scorecard</Heading>
           <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
             <Label variant="success">Ready to attach</Label>
@@ -59,7 +59,7 @@ export default function SandboxScreen() {
               ))}
             </tbody>
           </table>
-        </Box>
+        </div>
       </div>
     </div>
   );
