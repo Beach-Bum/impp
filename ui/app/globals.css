@@ -2,16 +2,59 @@ html, body { min-height: 100%; margin: 0; }
 * { box-sizing: border-box; }
 a { color: inherit; }
 
-/* Force Primer Header dark background (CSS variable fallback) */
-[class*="Header-Header"] {
+/* Header: light mode = dark bar, dark mode = lighter bar */
+[data-color-mode="light"] [class*="Header-Header"] {
   background-color: #24292f !important;
   color: #ffffff !important;
 }
-[class*="Header-HeaderLink"] {
+[data-color-mode="light"] [class*="Header-HeaderLink"] {
   color: rgba(255,255,255,0.85) !important;
 }
-[class*="Header-HeaderLink"]:hover {
+[data-color-mode="light"] [class*="Header-HeaderLink"]:hover {
   color: #ffffff !important;
+}
+[data-color-mode="dark"] [class*="Header-Header"] {
+  background-color: #161b22 !important;
+  color: #f0f6fc !important;
+}
+[data-color-mode="dark"] [class*="Header-HeaderLink"] {
+  color: rgba(240,246,252,0.85) !important;
+}
+[data-color-mode="dark"] [class*="Header-HeaderLink"]:hover {
+  color: #f0f6fc !important;
+}
+
+/* Dark mode body and content */
+[data-color-mode="dark"] body {
+  background-color: #0d1117 !important;
+  color: #e6edf3 !important;
+}
+[data-color-mode="dark"] .amm-page {
+  color: #e6edf3;
+}
+[data-color-mode="dark"] .amm-subtle {
+  color: #8b949e !important;
+}
+[data-color-mode="dark"] .amm-screen-subtitle {
+  color: #8b949e !important;
+}
+[data-color-mode="dark"] .amm-metric-tile {
+  background: #161b22 !important;
+  border-color: #30363d !important;
+}
+[data-color-mode="dark"] table {
+  color: #e6edf3;
+}
+[data-color-mode="dark"] th, [data-color-mode="dark"] td {
+  border-color: #30363d !important;
+}
+[data-color-mode="dark"] div[style*="border: 1px solid"],
+[data-color-mode="dark"] div[style*="border:1px solid"] {
+  border-color: #30363d !important;
+}
+[data-color-mode="dark"] pre, [data-color-mode="dark"] code {
+  background-color: #161b22 !important;
+  color: #e6edf3 !important;
 }
 
 .amm-page { padding: 2rem; max-width: 1280px; margin: 0 auto; }
