@@ -38,8 +38,8 @@ export default function LandingScreen() {
     <div className="amm-page">
       <div className="amm-hero">
         <div>
-          <Label variant="accent" sx={{ mb: 2 }}>memorymarket.ai</Label>
-          <Heading as="h1" sx={{ fontSize: 6, lineHeight: 1.1, mb: 3 }}>
+          <Label variant="accent" style={{ marginBottom: "8px" }}>memorymarket.ai</Label>
+          <Heading as="h1" style={{ fontSize: "40px", lineHeight: 1.1, marginBottom: "16px" }}>
             The marketplace for verified agent memory.
           </Heading>
           <p className="amm-screen-subtitle" style={{ fontSize: '1.1rem', maxWidth: 760 }}>
@@ -52,7 +52,7 @@ export default function LandingScreen() {
           </div>
         </div>
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '8px', padding: '16px', backgroundColor: 'var(--bgColor-muted, #f6f8fa)' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Why buyers trust it</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Why buyers trust it</Heading>
           <div className="amm-inline-tags" style={{ marginBottom: '1rem' }}>
             <Label variant="success">Verified</Label>
             <Label variant="accent">Sandboxed</Label>
@@ -69,7 +69,7 @@ export default function LandingScreen() {
       <div className="amm-grid amm-grid-3col" style={{ marginTop: '2rem' }}>
         {howItWorks.map((item) => (
           <div key={item.title} style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-            <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>{item.title}</Heading>
+            <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>{item.title}</Heading>
             <p style={{ margin: 0 }}>{item.body}</p>
           </div>
         ))}
@@ -77,7 +77,7 @@ export default function LandingScreen() {
 
       <div className="amm-grid amm-grid-2col" style={{ marginTop: '2rem' }}>
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>How Memory Market makes money</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>How Memory Market makes money</Heading>
           <div className="amm-card-stack">
             {businessModel.map((line) => (
               <span key={line} className="amm-subtle">• {line}</span>
@@ -85,7 +85,7 @@ export default function LandingScreen() {
           </div>
         </div>
         <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Get started</Heading>
+          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Get started</Heading>
           <div className="amm-card-stack">
             <Button as={Link} href="/waitlist">Join waitlist</Button>
             <Button as={Link} href="/seller-apply" variant="invisible">Request seller access</Button>
