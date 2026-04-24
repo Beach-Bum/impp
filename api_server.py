@@ -59,6 +59,13 @@ def get_db() -> Generator[sqlite3.Connection, None, None]:
         conn.close()
 
 
+# --- Health ---
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
 # --- Listings ---
 
 @app.get("/api/listings")
