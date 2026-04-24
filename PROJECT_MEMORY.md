@@ -1,208 +1,136 @@
-# Project Memory
+# Agent Memory Markets — Project Memory
 
-This file is a working memory summary for the `Beach-Bum/memory-market` project so future contributors can quickly understand the current product direction, repo structure, and recent decisions.
+> State as of 2026-04-24. For any developer (human or AI) picking this up.
 
-## What this repo is
+## What this project is
 
-This is the monorepo for **Memory Market / Agentic Memory Exchange**.
+A research paper + working protocol + marketplace UI for trading verified AI agent memory artifacts. An agent trains, exports what it learned as structured text, another agent (even on a different model) uses it to perform better. The paper proves this works, the protocol verifies artifacts aren't poisoned, and the marketplace lets people buy and sell them.
 
-- `amm/` — Python protocol and backend logic
-- `paper/` — paper and research artifacts
-- `api_server.py` — backend API server
-- `ui/` — live Next.js frontend deployed from Vercel
-- `tests/` — protocol/backend tests
+**Live site:** https://memorymarket.ai (alias: https://memory-market-gray.vercel.app)
+**Repo:** https://github.com/Beach-Bum/memory-market
 
-## Product framing
+## What was completed (2026-04-23 → 2026-04-24)
 
-Core positioning:
+### Paper (paper/agent-memory-markets-v2.md)
+- Revised from initial draft to submission-ready working paper
+- Narrowed prior work claim (13 citations added: ExpeL, Reflexion, Voyager, MemCollab, Akerlof, Parfit, MINJA, AgentPoison, Sleeper Agents, eTAMP, AutoSkill, Memento-Skills, Memory Transfer Learning)
+- Added cross-model transfer results (Claude→GPT-4o, Section 3.5)
+- Added leakage ablation (sanitized vs full artifact, Section 3.6) — key finding: framework-only artifacts outperform lookup-table artifacts
+- Added multi-dimensional evaluation scorecard S(a) = (E, R, F, A, C, Ξ) (Section 3.7)
+- Replaced qualitative economics with formal models: buyer utility, adverse selection/Akerlof, pricing formula, collateral/slashing, Shapley (Section 7)
+- Added 8-family attack taxonomy + 6-layer defense-in-depth (Section 9)
+- Added governance table (Section 9.4), Limitations section (Section 10)
+- Honest statistical reporting: Wilcoxon p-values, held-out-only metrics, power analysis
+- Two Deep Research reviews processed and all actionable items addressed
 
-**The marketplace for verified agent memory.**
+### Protocol code (amm/)
+- Domain registry with `--domain defi|cybersec` CLI flag
+- Configurable training_rounds per domain
+- Bootstrap confidence intervals for transfer efficiency
+- Negative TE auto-FAIL override + warn threshold lowered to 50
+- Trust score penalizes negative TE (-100 to 100 range)
+- Cross-model support: LLMClient protocol → AnthropicClient, OpenAIClient, OllamaClient
+- Sanitized export mode (`--sanitized` flag) for leakage ablation
+- Paired Wilcoxon signed-rank test (pure Python, no scipy)
+- Held-out-only metrics split in compute_transfer_efficiency()
+- Marketplace skeleton: identity, listing, preview modules + DB tables
+- FastAPI server (api_server.py) with endpoints for listings, previews, trust, feedback, identity, portfolio
+- Database seeder (seed_marketplace.py) with 5 artifacts, 4 sellers, verification certs
 
-Expanded message:
+### Corpus
+- DeFi: expanded from 8 → 32 items (20 training, 12 held-out), 8 scenarios, 6 trap items
+- CyberSec: expanded from 8 → 24 items (13 training, 11 held-out), 8 scenarios, 6 traps
+- CyberSec includes 16 real CVEs: Log4Shell, MOVEit, ProxyShell, Spring4Shell, CitrixBleed, SolarWinds SUNBURST, PrintNightmare, Follina, ESXi OpenSLP, GoAnywhere MFT, PaperCut, Zerologon, FortiGate SSL-VPN, Atlassian Confluence, F5 BIG-IP, Apache path traversal
 
-Buy, compare, audit, and deploy verified memory artifacts for AI agents with seller verification, sandbox testing, and controlled payment rails.
+### Cross-model experiments (manual, GPT-4o as buyer)
+- GPT novice: avg error 6.0 (all), 7.0 (held-out)
+- GPT buyer + full artifact: avg error 5.97, TE 0.5%
+- GPT buyer + sanitized artifact: avg error 5.19, TE 13.5%
+- Wilcoxon p=0.37 (directional, not significant at n=32)
 
-## Key product ideas
+### UI (ui/)
+- GitHub Primer design system (v38, @primer/react)
+- Pages: Market, Compare, Portfolio, Transactions, Payments, Policies, Incidents, Me, Asset detail, Audit, Seller profile, Agent detail
+- Real AMM logomark SVG (from designer files at ~/Desktop/SVG/)
+- Light/dark mode toggle with full theme switching (header, body, cards, tables, code blocks)
+- Fetches from FastAPI backend, falls back to mock data when API unreachable
+- Deployed to Vercel: project `acidinfo/memory-market`, root directory `ui/`
 
-The platform is not just a listing site. It is a governed marketplace and control plane for tradable agent memory artifacts.
+## What's left to build
 
-Important product surfaces:
-- market discovery
-- asset due diligence
-- seller trust and verification
-- compare
-- audit envelope
-- payments and transactions
-- control tower / portfolio
-- sandbox scorecard
+### High priority
+- **Purchase flow**: Acquire button → create order → escrow → deliver artifact content → confirm
+- **Wire Compare page to API**: currently uses directory mock data
+- **Wire Transactions/Payments pages to API**: currently static
+- **More experiment trials**: need Anthropic API credits, then run 10+ automated trials for statistical power
+- **memorymarket.ai custom domain**: DNS propagated but may need Vercel domain alias verification
 
-## Repo / deployment truth
+### Medium priority
+- **Baseline comparisons**: show artifacts beat few-shot exemplars, not just memory-less novice
+- **Real DeFi data**: DeFi domain is still fully synthetic (cybersec has real CVEs)
+- **Port remaining ChatGPT designs**: Compare side-by-side view, Audit evidence package (HTML prototypes at ~/Projects/agent-research/agent-memory-market/Website/agentic-memory-market-carbon-clickable-prototype/)
+- **API authentication**: currently no auth on FastAPI endpoints
+- **Vercel + API deployment**: API runs locally only — need Railway/Fly.io for production backend
 
-- The old separate `memory-market-ui` repo is considered stale/dead.
-- The active frontend lives in `ui/` inside this monorepo.
-- Vercel must deploy from the `ui` root directory.
-- The public domain `memorymarket.ai` is intended to point to the `ui/` app.
+### Lower priority
+- **Red-team the adversarial framework**: test against MINJA, AgentPoison, BackdoorAgent attack families
+- **Economic model simulation**: run the pricing/slashing formulas with real data
+- **Paper submission prep**: final proofread, compile LaTeX, ArXiv upload
+- **Delete stale `Beach-Bum/memory-market-ui` repo** on GitHub (was Carbon version, now dead)
 
-## Current frontend stack
+## Key decisions a developer needs to know
 
-Frontend in `ui/` uses:
-- Next.js
-- React
-- Primer (`@primer/react`)
-- `@primer/octicons-react`
-- styled-components
+### Architecture
+- **Monorepo**: Python backend + Next.js frontend in one repo. Vercel deploys from `ui/` subdirectory.
+- **SQLite**: good for prototype, will need Postgres for production.
+- **FastAPI**: lightweight, no auth. Production needs API keys or JWT.
+- **Primer v38**: does NOT have `Box`, `Text`, `TabNav`, or `sx` props. Use plain `<div>` + `style`. Every new screen must follow this pattern or the build breaks.
 
-## Current live route set
+### UI framework
+- Evaluated Carbon (IBM), PatternFly (Red Hat), and Primer (GitHub). **Chose Primer** for its developer-native feel.
+- Dark mode uses CSS attribute selectors on `[data-color-mode]` to override inline styles. This is a workaround because Primer's theme variables don't resolve for all components in Next.js SSR. Fragile but works.
+- Header is white in light mode, dark in dark mode. Logo swaps between dark fill (`#020202`) and white fill (`#ffffff`).
 
-Implemented routes in `ui/app` include:
-- `/` — landing page target or redirect entry
-- `/market`
-- `/compare`
-- `/portfolio`
-- `/transactions`
-- `/payments`
-- `/policies`
-- `/incidents`
-- `/me`
-- `/asset/[slug]`
-- `/agents/[id]`
-- `/audit/[artifactId]`
-- `/sellers/[sellerId]`
+### Paper
+- The "no prior work" claim is DEAD. Must cite "Infrastructure for Valuable, Tradable, and Verifiable Agent Memory" (March 2026) as direct overlap.
+- The >100% transfer efficiency is noise, not a finding. Reported honestly as within-run variance.
+- The sanitized artifact outperforming the full artifact is the strongest finding. This refutes the "benchmark tutoring" critique.
+- Statistical power is insufficient at n=32. Need ~100-150 held-out items for significance at moderate effect size.
 
-Additional public onboarding routes should exist / be added:
-- `/signup`
-- `/waitlist`
-- `/seller-apply`
-- `/sandbox`
-- `/sandbox/[runId]`
+### API keys
+- **BOTH Anthropic and OpenAI keys were exposed in chat during this session. They MUST be rotated.**
+- Anthropic account needs credits added at console.anthropic.com before automated experiments can run.
 
-## Branding
+## File structure
 
-Brand mark direction:
-- use the provided black/white memory-market mark
-- black version for light backgrounds
-- white/inverse version for dark header contexts
-
-Branding already started in the Primer shell:
-- header should use the logo mark next to `AMM`
-- icon routes are generated in-app for favicon / app icon behavior
-
-## Navigation
-
-Shared route config should reflect the current product IA:
-- Market
-- Compare
-- Portfolio
-- Transactions
-- Payments
-- Policies
-- Incidents
-- Me
-
-## Seller / buyer / account model
-
-Account types:
-- Buyer
-- Seller
-- Agent Wallet
-
-Verification tiers:
-- Verified
-- Institutional
-- Agent Wallet
-
-Seller trust posture should include:
-- verification tier
-- stake / collateral
-- dispute rate
-- successful deliveries
-- wallet/payment rail
-- listed assets
-
-## Payments
-
-Planned payment rails:
-- USDC escrow
-- x402 / A2A wallet flow
-- fiat / card fallback
-
-Recommended direction:
-- use **Privy** for human auth and wallet onboarding
-- use embedded or connected wallets for buyers/sellers
-- keep x402 / agent-wallet flow as advanced capability layer
-
-## Revenue model
-
-Working business model:
-- marketplace take rate on primary sales
-- verification / premium listing fees
-- sandbox / evaluation credits
-- escrow / payout routing fees
-- enterprise subscriptions for private markets, policy controls, and team features
-
-## Sandbox direction
-
-Sandbox should become a first-class trust surface.
-
-Recommended scorecard fields:
-- transfer lift
-- negative transfer risk
-- adversarial cleanliness
-- freshness
-- seller tier
-- estimated cost
-- recommended scope
-- rollback recommendation
-
-Example output:
-- Transfer lift: +14.2%
-- Negative transfer risk: Low
-- Adversarial profile: Clean
-- Seller tier: Institutional
-- Freshness: 12 days
-- Estimated monthly cost: $420
-- Recommended scope: Retrieval only
-- Rollback rule: Auto-detach if negative transfer > 5%
-
-## Landing page direction
-
-Primary one-liner:
-
-**The marketplace for verified agent memory.**
-
-Hero structure:
-- headline
-- subheadline about buying, comparing, auditing, and deploying memory artifacts
-- CTAs for market, signup, sandbox, waitlist
-- trust strip showing verified sellers, sandboxing, escrow, rollback controls
-
-## Immediate next work
-
-1. Finish / polish landing page
-2. Add signup and waitlist flows
-3. Add seller application flow
-4. Add sandbox scorecard flow
-5. Connect acquire / checkout to payments
-6. Increase internal linking between market, assets, sellers, compare, audit, and payments
-7. Runtime QA on live Vercel deployment
-8. Add backend APIs for real profile, transaction, and sandbox data
-
-## Deployment notes
-
-If Vercel says it cannot detect Next.js, the project is usually pointed at the wrong root directory.
-
-Correct setup:
-- repository: `Beach-Bum/memory-market`
-- root directory: `ui`
-- framework: Next.js
-- production branch: `main`
-
-## Why this file exists
-
-This file is intended as a lightweight handoff memory so contributors do not have to reconstruct:
-- the repo split
-- the UI stack decision
-- the branding direction
-- the account / payment model
-- the key product surfaces
-- the current priorities
+```
+├── amm/                    # Python protocol library
+│   ├── adversarial/        # 4 probes + runner
+│   ├── artifact/           # Schema, export
+│   ├── benchmark/          # Training, sandbox, engine
+│   ├── domains/            # DeFi (32 items), CyberSec (24 items)
+│   ├── marketplace/        # Identity, listing, preview
+│   ├── registry/           # SQLite DB, trust computation
+│   ├── verification/       # Referee, certificates
+│   ├── api.py              # Anthropic client (legacy compat)
+│   ├── api_base.py         # LLMClient protocol
+│   ├── api_openai.py       # OpenAI client
+│   ├── api_ollama.py       # Ollama client
+│   └── config.py           # Model, thresholds, weights
+├── ui/                     # Next.js + Primer (Vercel deploys this)
+│   ├── app/                # Routes
+│   ├── components/         # Screens + shared components
+│   └── lib/                # API client, mock data, routes
+├── paper/                  # Working paper
+├── tests/                  # 26 unit tests
+├── api_server.py           # FastAPI marketplace server
+├── seed_marketplace.py     # Database seeder
+├── cross_model_test.py     # GPT cross-model experiment scorer
+├── run_experiment.py       # Automated experiment CLI
+├── run_verify.py           # Artifact verification CLI
+├── run_feedback.py         # Buyer feedback CLI
+├── run_trust_report.py     # Trust report CLI
+├── artifact-expert-defi-v2.md      # Full expert artifact
+├── artifact-sanitized-defi-v2.md   # Sanitized (framework-only) artifact
+└── gpt-*-scores.json       # Cross-model experiment results
+```
