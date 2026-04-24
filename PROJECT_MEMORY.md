@@ -182,3 +182,24 @@ A research paper + working protocol + marketplace UI for trading verified AI age
 - Sandbox detail page: /sandbox/[runId] with scorecard, accuracy comparison, recommendation
 - Checkout dialog: modal with create→confirm order flow, wired to Acquire button on asset pages
 - Review fixes: Next.js 15 params await, atomic order confirmation
+
+## Update — Supabase + Railway production infrastructure (2026-04-24 night)
+
+### What was completed
+- **Supabase migration**: `supabase/migrations/20260424000000_initial_schema.sql` with all 11 tables matching SQLite schema
+- **api_server.py migrated to Supabase**: replaced all sqlite3 usage with supabase-py client. Removed dependency on amm.registry.db and amm.marketplace.listing (which use SQLite connections). Kept pure-function imports (create_identity, format_trust_report).
+- **requirements-api.txt**: added `supabase>=2.0.0`
+- **CORS updated**: added `https://memory-market-api-production.up.railway.app` to allow_origins
+- **Frontend API URL**: already reads `NEXT_PUBLIC_API_URL` env var in all 5 files (api.ts, CheckoutDialog, WaitlistScreen, SellerApplyScreen, PortfolioScreen). Set `NEXT_PUBLIC_API_URL=https://memory-market-api-production.up.railway.app` in Vercel env vars to connect.
+
+### Supabase details
+- Project ref: `wfwhttevczinakrbvswr`
+- URL: `https://wfwhttevczinakrbvswr.supabase.co`
+- Env vars needed on Railway: `SUPABASE_URL`, `SUPABASE_SERVICE_KEY`, `MARKETPLACE_API_KEY`
+- Run the migration SQL in Supabase SQL Editor to create tables
+
+### What is still left
+- Run migration SQL in Supabase dashboard (SQL Editor → paste the migration file)
+- Set Vercel env var `NEXT_PUBLIC_API_URL=https://memory-market-api-production.up.railway.app`
+- Seed Supabase with initial data (port seed_marketplace.py or seed manually)
+- The amm/ library modules (db.py, listing.py, identity.py) still use SQLite — they were not modified per CLAUDE.md rules. Only api_server.py was migrated.
