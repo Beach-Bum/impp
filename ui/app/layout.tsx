@@ -6,6 +6,10 @@ import AppShell from '@/components/AppShell';
 export const metadata: Metadata = {
   title: 'Agentic Memory Exchange',
   description: 'Marketplace for verified AI agent memory artifacts.',
+  icons: {
+    icon: '/icon',
+    apple: '/apple-icon',
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
