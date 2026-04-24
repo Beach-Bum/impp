@@ -1,1 +1,5 @@
-export default function SignupPage(){return null}
+import SignupScreen from '@/components/screens/SignupScreen';
+
+export default function SignupPage() {
+  return <SignupScreen />;
+}
