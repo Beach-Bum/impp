@@ -182,3 +182,18 @@ A research paper + working protocol + marketplace UI for trading verified AI age
 - Sandbox detail page: /sandbox/[runId] with scorecard, accuracy comparison, recommendation
 - Checkout dialog: modal with create→confirm order flow, wired to Acquire button on asset pages
 - Review fixes: Next.js 15 params await, atomic order confirmation
+
+## Update — checkout/auth flow QA (2026-04-24)
+
+### What was fixed
+- Removed X-API-Key auth from POST /api/orders and POST /api/orders/{id}/confirm — static API keys in frontend JS are insecure (readable from devtools). These endpoints are now unauthenticated; Privy session tokens should be added when auth is wired up.
+- Fixed seed_marketplace.py: inlined trust score formula to avoid transitive import of anthropic SDK (referee.py → api.py → anthropic). Seeder now runs without anthropic installed.
+
+### What was verified
+- Full checkout flow tested end-to-end: GET /api/listings → POST /api/orders (creates pending) → POST /api/orders/{id}/confirm (confirms) → GET /api/orders/{id} (verified confirmed status)
+- Frontend CheckoutDialog correctly calls these endpoints without auth headers
+- Asset page loads via mock fallback when API is unreachable; checkout shows error flash (expected behavior)
+
+### Decisions
+- verify_api_key function kept in api_server.py for future server-to-server endpoints
+- Order endpoints left unauthenticated for now — Privy session auth is the planned direction
