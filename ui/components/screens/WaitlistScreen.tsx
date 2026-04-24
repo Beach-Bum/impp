@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Box, Button, Heading, Label, TextInput, Textarea } from '@primer/react';
+import { Button, Heading, Label, TextInput, Textarea } from '@primer/react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8100';
 
@@ -41,7 +41,7 @@ export default function WaitlistScreen() {
       </p>
 
       <div className="amm-grid amm-grid-2col">
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Request access</Heading>
           {success ? (
             <p style={{ color: 'var(--fgColor-success, green)' }}>Thanks! We'll be in touch.</p>
@@ -82,9 +82,9 @@ export default function WaitlistScreen() {
               </div>
             </form>
           )}
-        </Box>
+        </div>
 
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>What you’ll get</Heading>
           <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
             <Label variant="accent">Sandbox access</Label>
@@ -96,7 +96,7 @@ export default function WaitlistScreen() {
             <span className="amm-subtle">• Updates on buyer, seller, and agent-wallet onboarding</span>
             <span className="amm-subtle">• Access to escrow, x402, and enterprise policy features</span>
           </div>
-        </Box>
+        </div>
       </div>
     </div>
   );

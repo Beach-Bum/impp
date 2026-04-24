@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Box, Button, Heading, Label, TextInput, Select, Flash } from '@primer/react';
+import { Button, Heading, Label, TextInput, Select, Flash } from '@primer/react';
 
 const PRIVY_ENABLED = !!process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
@@ -58,7 +58,7 @@ export default function SignupScreen() {
       </p>
 
       <div className="amm-grid amm-grid-2col">
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Sign up</Heading>
           {submitted ? (
             <Flash variant="success">
@@ -97,9 +97,9 @@ export default function SignupScreen() {
               </div>
             </div>
           )}
-        </Box>
+        </div>
 
-        <Box sx={{ border: '1px solid', borderColor: 'border.default', borderRadius: 2, p: 3 }}>
+        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
           <Heading as="h2" sx={{ fontSize: 2, mb: 2 }}>Recommended auth model</Heading>
           <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
             <Label variant="accent">Privy</Label>
@@ -115,7 +115,7 @@ export default function SignupScreen() {
             <Button as={Link} href="/waitlist" variant="invisible">Join waitlist</Button>
             <Button as={Link} href="/seller-apply" variant="invisible">Request seller access</Button>
           </div>
-        </Box>
+        </div>
       </div>
     </div>
   );
