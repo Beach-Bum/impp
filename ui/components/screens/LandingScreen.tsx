@@ -10,6 +10,7 @@ import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/h
 import { Badge } from '@/components/ui/badge';
 import { Kbd } from '@/components/ui/kbd';
 import { CodeBlock } from '@/components/ui/code-block';
+import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
 
 const devBlogs = [
   { title: 'Cross-Model Transfer Upgrade', date: '2026-04-09' },
@@ -66,7 +67,9 @@ export default function LandingScreen() {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger>
-                <strong className="cursor-help text-foreground underline decoration-dotted">56</strong>
+                <strong className="cursor-help text-foreground underline decoration-dotted">
+                  <CountingNumber number={56} inView className="tabular-nums" />
+                </strong>
               </TooltipTrigger>
               <TooltipContent>28 DeFi + 28 CyberSec artifacts</TooltipContent>
             </Tooltip>
