@@ -6,7 +6,7 @@ from amm.domains.defi_risk import DeFiRiskDomain
 from amm.domains.cybersec import CyberSecDomain
 from amm.benchmark.sandbox import bootstrap_ci, compute_transfer_efficiency, AssessmentResult
 from amm.adversarial.runner import run_all_probes
-from amm.config import ADVERSARIAL_WARN_THRESHOLD
+from amm.config import ADVERSARIAL_RISK_WARN_CEILING
 from amm.registry.db import init_db, store_artifact
 from amm.marketplace.identity import create_identity, verify_ownership, register_participant, get_participant
 from amm.marketplace.listing import create_listing, search_listings, get_listing, delist
@@ -87,7 +87,7 @@ def test_bootstrap_ci_in_metrics():
 # --- A4: Negative TE threshold ---
 
 def test_warn_threshold_lowered():
-    assert ADVERSARIAL_WARN_THRESHOLD == 50
+    assert ADVERSARIAL_RISK_WARN_CEILING == 50
 
 
 # --- B1: Expanded DeFi corpus ---
