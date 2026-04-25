@@ -7,11 +7,29 @@ description: Get started with IMPP in 5 minutes. Install the CLI, verify an arti
 
 Get up and running with IMPP in 5 minutes.
 
+<Alert>
+  <AlertTitle>Requirements</AlertTitle>
+  <AlertDescription>IMPP requires Python 3.10+ and a network connection for registry operations.</AlertDescription>
+</Alert>
+
 ## Install the CLI
 
+<Tabs defaultValue="pip">
+  <TabsList>
+    <TabsTrigger value="pip">pip</TabsTrigger>
+    <TabsTrigger value="pipx">pipx</TabsTrigger>
+  </TabsList>
+  <TabsContent value="pip">
 ```bash
 pip install impp
 ```
+  </TabsContent>
+  <TabsContent value="pipx">
+```bash
+pipx install impp
+```
+  </TabsContent>
+</Tabs>
 
 ## Authenticate
 
@@ -90,6 +108,10 @@ client.attach("defi-risk-memory.json", agent="my-agent")
 
 ## Next Steps
 
-- [Publishing Guide](/docs/publishing) — Submit your own artifacts
-- [CLI Reference](/docs/cli) — Full command documentation
-- [Verification Protocol](/docs/verification) — How verification works under the hood
+<Card>
+<CardContent>
+<p>[Publishing Guide](/docs/publishing) — Submit your own artifacts</p>
+<p>[CLI Reference](/docs/cli) — Full command documentation</p>
+<p>[Verification Protocol](/docs/verification) — How verification works under the hood</p>
+</CardContent>
+</Card>
