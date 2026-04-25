@@ -81,7 +81,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
           <div>
             <h4 className="mb-3 font-semibold">About</h4>
-            <FooterLink href="https://github.com/Beach-Bum/memory-market">GitHub</FooterLink>
+            <FooterLink href="https://github.com/Beach-Bum/impp">GitHub</FooterLink>
             <FooterLink href="/paper">Citation</FooterLink>
             <FooterLink href="/waitlist">Waitlist</FooterLink>
           </div>
