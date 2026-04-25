@@ -1,10 +1,13 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { TRANSACTIONS, getSellerProfile } from '@/lib/directory';
+import { Spinner } from '@/components/ui/spinner';
+import { fetchTransactions, type TransactionRecord } from '@/lib/api';
+import { getSellerProfile } from '@/lib/directory';
 
 function statusVariant(status: string): 'default' | 'outline' | 'secondary' {
   if (status === 'Released') return 'default';
@@ -13,6 +16,15 @@ function statusVariant(status: string): 'default' | 'outline' | 'secondary' {
 }
 
 export default function TransactionsScreen() {
+  const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTransactions().then(setTransactions).finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="mx-auto max-w-5xl px-5 py-8"><Spinner /></div>;
+
   return (
     <div className="mx-auto max-w-5xl px-5 py-8">
       <h1 className="mb-1 text-2xl font-light">Transactions</h1>
@@ -32,7 +44,7 @@ export default function TransactionsScreen() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {TRANSACTIONS.map((txn) => {
+              {transactions.map((txn) => {
                 const seller = getSellerProfile(txn.sellerId);
                 return (
                   <TableRow key={txn.id}>
