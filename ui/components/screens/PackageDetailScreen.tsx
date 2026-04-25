@@ -12,6 +12,7 @@ import { CodeBlock } from '@/components/ui/code-block';
 import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
 import { CopyButton } from '@/components/animate-ui/components/buttons/copy';
 import { Shield, GitBranch, Clock, User, ExternalLink, FileText, Download } from 'lucide-react';
+import { ShareButton } from '@/components/animate-ui/components/community/share-button';
 
 // Package data keyed by slug (matches landing page newPackages)
 const PACKAGES: Record<string, PackageData> = {
@@ -299,6 +300,19 @@ export default function PackageDetailScreen({ slug }: { slug: string }) {
             <span className="truncate">{pkg.installCmd}</span>
             <CopyButton content={pkg.installCmd} size="xs" variant="ghost" className="ml-auto shrink-0" />
           </div>
+          <ShareButton
+            size="sm"
+            icon="prefix"
+            onIconClick={(platform) => {
+              const url = encodeURIComponent(window.location.href);
+              const text = encodeURIComponent(`Check out ${pkg.name} on IMPP`);
+              if (platform === 'x') window.open(`https://x.com/intent/tweet?url=${url}&text=${text}`);
+              else if (platform === 'github') window.open(pkg.repoUrl.startsWith('http') ? pkg.repoUrl : `https://${pkg.repoUrl}`);
+              else if (platform === 'facebook') window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`);
+            }}
+          >
+            Share
+          </ShareButton>
         </div>
 
         {/* Description */}
