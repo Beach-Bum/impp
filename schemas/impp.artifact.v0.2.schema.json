@@ -1,0 +1,251 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://impp.sh/schemas/impp.artifact.v0.2.schema.json",
+  "title": "IMPP Artifact Manifest v0.2",
+  "description": "Protocol-first manifest for portable procedural and semantic agent memory artifacts.",
+  "type": "object",
+  "required": [
+    "schema",
+    "name",
+    "version",
+    "type",
+    "license",
+    "summary",
+    "payload",
+    "scope",
+    "attach",
+    "source",
+    "privacy",
+    "provenance",
+    "freshness",
+    "revocation"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "impp.artifact.v0.2"
+    },
+    "name": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+$"
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["procedural", "semantic", "episodic_derived", "hybrid"]
+    },
+    "license": {
+      "type": "string",
+      "minLength": 1
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "artifact_card": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object",
+      "required": ["format", "path"],
+      "additionalProperties": false,
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["markdown", "json", "yaml", "jsonl", "text", "mixed"]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "content_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-fA-F0-9]{64}$"
+        },
+        "token_count": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "required": ["domain", "intended_use", "prohibited_use", "contraindications"],
+      "additionalProperties": false,
+      "properties": {
+        "domain": { "type": "string", "minLength": 1 },
+        "subdomains": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "intended_use": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "prohibited_use": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "contraindications": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "attach": {
+      "type": "object",
+      "required": ["allowed_modes", "prohibited_modes", "default_mode"],
+      "additionalProperties": false,
+      "properties": {
+        "allowed_modes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/attach_mode" },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "prohibited_modes": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/attach_mode" },
+          "uniqueItems": true
+        },
+        "default_mode": { "$ref": "#/$defs/attach_mode" }
+      }
+    },
+    "source": {
+      "type": "object",
+      "required": ["author", "source_material", "generation_method"],
+      "additionalProperties": false,
+      "properties": {
+        "author": { "type": "string" },
+        "author_agent": { "type": "string" },
+        "observation_window": { "type": "string" },
+        "source_material": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "generation_method": { "type": "string" },
+        "source_url": { "type": "string" },
+        "commit_hash": { "type": "string" }
+      }
+    },
+    "privacy": {
+      "type": "object",
+      "required": ["pii", "proprietary_data", "redaction_method", "consent_required"],
+      "additionalProperties": false,
+      "properties": {
+        "pii": {
+          "type": "string",
+          "enum": ["none_detected", "redacted", "present", "unknown"]
+        },
+        "proprietary_data": { "type": "boolean" },
+        "redaction_method": { "type": "string" },
+        "consent_required": { "type": "boolean" }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["content_hash"],
+      "additionalProperties": false,
+      "properties": {
+        "content_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-fA-F0-9]{64}$"
+        },
+        "manifest_hash": {
+          "type": "string",
+          "pattern": "^sha256:[a-fA-F0-9]{64}$"
+        },
+        "signature": { "type": ["string", "null"] },
+        "transparency_log": { "type": ["string", "null"] },
+        "attestations": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "evaluated": { "type": "boolean" },
+        "evaluator_version": { "type": "string" },
+        "evaluated_at": { "type": "string", "format": "date-time" },
+        "suites": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": { "type": ["number", "string", "boolean", "null"] }
+        },
+        "known_failures": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "reason_codes": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "conflicts": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "declares": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "incompatible_with": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "dependencies": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "freshness": {
+      "type": "object",
+      "required": ["created_at"],
+      "additionalProperties": false,
+      "properties": {
+        "created_at": { "type": "string", "format": "date-time" },
+        "expires_at": { "type": ["string", "null"], "format": "date-time" },
+        "recommended_reverify_after_days": { "type": "integer", "minimum": 0 },
+        "decay_model": { "type": "string" }
+      }
+    },
+    "revocation": {
+      "type": "object",
+      "required": ["status"],
+      "additionalProperties": false,
+      "properties": {
+        "status": {
+          "type": "string",
+          "enum": ["active", "revoked", "superseded", "rejected"]
+        },
+        "reason": { "type": ["string", "null"] },
+        "superseded_by": { "type": ["string", "null"] }
+      }
+    }
+  },
+  "$defs": {
+    "attach_mode": {
+      "type": "string",
+      "enum": [
+        "prepend_policy",
+        "few_shot_examples",
+        "retrieval_only",
+        "tool_policy",
+        "read_only_reference"
+      ]
+    }
+  }
+}
