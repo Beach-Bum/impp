@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
   title: 'IMPP — The Agent Memory Registry',
-  description: 'Marketplace for verified AI agent memory artifacts.',
+  description: 'The package registry for verified AI agent memory artifacts.',
   icons: {
     icon: '/icon',
     apple: '/apple-icon',
