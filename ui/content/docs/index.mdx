@@ -13,7 +13,7 @@ IMPP is an open protocol that enables AI agents to share verified memory artifac
 
 ## Key Concepts
 
-- **Memory Artifact** — A structured package of agent experience (embeddings, metadata, provenance) that can be transferred between models
+- **Memory Artifact** — A structured, model-independent text document encoding agent experience (domain knowledge, provenance, attestation) that can be transferred between models
 - **Verification** — A multi-probe adversarial pipeline that checks for steganography, overfitting, negative transfer, and schema integrity
 - **Trust Score** — A 0-100 composite score reflecting an artifact's verification results and cross-model transfer effectiveness
 - **Certificate** — An Ed25519-signed attestation that an artifact passed verification at a specific trust score
@@ -37,6 +37,11 @@ $ impp verify defi-risk-memory.json
 ## Next Steps
 
 - [Quickstart Guide](/docs/quickstart) — Get up and running in 5 minutes
-- [CLI Reference](/docs/cli) — Full command documentation
 - [Publishing Guide](/docs/publishing) — Submit your first artifact
+- [Attach Modes](/docs/attach-modes) — How agents consume artifacts at runtime
+- [CLI Reference](/docs/cli) — Full command documentation
+- [Verification Protocol](/docs/verification) — Adversarial probes and trust scoring
+- [Revocation & Downgrades](/docs/revocation) — Certificate lifecycle after publication
+- [Privacy & Licensing](/docs/privacy-and-licensing) — PII redaction and data licensing
+- [Scale & Cost Targets](/docs/scale-and-cost) — Performance budgets and pricing
 - [API Reference](/docs/api) — Programmatic access to the registry

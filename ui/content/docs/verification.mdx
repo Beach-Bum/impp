@@ -31,7 +31,7 @@ Before issuance, artifacts are subjected to the following probes. A failing prob
 
 | Probe | What It Checks |
 |-------|---------------|
-| **Embedding Steganography** | Hidden payloads in vector representations |
+| **Steganography Detection** | Hidden payloads encoded in artifact content |
 | **Overfit Probe** | Whether the artifact memorises its training set rather than generalising |
 | **Negative Transfer** | Performance degradation when attached to a clean baseline agent |
 | **Freshness Check** | Flags artifacts whose source data is older than the domain threshold |
@@ -39,29 +39,51 @@ Before issuance, artifacts are subjected to the following probes. A failing prob
 
 ### Probe Details
 
-**Embedding Steganography Detection** runs statistical analysis on the embedding space to detect unusual patterns that could encode hidden instructions or payloads. Uses KL-divergence against reference distributions.
+**Steganography Detection** runs statistical analysis on the artifact content to detect unusual patterns that could encode hidden instructions or payloads. Uses KL-divergence against reference distributions for the artifact's content format.
 
 **Overfit Probe** evaluates the artifact against held-out test sets from the same domain. An artifact that performs significantly better on its training distribution than on the test set is flagged.
 
 **Negative Transfer Probe** attaches the artifact to a clean baseline agent and measures task performance before and after. A statistically significant drop in baseline tasks indicates negative transfer.
 
-**Freshness Check** compares the artifact's source data timestamps against domain-specific thresholds. DeFi artifacts with data older than 30 days are flagged. Cybersecurity artifacts have a 90-day threshold.
+**Freshness Check** compares the artifact's source data timestamps against domain-specific thresholds. DeFi artifacts with data older than 30 days are flagged. Cybersecurity artifacts have a 90-day threshold. Freshness is computed using exponential decay with a configurable half-life (default 180 days).
 
-**Schema Integrity** validates the IMPP artifact schema: required fields (`impp_version`, `name`, `version`, `domain`, `embeddings`, `metadata`), version format, and embedding dimensions.
+**Schema Integrity** validates the IMPP artifact schema `M = (D, K, P, A, H)`: required fields (`domain`, `knowledge`, `provenance`, `attestation`), version format, and content format constraints.
+
+### Adversarial Risk Thresholds
+
+Each probe contributes to a composite adversarial risk score (0–100), weighted as follows:
+
+| Probe | Weight |
+|-------|--------|
+| Bias | 0.30 |
+| Consistency | 0.25 |
+| Steganography | 0.25 |
+| Overfit | 0.20 |
+
+The composite risk score determines the outcome:
+
+| Risk Score | Outcome |
+|------------|---------|
+| 0–30 | **PASS** — artifact is clean |
+| 31–50 | **WARNING** — manual review recommended |
+| 51–100 | **FAIL** — artifact is rejected |
 
 ## Trust Score Computation
 
-The trust score is a weighted composite:
+The trust score is a weighted composite of three signals:
 
 ```
 trust_score = (
-  0.30 * cross_model_transfer_effectiveness +
-  0.25 * adversarial_probe_pass_rate +
-  0.20 * embedding_quality_score +
-  0.15 * freshness_score +
-  0.10 * schema_completeness
+  0.50 * transfer_efficiency +
+  0.30 * adversarial_clean +
+  0.20 * freshness
 )
 ```
+
+Where:
+- **transfer_efficiency** — how well the artifact's knowledge transfers to a receiving agent, measured as task performance improvement (0–100)
+- **adversarial_clean** — `100 - adversarial_risk_score`; higher means cleaner (0–100)
+- **freshness** — exponential decay based on artifact age, with a 180-day half-life (0–100)
 
 Scores range from 0 to 100. Artifacts below 50 are not certified.
 

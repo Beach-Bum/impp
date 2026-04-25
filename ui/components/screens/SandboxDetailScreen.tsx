@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from '@/components/ui/breadcrumb';
-import { Progress } from '@/components/ui/progress';
+import { Progress, ProgressTrack } from '@/components/animate-ui/components/base/progress';
 import { CodeBlock } from '@/components/ui/code-block';
 
 type RunMetrics = {
@@ -136,14 +136,14 @@ export default function SandboxDetailScreen({ runId }: { runId: string }) {
                       <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Training</span>
                       <span className="text-sm font-semibold">{run.metrics.training_accuracy}%</span>
                     </div>
-                    <Progress value={run.metrics.training_accuracy} />
+                    <Progress value={run.metrics.training_accuracy}><ProgressTrack /></Progress>
                   </div>
                   <div>
                     <div className="mb-1 flex items-center justify-between">
                       <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Held-out</span>
                       <span className="text-sm font-semibold">{run.metrics.heldout_accuracy}%</span>
                     </div>
-                    <Progress value={run.metrics.heldout_accuracy} />
+                    <Progress value={run.metrics.heldout_accuracy}><ProgressTrack /></Progress>
                   </div>
                 </div>
                 <div className="flex items-center gap-2">

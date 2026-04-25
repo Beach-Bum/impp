@@ -12,28 +12,7 @@ const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
   title: 'IMPP — The Agent Memory Registry',
-  description: 'Browse, verify, and trade learned behaviors across AI agent ecosystems. The package manager for agent memory.',
-  metadataBase: new URL('https://impp.sh'),
-  openGraph: {
-    title: 'IMPP — The Agent Memory Registry',
-    description: 'Browse, verify, and trade learned behaviors across AI agent ecosystems.',
-    url: 'https://impp.sh',
-    siteName: 'IMPP',
-    type: 'website',
-    locale: 'en_US',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'IMPP — The Agent Memory Registry',
-    description: 'Browse, verify, and trade learned behaviors across AI agent ecosystems.',
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-  alternates: {
-    canonical: 'https://impp.sh',
-  },
+  description: 'The package registry for verified AI agent memory artifacts.',
   icons: {
     icon: '/icon',
     apple: '/apple-icon',

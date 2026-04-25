@@ -11,7 +11,7 @@ export default function ProfileScreen() {
   return (
     <div className="mx-auto max-w-5xl px-5 py-8">
       <h1 className="mb-1 text-2xl font-light">My profile</h1>
-      <p className="mb-6 text-sm text-muted-foreground">Buyer identity, verification posture, wallet defaults, and marketplace guardrails.</p>
+      <p className="mb-6 text-sm text-muted-foreground">Identity, verification posture, wallet defaults, and registry guardrails.</p>
 
       <div className="grid gap-8 lg:grid-cols-2">
         <Card>
