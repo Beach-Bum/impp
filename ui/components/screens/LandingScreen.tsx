@@ -222,8 +222,8 @@ artifacts = impp.autoload()`}</CodeBlock>
                     <TableRow key={item.name}>
                       <TableCell>
                         <HoverCard>
-                          <HoverCardTrigger>
-                            <Link href={`/package/${item.slug}`} className="hover:underline">{item.name}</Link>
+                          <HoverCardTrigger render={<Link href={`/package/${item.slug}`} />} className="hover:underline">
+                            {item.name}
                           </HoverCardTrigger>
                           <HoverCardContent className="w-64">
                             <div className="space-y-1">
