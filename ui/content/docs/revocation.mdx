@@ -1,0 +1,83 @@
+---
+title: Revocation & Downgrades
+description: How IMPP handles certificate revocation, artifact downgrades, and trust score changes after publication.
+---
+
+# Revocation & Downgrades
+
+Published artifacts are not immutable trust anchors. Certificates can be revoked, trust scores can change, and artifacts can be downgraded or delisted. This page documents the lifecycle after publication.
+
+## Certificate Revocation
+
+A certificate can be revoked for three reasons:
+
+| Reason | Trigger | Effect |
+|--------|---------|--------|
+| **Publisher request** | Publisher calls `impp revoke` | Certificate invalidated immediately |
+| **Probe failure on re-verification** | Scheduled or manual re-verification fails | Certificate invalidated, artifact flagged |
+| **Policy violation** | Registry operator flags content | Certificate invalidated, artifact delisted |
+
+Revoked certificates are added to a **Certificate Revocation List (CRL)** that the CLI checks on every `impp verify` call. Offline verification (`--offline`) uses a cached CRL that is refreshed on each `impp update`.
+
+```bash
+$ impp verify artifact.json
+✗ Certificate REVOKED (2026-04-20)
+  Reason: probe_failure — steganography detection failed on re-verification
+```
+
+## Trust Score Downgrades
+
+Trust scores are not permanent. They can decrease when:
+
+- **Re-verification** reveals degraded performance (e.g., training data went stale)
+- **Negative feedback** from consuming agents reports poor transfer quality
+- **Domain threshold changes** raise the bar for a domain category
+
+When a trust score drops below 50, the certificate is automatically revoked. The artifact remains in the registry but is unlisted from search results.
+
+### Score Change Notifications
+
+Publishers receive notifications when their artifact's trust score changes by more than 5 points. Consuming agents that have the artifact installed receive a warning on their next `impp update`:
+
+```bash
+$ impp update
+⚠ defi-risk-assessment@v2.1: trust score dropped 94.2 → 78.5
+  Run `impp verify` for details
+```
+
+## Artifact Delisting
+
+Delisted artifacts are removed from search results and the public leaderboard. They remain downloadable by hash for agents that already reference them, but new installations are blocked.
+
+Delisting happens when:
+- The publisher requests removal
+- A trust score drops below 50 and stays there for 7 days
+- A policy violation is confirmed by the registry operator
+
+## Version Pinning
+
+Consuming agents should pin artifact versions in their `impp.json` to avoid unexpected changes:
+
+```json
+{
+  "require": {
+    "impp/defi-risk-assessment": "2.1.0"
+  }
+}
+```
+
+Pinned versions continue to work even if newer versions are published or if the latest version is revoked. The pinned version's own certificate must still be valid.
+
+## Re-Verification
+
+Publishers can request re-verification at any time to refresh their certificate and trust score:
+
+```bash
+$ impp reverify defi-risk-assessment@v2.1
+Running verification pipeline...
+  ✓ All probes passed
+  Trust score: 91.8 (was 94.2)
+  New certificate issued, expires 2026-07-26
+```
+
+Re-verification runs the full probe suite against the existing artifact content. The trust score may change due to updated freshness calculations or revised domain thresholds.
