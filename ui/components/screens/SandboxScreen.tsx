@@ -1,6 +1,11 @@
 'use client';
 
-import { Button, Heading, Label, Select, TextInput } from '@primer/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 
 const scorecard = [
   ['Transfer lift', '+14.2%'],
@@ -15,51 +20,59 @@ const scorecard = [
 
 export default function SandboxScreen() {
   return (
-    <div className="amm-page">
-      <Heading style={{ marginBottom: '4px' }}>Sandbox</Heading>
-      <p className="amm-screen-subtitle">
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <h1 className="mb-1 text-2xl font-light">Sandbox</h1>
+      <p className="mb-6 text-sm text-muted-foreground">
         Test memory artifacts against a scoped evaluation pack before you buy or attach.
       </p>
 
-      <div className="amm-grid amm-grid-2col">
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Run evaluation</Heading>
-          <div className="amm-card-stack">
-            <TextInput placeholder="Artifact id or title" block />
-            <Select block defaultValue="gpt-4o">
-              <Select.Option value="gpt-4o">GPT-4o</Select.Option>
-              <Select.Option value="claude-sonnet">Claude Sonnet</Select.Option>
-              <Select.Option value="custom-agent">Custom agent</Select.Option>
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Run evaluation</CardTitle></CardHeader>
+          <CardContent className="flex flex-col gap-3">
+            <Input placeholder="Artifact id or title" />
+            <Select defaultValue="gpt-4o">
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="gpt-4o">GPT-4o</SelectItem>
+                <SelectItem value="claude-sonnet">Claude Sonnet</SelectItem>
+                <SelectItem value="custom-agent">Custom agent</SelectItem>
+              </SelectContent>
             </Select>
-            <Select block defaultValue="default-pack">
-              <Select.Option value="default-pack">Default benchmark pack</Select.Option>
-              <Select.Option value="adversarial-pack">Adversarial pack</Select.Option>
-              <Select.Option value="org-pack">Organization pack</Select.Option>
+            <Select defaultValue="default-pack">
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="default-pack">Default benchmark pack</SelectItem>
+                <SelectItem value="adversarial-pack">Adversarial pack</SelectItem>
+                <SelectItem value="org-pack">Organization pack</SelectItem>
+              </SelectContent>
             </Select>
-            <div className="amm-action-row" style={{ flexWrap: 'wrap' }}>
+            <div className="flex flex-wrap gap-2">
               <Button>Run sandbox</Button>
-              <Button variant="invisible">Save config</Button>
+              <Button variant="ghost">Save config</Button>
             </div>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
 
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Example scorecard</Heading>
-          <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
-            <Label variant="success">Ready to attach</Label>
-            <Label variant="accent">Scoped deployment</Label>
-          </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-            <tbody>
-              {scorecard.map(([label, value]) => (
-                <tr key={label} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
-                  <td style={{ padding: '8px 0', fontWeight: 600 }}>{label}</td>
-                  <td style={{ padding: '8px 0' }}>{value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Example scorecard</CardTitle></CardHeader>
+          <CardContent>
+            <div className="mb-3 flex flex-wrap gap-1">
+              <Badge>Ready to attach</Badge>
+              <Badge variant="secondary">Scoped deployment</Badge>
+            </div>
+            <Table>
+              <TableBody>
+                {scorecard.map(([label, value]) => (
+                  <TableRow key={label}>
+                    <TableCell className="font-semibold">{label}</TableCell>
+                    <TableCell>{value}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

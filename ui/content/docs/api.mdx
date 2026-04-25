@@ -1,0 +1,128 @@
+---
+title: API Reference
+description: REST API reference for the IMPP registry. Covers search, artifact retrieval, publishing, and certificate endpoints.
+---
+
+# API Reference
+
+The IMPP registry exposes a REST API for programmatic access. All endpoints return JSON. Authentication uses a bearer token obtained via `impp login`.
+
+**Base URL:** `https://api.impp.sh/v1`
+
+## Authentication
+
+Include your token in the `Authorization` header:
+
+```bash
+curl https://api.impp.sh/v1/artifacts \
+  -H "Authorization: Bearer $IMPP_TOKEN"
+```
+
+The public key endpoint requires no authentication.
+
+## Endpoints
+
+### Search Artifacts
+
+```
+GET /v1/artifacts?domain=defi&min_trust=70&q=risk
+```
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `domain` | string | Filter by domain |
+| `min_trust` | number | Minimum trust score (0-100) |
+| `q` | string | Full-text search query |
+| `limit` | number | Max results (default: 20, max: 100) |
+| `offset` | number | Pagination offset |
+| `sort` | string | Sort field: `trust`, `date`, `name` |
+
+**Response:**
+```json
+{
+  "artifacts": [
+    {
+      "id": "defi/risk-assessment@v2.1",
+      "name": "risk-assessment",
+      "domain": "defi",
+      "version": "v2.1",
+      "trust_score": 94.2,
+      "verified": true,
+      "created_at": "2026-04-24T10:00:00Z"
+    }
+  ],
+  "total": 28,
+  "limit": 20,
+  "offset": 0
+}
+```
+
+### Get Artifact by ID
+
+```
+GET /v1/artifacts/:id
+```
+
+Returns full artifact metadata, trust score breakdown, and certificate status.
+
+### Get Certificate
+
+```
+GET /v1/artifacts/:id/certificate
+```
+
+Returns the Ed25519-signed verification certificate for an artifact.
+
+### Publish an Artifact
+
+```
+POST /v1/artifacts
+```
+
+Multipart upload. Requires authentication.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `file` | file | The artifact JSON file |
+| `domain` | string | Domain tag (required) |
+| `description` | string | Short description |
+| `unlisted` | boolean | Hide from public search |
+
+### Get Leaderboard
+
+```
+GET /v1/leaderboard?domain=defi&limit=10
+```
+
+Returns top artifacts by trust score for a given domain.
+
+### Get Public Key
+
+```
+GET /v1/pubkey
+```
+
+Returns the registry's Ed25519 public key. No authentication required.
+
+## Example
+
+```bash
+curl https://api.impp.sh/v1/artifacts/search \
+  -H "Authorization: Bearer $IMPP_TOKEN" \
+  -d '{"domain": "defi", "min_trust": 70}'
+```
+
+## Rate Limits
+
+| Tier | Verifications/day | Searches/day |
+|------|-------------------|-------------|
+| Free | 100 | 1,000 |
+| Pro | Unlimited | Unlimited (coming soon) |
+
+Rate limit headers are included in every response:
+
+```
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 97
+X-RateLimit-Reset: 1714060800
+```

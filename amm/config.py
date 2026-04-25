@@ -17,6 +17,8 @@ API_RETRY_BASE_DELAY = 1  # seconds, exponential backoff: 2^attempt
 PROJECT_ROOT = Path(__file__).parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 REGISTRY_DB_PATH = DATA_DIR / "registry.db"
+AMM_DIR = Path(os.environ.get("AMM_DIR", Path.home() / ".amm"))
+CERTS_DIR = AMM_DIR / "certs"
 
 # Verification
 CERTIFICATE_EXPIRY_DAYS = 90
@@ -41,5 +43,13 @@ TRUST_WEIGHTS = {
     "freshness": 0.20,
 }
 
-# Ensure data directory exists
+# API server
+API_BASE_URL = os.environ.get("AMM_API_URL", "https://api.memorymarket.ai")
+JWT_SECRET = os.environ.get("AMM_JWT_SECRET", "dev-secret-change-me")
+JWT_ALGORITHM = "HS256"
+FREE_TIER_MONTHLY_LIMIT = 50
+
+# Ensure directories exist
 DATA_DIR.mkdir(parents=True, exist_ok=True)
+AMM_DIR.mkdir(parents=True, exist_ok=True)
+CERTS_DIR.mkdir(parents=True, exist_ok=True)

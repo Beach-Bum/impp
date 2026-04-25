@@ -2,7 +2,12 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { Button, Heading, Label, TextInput, Select, Flash } from '@primer/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const PRIVY_ENABLED = !!process.env.NEXT_PUBLIC_PRIVY_APP_ID;
 
@@ -15,20 +20,12 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false);
 
   function handlePrivyLogin() {
-    // When @privy-io/react-auth is installed:
-    // import { usePrivy } from '@privy-io/react-auth';
-    // const { login } = usePrivy();
-    // login();
-    // For now, redirect to waitlist as a fallback
     window.location.href = '/waitlist';
   }
 
   async function handleEmailSignup() {
     if (!email) return;
-    if (PRIVY_ENABLED) {
-      // When Privy is wired, this will call login({ email })
-      return;
-    }
+    if (PRIVY_ENABLED) return;
     setLoading(true);
     setError('');
     try {
@@ -51,71 +48,76 @@ export default function SignupScreen() {
   }
 
   return (
-    <div className="amm-page">
-      <Heading style={{ marginBottom: '4px' }}>Create your account</Heading>
-      <p className="amm-screen-subtitle">
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <h1 className="mb-1 text-2xl font-light">Create your account</h1>
+      <p className="mb-6 text-sm text-muted-foreground">
         Start with email, social, or wallet, then choose whether you are joining as a buyer, seller, or agent wallet.
       </p>
 
-      <div className="amm-grid amm-grid-2col">
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Sign up</Heading>
-          {submitted ? (
-            <Flash variant="success">
-              Thanks! We&apos;ll notify you at {email} when accounts are live.
-            </Flash>
-          ) : (
-            <div className="amm-card-stack">
-              {error && <Flash variant="danger">{error}</Flash>}
-              <TextInput
-                placeholder="Email address"
-                block
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <TextInput
-                placeholder="Organization or team"
-                block
-                value={org}
-                onChange={(e) => setOrg(e.target.value)}
-              />
-              <Select block value={role} onChange={(e) => setRole(e.target.value)}>
-                <Select.Option value="buyer">Buyer</Select.Option>
-                <Select.Option value="seller">Seller</Select.Option>
-                <Select.Option value="agent-wallet">Agent Wallet</Select.Option>
-              </Select>
-              <div className="amm-action-row" style={{ flexWrap: 'wrap' }}>
-                <Button onClick={handleEmailSignup} disabled={loading}>
-                  {loading ? 'Submitting…' : 'Continue with email'}
-                </Button>
-                <Button variant="invisible" onClick={handlePrivyLogin}>
-                  {PRIVY_ENABLED ? 'Continue with Google' : 'Join waitlist instead'}
-                </Button>
-                <Button variant="invisible" onClick={handlePrivyLogin}>
-                  {PRIVY_ENABLED ? 'Continue with wallet' : 'Request seller access'}
-                </Button>
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Sign up</CardTitle></CardHeader>
+          <CardContent>
+            {submitted ? (
+              <Alert>
+                <AlertDescription>Thanks! We&apos;ll notify you at {email} when accounts are live.</AlertDescription>
+              </Alert>
+            ) : (
+              <div className="flex flex-col gap-3">
+                {error && <Alert variant="destructive"><AlertDescription>{error}</AlertDescription></Alert>}
+                <Input
+                  placeholder="Email address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+                <Input
+                  placeholder="Organization or team"
+                  value={org}
+                  onChange={(e) => setOrg(e.target.value)}
+                />
+                <Select value={role} onValueChange={(v) => v && setRole(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="buyer">Buyer</SelectItem>
+                    <SelectItem value="seller">Seller</SelectItem>
+                    <SelectItem value="agent-wallet">Agent Wallet</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex flex-wrap gap-2">
+                  <Button onClick={handleEmailSignup} disabled={loading}>
+                    {loading ? 'Submitting...' : 'Continue with email'}
+                  </Button>
+                  <Button variant="ghost" onClick={handlePrivyLogin}>
+                    {PRIVY_ENABLED ? 'Continue with Google' : 'Join waitlist instead'}
+                  </Button>
+                  <Button variant="ghost" onClick={handlePrivyLogin}>
+                    {PRIVY_ENABLED ? 'Continue with wallet' : 'Request seller access'}
+                  </Button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </CardContent>
+        </Card>
 
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Recommended auth model</Heading>
-          <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
-            <Label variant="accent">Privy</Label>
-            <Label variant="secondary">Embedded wallet</Label>
-            <Label variant="secondary">Wallet connect</Label>
-          </div>
-          <div className="amm-card-stack">
-            <span className="amm-subtle">• Human users should be able to start with email or social auth.</span>
-            <span className="amm-subtle">• Wallets should be connectable or created on demand.</span>
-            <span className="amm-subtle">• Agent-wallet accounts should route into spend-cap and allowance setup.</span>
-          </div>
-          <div className="amm-action-row" style={{ marginTop: '1rem', flexWrap: 'wrap' }}>
-            <Button as={Link} href="/waitlist" variant="invisible">Join waitlist</Button>
-            <Button as={Link} href="/seller-apply" variant="invisible">Request seller access</Button>
-          </div>
-        </div>
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Recommended auth model</CardTitle></CardHeader>
+          <CardContent>
+            <div className="mb-3 flex flex-wrap gap-1">
+              <Badge variant="secondary">Privy</Badge>
+              <Badge variant="outline">Embedded wallet</Badge>
+              <Badge variant="outline">Wallet connect</Badge>
+            </div>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <div>Human users should be able to start with email or social auth.</div>
+              <div>Wallets should be connectable or created on demand.</div>
+              <div>Agent-wallet accounts should route into spend-cap and allowance setup.</div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button variant="ghost" render={<Link href="/waitlist" />}>Join waitlist</Button>
+              <Button variant="ghost" render={<Link href="/seller-apply" />}>Request seller access</Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

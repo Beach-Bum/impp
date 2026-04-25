@@ -1,6 +1,8 @@
 'use client';
 
-import { Heading, Button, Label } from '@primer/react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import StatusTag from '@/components/StatusTag';
 import { getAgentById } from '@/lib/mock-data';
 
@@ -8,53 +10,55 @@ export default function AgentScreen({ id }: { id: string }) {
   const agent = getAgentById(id);
 
   return (
-    <div className="amm-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <div className="mb-6 flex items-start justify-between">
         <div>
-          <Heading>{agent.name}</Heading>
-          <p className="amm-screen-subtitle">Mounted memories, health, and rollback history.</p>
+          <h1 className="mb-1 text-2xl font-light">{agent.name}</h1>
+          <p className="text-sm text-muted-foreground">Mounted memories, health, and rollback history.</p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button>Replay sandbox</Button>
-          <Button variant="danger">Detach memory</Button>
+        <div className="flex gap-2">
+          <Button variant="outline">Replay sandbox</Button>
+          <Button variant="destructive">Detach memory</Button>
         </div>
       </div>
 
-      <div className="amm-grid amm-grid-2col">
-        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
-          <Heading as="h2" style={{ fontSize: '14px', marginBottom: '8px' }}>Current status</Heading>
-          <StatusTag status={agent.status} />
-          <p className="amm-subtle" style={{ marginTop: '8px' }}>Last evaluation: {agent.lastEval}</p>
-          <p>Mounted memory: {agent.memory}</p>
-        </div>
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Current status</CardTitle></CardHeader>
+          <CardContent>
+            <StatusTag status={agent.status} />
+            <p className="mt-2 text-sm text-muted-foreground">Last evaluation: {agent.lastEval}</p>
+            <p className="text-sm leading-relaxed">Mounted memory: {agent.memory}</p>
+          </CardContent>
+        </Card>
 
-        <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', overflow: 'hidden' }}>
-          <div style={{ padding: '16px', borderBottom: '1px solid #d0d7de' }}>
-            <Heading as="h2" style={{ fontSize: '14px' }}>Rollback history</Heading>
-          </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--borderColor-default, #d0d7de)' }}>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Event</th>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>When</th>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Actor</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                ['Mounted asset', '3 days ago', 'Policy engine'],
-                ['Replay sandbox passed', '2 days ago', 'Security operator'],
-                ['Drift watch refreshed', '6 hours ago', 'Automated evaluator'],
-              ].map(([event, when, actor]) => (
-                <tr key={event} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
-                  <td style={{ padding: '8px 12px' }}>{event}</td>
-                  <td style={{ padding: '8px 12px' }}>{when}</td>
-                  <td style={{ padding: '8px 12px' }}>{actor}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Rollback history</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Event</TableHead>
+                  <TableHead>When</TableHead>
+                  <TableHead>Actor</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {[
+                  ['Mounted asset', '3 days ago', 'Policy engine'],
+                  ['Replay sandbox passed', '2 days ago', 'Security operator'],
+                  ['Drift watch refreshed', '6 hours ago', 'Automated evaluator'],
+                ].map(([event, when, actor]) => (
+                  <TableRow key={event}>
+                    <TableCell>{event}</TableCell>
+                    <TableCell>{when}</TableCell>
+                    <TableCell>{actor}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

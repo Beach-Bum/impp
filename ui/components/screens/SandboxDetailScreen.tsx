@@ -1,7 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Button, Heading, Label } from '@primer/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 
 type RunMetrics = {
   transfer_efficiency: number;
@@ -58,96 +61,79 @@ const scorecard = (metrics: RunMetrics) => [
 export default function SandboxDetailScreen({ runId }: { runId: string }) {
   const run = getMockRun(runId);
 
-  const statusVariant =
-    run.status === 'completed' ? 'success' : run.status === 'failed' ? 'danger' : 'attention';
-
+  const statusVariant = run.status === 'completed' ? 'default' as const : run.status === 'failed' ? 'destructive' as const : 'secondary' as const;
   const accuracyGap = (run.metrics.training_accuracy - run.metrics.heldout_accuracy).toFixed(1);
-  const gapVariant = parseFloat(accuracyGap) <= 5 ? 'success' : 'attention';
+  const gapVariant = parseFloat(accuracyGap) <= 5 ? 'default' as const : 'secondary' as const;
 
   return (
-    <div className="amm-page">
-      {/* Back link */}
-      <div style={{ marginBottom: '16px' }}>
-        <Link
-          href="/sandbox"
-          style={{ fontSize: '13px', color: 'var(--fgColor-accent, #0969da)', textDecoration: 'none' }}
-        >
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <div className="mb-4">
+        <Link href="/sandbox" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           ← Back to Sandbox
         </Link>
       </div>
 
-      {/* Header */}
-      <div style={{ marginBottom: '20px' }}>
-        <Heading style={{ marginBottom: '4px' }}>{run.artifact}</Heading>
-        <p className="amm-subtle" style={{ margin: '0 0 10px' }}>
-          Run ID: <code style={{ fontSize: '11px', background: 'var(--bgColor-muted, #f6f8fa)', padding: '1px 5px', borderRadius: '3px' }}>{run.id}</code>
-        </p>
-        <div className="amm-inline-tags">
-          <Label>{run.domain}</Label>
-          <Label variant="accent">{run.model}</Label>
-          <Label variant={statusVariant}>{run.status}</Label>
-          <span className="amm-subtle" style={{ alignSelf: 'center', fontSize: '12px' }}>{run.date}</span>
-        </div>
+      <h1 className="mb-1 text-2xl font-light">{run.artifact}</h1>
+      <p className="mb-3 text-sm text-muted-foreground">
+        Run ID: <code className="rounded bg-muted px-1.5 py-0.5 text-xs">{run.id}</code>
+      </p>
+      <div className="mb-6 flex flex-wrap gap-1">
+        <Badge variant="outline">{run.domain}</Badge>
+        <Badge>{run.model}</Badge>
+        <Badge variant={statusVariant}>{run.status}</Badge>
+        <span className="self-center text-xs text-muted-foreground">{run.date}</span>
       </div>
 
-      <div className="amm-grid amm-grid-2col">
-        {/* Scorecard */}
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Evaluation scorecard</Heading>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-            <tbody>
-              {scorecard(run.metrics).map(([label, value]) => (
-                <tr
-                  key={label}
-                  style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}
-                >
-                  <td style={{ padding: '8px 0', fontWeight: 600 }}>{label}</td>
-                  <td style={{ padding: '8px 0' }}>{value}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Evaluation scorecard</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableBody>
+                {scorecard(run.metrics).map(([label, value]) => (
+                  <TableRow key={label}>
+                    <TableCell className="font-semibold">{label}</TableCell>
+                    <TableCell>{value}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-        {/* Right column: accuracy comparison + recommendation */}
-        <div className="amm-card-stack" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {/* Training vs held-out accuracy */}
-          <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-            <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Accuracy comparison</Heading>
-            <div className="amm-metric-grid" style={{ marginBottom: '12px' }}>
-              <div className="amm-metric-tile" style={{ flex: 1 }}>
-                <div className="amm-metric-label">Training</div>
-                <span className="amm-metric-value">{run.metrics.training_accuracy}%</span>
+        <div className="flex flex-col gap-4">
+          <Card>
+            <CardHeader><CardTitle className="text-xl font-light">Accuracy comparison</CardTitle></CardHeader>
+            <CardContent>
+              <div className="mb-3 grid grid-cols-2 gap-4">
+                <div className="rounded-md border p-3">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Training</div>
+                  <div className="mt-1 text-lg font-semibold">{run.metrics.training_accuracy}%</div>
+                </div>
+                <div className="rounded-md border p-3">
+                  <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Held-out</div>
+                  <div className="mt-1 text-lg font-semibold">{run.metrics.heldout_accuracy}%</div>
+                </div>
               </div>
-              <div className="amm-metric-tile" style={{ flex: 1 }}>
-                <div className="amm-metric-label">Held-out</div>
-                <span className="amm-metric-value">{run.metrics.heldout_accuracy}%</span>
+              <div className="flex items-center gap-2">
+                <Badge variant={gapVariant}>Gap: {accuracyGap}pp</Badge>
+                <span className="text-xs text-muted-foreground">
+                  {parseFloat(accuracyGap) <= 5 ? 'Low generalization risk' : 'Monitor generalization'}
+                </span>
               </div>
-            </div>
-            <div className="amm-inline-tags">
-              <Label variant={gapVariant}>Gap: {accuracyGap}pp</Label>
-              <span className="amm-subtle" style={{ fontSize: '11px', alignSelf: 'center' }}>
-                {parseFloat(accuracyGap) <= 5 ? 'Low generalization risk' : 'Monitor generalization'}
-              </span>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
 
-          {/* Recommendation */}
-          <div
-            style={{
-              border: '1px solid var(--borderColor-success-emphasis, #2da44e)',
-              borderRadius: '6px',
-              padding: '16px',
-              backgroundColor: 'var(--bgColor-success-subtle, #dafbe1)',
-            }}
-          >
-            <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Recommendation</Heading>
-            <p style={{ margin: '0 0 12px', fontSize: '13px' }}>{run.recommendation}</p>
-            <div className="amm-action-row">
-              <Button variant="primary" size="small">Attach artifact</Button>
-              <Button variant="invisible" size="small">Export report</Button>
-            </div>
-          </div>
+          <Card className="border-green-600/30 bg-green-50/50 dark:bg-green-950/20">
+            <CardHeader><CardTitle className="text-xl font-light">Recommendation</CardTitle></CardHeader>
+            <CardContent>
+              <p className="mb-3 text-sm">{run.recommendation}</p>
+              <div className="flex gap-2">
+                <Button size="sm">Attach artifact</Button>
+                <Button size="sm" variant="ghost">Export report</Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

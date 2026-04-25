@@ -2,7 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Heading, Label, Spinner } from '@primer/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Spinner } from '@/components/ui/spinner';
 import { fetchListings, type ListingRecord } from '@/lib/api';
 import { getSellerProfile } from '@/lib/directory';
 
@@ -16,57 +20,57 @@ export default function CompareScreen() {
 
   const selected = useMemo(() => listings.slice(0, 3), [listings]);
 
-  if (loading) return <div className="amm-page"><Spinner size="medium" /></div>;
+  if (loading) return <div className="mx-auto max-w-5xl px-5 py-8"><Spinner /></div>;
 
   return (
-    <div className="amm-page">
-      <Heading style={{ marginBottom: '4px' }}>Compare artifacts</Heading>
-      <p className="amm-screen-subtitle">Compare trust, transfer, seller quality, and price before you attach or buy.</p>
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <h1 className="mb-1 text-2xl font-light">Compare artifacts</h1>
+      <p className="mb-6 text-sm text-muted-foreground">Compare trust, transfer, seller quality, and price before you attach or buy.</p>
 
-      <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', overflow: 'hidden' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-          <thead>
-            <tr style={{ borderBottom: '1px solid var(--borderColor-default, #d0d7de)' }}>
-              <th style={{ textAlign: 'left', padding: '8px 12px' }}>Field</th>
-              {selected.map((item) => (
-                <th key={item.id} style={{ textAlign: 'left', padding: '8px 12px' }}>{item.title}</th>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Field</TableHead>
+                {selected.map((item) => <TableHead key={item.id}>{item.title}</TableHead>)}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[
+                ['Domain', (i: ListingRecord) => i.domain],
+                ['Seller', (i: ListingRecord) => getSellerProfile(i.seller_id)?.name || i.seller_id],
+                ['Trust', (i: ListingRecord) => `${i.trust_score?.toFixed(1) ?? '—'}/100`],
+                ['Transfer lift', (i: ListingRecord) => `${i.latest_transfer_efficiency?.toFixed(1) ?? '—'}%`],
+                ['Adversarial', (i: ListingRecord) => `${i.latest_adversarial_score?.toFixed(1) ?? '—'}/100`],
+                ['Price', (i: ListingRecord) => `$${i.price_usd.toFixed(2)}`],
+                ['License', (i: ListingRecord) => i.license_type],
+              ].map(([label, getter]) => (
+                <TableRow key={String(label)}>
+                  <TableCell className="font-semibold">{label as string}</TableCell>
+                  {selected.map((item) => <TableCell key={`${item.id}-${label}`}>{(getter as any)(item)}</TableCell>)}
+                </TableRow>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {[
-              ['Domain', (i: ListingRecord) => i.domain],
-              ['Seller', (i: ListingRecord) => getSellerProfile(i.seller_id)?.name || i.seller_id],
-              ['Trust', (i: ListingRecord) => `${i.trust_score?.toFixed(1) ?? '—'}/100`],
-              ['Transfer lift', (i: ListingRecord) => `${i.latest_transfer_efficiency?.toFixed(1) ?? '—'}%`],
-              ['Adversarial', (i: ListingRecord) => `${i.latest_adversarial_score?.toFixed(1) ?? '—'}/100`],
-              ['Price', (i: ListingRecord) => `$${i.price_usd.toFixed(2)}`],
-              ['License', (i: ListingRecord) => i.license_type],
-            ].map(([label, getter]) => (
-              <tr key={String(label)} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
-                <td style={{ padding: '8px 12px', fontWeight: 600 }}>{label as string}</td>
-                {selected.map((item) => <td key={`${item.id}-${label}`} style={{ padding: '8px 12px' }}>{(getter as any)(item)}</td>)}
-              </tr>
-            ))}
-            <tr>
-              <td style={{ padding: '8px 12px', fontWeight: 600 }}>Action</td>
-              {selected.map((item) => (
-                <td key={`${item.id}-action`} style={{ padding: '8px 12px' }}>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <Button as="a" href={`/asset/${item.id}`}>Review</Button>
-                    <Button as="a" href={`/audit/${item.id}`} variant="invisible">Audit</Button>
-                  </div>
-                </td>
-              ))}
-            </tr>
-          </tbody>
-        </table>
-      </div>
+              <TableRow>
+                <TableCell className="font-semibold">Action</TableCell>
+                {selected.map((item) => (
+                  <TableCell key={`${item.id}-action`}>
+                    <div className="flex flex-wrap gap-2">
+                      <Button size="sm" render={<Link href={`/asset/${item.id}`} />}>Review</Button>
+                      <Button size="sm" variant="ghost" render={<Link href={`/audit/${item.id}`} />}>Audit</Button>
+                    </div>
+                  </TableCell>
+                ))}
+              </TableRow>
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
-      <div className="amm-inline-tags" style={{ marginTop: '16px' }}>
-        <Label variant="accent">Best for shortlist decisions</Label>
-        <Label variant="secondary">Seller quality should be read alongside artifact quality</Label>
-        <Label variant="secondary">Use audit page for provenance and payout controls</Label>
+      <div className="mt-4 flex flex-wrap gap-1">
+        <Badge variant="secondary">Best for shortlist decisions</Badge>
+        <Badge variant="outline">Seller quality should be read alongside artifact quality</Badge>
+        <Badge variant="outline">Use audit page for provenance and payout controls</Badge>
       </div>
     </div>
   );

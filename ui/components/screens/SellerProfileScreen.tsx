@@ -2,15 +2,14 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { Button, Flash, Heading, Label, Link as PrimerLink, Spinner } from '@primer/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
 import { fetchListings, type ListingRecord } from '@/lib/api';
 import { getSellerListings, getSellerProfile } from '@/lib/directory';
-
-function tierVariant(tier: string): 'success' | 'accent' | 'attention' {
-  if (tier === 'institutional') return 'success';
-  if (tier === 'verified') return 'accent';
-  return 'attention';
-}
 
 export default function SellerProfileScreen({ sellerId }: { sellerId: string }) {
   const [listings, setListings] = useState<ListingRecord[]>([]);
@@ -21,100 +20,118 @@ export default function SellerProfileScreen({ sellerId }: { sellerId: string }) 
     fetchListings().then(setListings).finally(() => setLoading(false));
   }, []);
 
-  if (!seller) {
-    return <div className="amm-page"><Flash variant="danger">Seller not found.</Flash></div>;
-  }
+  if (!seller) return <div className="mx-auto max-w-5xl px-5 py-8"><Alert variant="destructive"><AlertDescription>Seller not found.</AlertDescription></Alert></div>;
 
   const sellerListings = getSellerListings(listings, seller.id);
 
   return (
-    <div className="amm-page">
-      <Heading style={{ marginBottom: '4px' }}>{seller.name}</Heading>
-      <p className="amm-screen-subtitle">Seller profile, verification, dispute posture, and wallet identity.</p>
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <h1 className="mb-1 text-2xl font-light">{seller.name}</h1>
+      <p className="mb-6 text-sm text-muted-foreground">Seller profile, verification, dispute posture, and wallet identity.</p>
 
-      <div className="amm-grid amm-grid-2col">
-        <div className="amm-card-stack">
-          <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', padding: '16px' }}>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap' }}>
-              <Label variant={tierVariant(seller.verifiedTier)}>{seller.verifiedTier}</Label>
-              <Label variant="secondary">Rep {seller.reputation}</Label>
-              <Label variant="secondary">Stake ${seller.stakingUsd.toLocaleString()}</Label>
-            </div>
-            <p style={{ marginTop: 0 }}>{seller.bio}</p>
-            <div className="amm-card-stack">
-              <span className="amm-subtle">Handle: {seller.handle}</span>
-              <span className="amm-subtle">Location: {seller.location}</span>
-              <span className="amm-subtle">Wallet rail: {seller.walletScheme}</span>
-              <span className="amm-subtle">Joined: {seller.joinedAt}</span>
-              {seller.website ? <PrimerLink href={seller.website}>{seller.website}</PrimerLink> : null}
-            </div>
-          </div>
+      <div className="grid gap-8 lg:grid-cols-2">
+        <div className="flex flex-col gap-3">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <Badge>{seller.verifiedTier}</Badge>
+                <Badge variant="secondary">Rep {seller.reputation}</Badge>
+                <Badge variant="secondary">Stake ${seller.stakingUsd.toLocaleString()}</Badge>
+              </div>
+              <p className="text-sm leading-relaxed">{seller.bio}</p>
+              <div className="mt-3 space-y-1 text-sm text-muted-foreground">
+                <div>Handle: {seller.handle}</div>
+                <div>Location: {seller.location}</div>
+                <div>Wallet rail: {seller.walletScheme}</div>
+                <div>Joined: {seller.joinedAt}</div>
+                {seller.website && <a href={seller.website} className="block hover:underline">{seller.website}</a>}
+              </div>
+            </CardContent>
+          </Card>
 
-          <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', padding: '16px' }}>
-            <Heading as="h2" style={{ fontSize: '16px', marginBottom: '8px' }}>Trust posture</Heading>
-            <div className="amm-metric-grid" style={{ gridTemplateColumns: 'repeat(3, minmax(0, 1fr))' }}>
-              <div className="amm-metric-tile"><span className="amm-metric-label">Deliveries</span><span className="amm-metric-value">{seller.successfulDeliveries}</span></div>
-              <div className="amm-metric-tile"><span className="amm-metric-label">Dispute rate</span><span className="amm-metric-value">{seller.disputeRatePct}%</span></div>
-              <div className="amm-metric-tile"><span className="amm-metric-label">Listings</span><span className="amm-metric-value">{seller.listedAssets}</span></div>
-            </div>
-            <div className="amm-inline-tags" style={{ marginTop: '12px' }}>
-              {seller.categories.map((category) => <Label key={category} variant="secondary">{category}</Label>)}
-            </div>
-          </div>
+          <Card>
+            <CardHeader><CardTitle className="text-xl font-light">Trust posture</CardTitle></CardHeader>
+            <CardContent>
+              <div className="mb-3 grid grid-cols-3 gap-4">
+                {[
+                  ['Deliveries', seller.successfulDeliveries],
+                  ['Dispute rate', `${seller.disputeRatePct}%`],
+                  ['Listings', seller.listedAssets],
+                ].map(([label, value]) => (
+                  <div key={String(label)} className="rounded-md border p-3">
+                    <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+                    <div className="mt-1 text-lg font-semibold">{value}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {seller.categories.map((c) => <Badge key={c} variant="outline">{c}</Badge>)}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div className="amm-card-stack">
-          <Flash variant={seller.verifiedTier === 'agent-wallet' ? 'warning' : 'success'}>
-            <strong>{seller.verifiedTier === 'agent-wallet' ? 'Enhanced review required' : 'Verified seller'}</strong>
-            <br />
-            {seller.verifiedTier === 'agent-wallet'
-              ? 'Agent-wallet sellers need spend caps, signed allowances, and slower payout release.'
-              : 'Seller identity and signing keys have passed listing review.'}
-          </Flash>
-          <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', padding: '16px' }}>
-            <Heading as="h2" style={{ fontSize: '16px', marginBottom: '8px' }}>Commercial controls</Heading>
-            <span className="amm-subtle" style={{ display: 'block' }}>Escrow release after sandbox pass</span>
-            <span className="amm-subtle" style={{ display: 'block' }}>Stake can be slashed on fraud or rights breach</span>
-            <span className="amm-subtle" style={{ display: 'block' }}>Royalty splits supported for co-signers and marketplaces</span>
-            <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-              <Button as="a" href="/payments">Payment rails</Button>
-              <Button as="a" href="/transactions" variant="invisible">Transactions</Button>
-            </div>
-          </div>
+        <div className="flex flex-col gap-3">
+          <Alert>
+            <AlertDescription>
+              <strong>{seller.verifiedTier === 'agent-wallet' ? 'Enhanced review required' : 'Verified seller'}</strong>
+              <br />
+              {seller.verifiedTier === 'agent-wallet'
+                ? 'Agent-wallet sellers need spend caps, signed allowances, and slower payout release.'
+                : 'Seller identity and signing keys have passed listing review.'}
+            </AlertDescription>
+          </Alert>
+          <Card>
+            <CardHeader><CardTitle className="text-xl font-light">Commercial controls</CardTitle></CardHeader>
+            <CardContent>
+              <div className="space-y-1 text-sm text-muted-foreground">
+                <div>Escrow release after sandbox pass</div>
+                <div>Stake can be slashed on fraud or rights breach</div>
+                <div>Royalty splits supported for co-signers and marketplaces</div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Button render={<a href="/payments" />}>Payment rails</Button>
+                <Button variant="ghost" render={<a href="/transactions" />}>Transactions</Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 
-      <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', overflow: 'hidden', marginTop: '16px' }}>
-        <div style={{ padding: '16px', borderBottom: '1px solid var(--borderColor-default, #d0d7de)' }}>
-          <Heading as="h2" style={{ fontSize: '16px' }}>Listed artifacts</Heading>
-        </div>
-        {loading ? (
-          <div style={{ padding: '24px' }}><Spinner size="medium" /></div>
-        ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--borderColor-default, #d0d7de)' }}>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Artifact</th>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Trust</th>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Lift</th>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Price</th>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sellerListings.map((item) => (
-                <tr key={item.id} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
-                  <td style={{ padding: '8px 12px' }}><strong>{item.title}</strong><div className="amm-subtle">{item.domain}</div></td>
-                  <td style={{ padding: '8px 12px' }}>{item.trust_score?.toFixed(1) ?? '—'}/100</td>
-                  <td style={{ padding: '8px 12px' }}>{item.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</td>
-                  <td style={{ padding: '8px 12px' }}>${item.price_usd.toFixed(2)}</td>
-                  <td style={{ padding: '8px 12px' }}><Link href={`/asset/${item.id}`}>Review</Link></td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      <Card className="mt-6">
+        <CardHeader><CardTitle className="text-xl font-light">Listed artifacts</CardTitle></CardHeader>
+        <CardContent className="p-0">
+          {loading ? (
+            <div className="p-6"><Spinner /></div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Artifact</TableHead>
+                  <TableHead>Trust</TableHead>
+                  <TableHead>Lift</TableHead>
+                  <TableHead>Price</TableHead>
+                  <TableHead>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {sellerListings.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>
+                      <strong>{item.title}</strong>
+                      <div className="text-xs text-muted-foreground">{item.domain}</div>
+                    </TableCell>
+                    <TableCell>{item.trust_score?.toFixed(1) ?? '—'}/100</TableCell>
+                    <TableCell>{item.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</TableCell>
+                    <TableCell>${item.price_usd.toFixed(2)}</TableCell>
+                    <TableCell><Link href={`/asset/${item.id}`} className="hover:underline">Review</Link></TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

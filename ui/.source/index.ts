@@ -1,0 +1,11 @@
+// @ts-nocheck -- skip type checking
+import * as docs_6 from "../content/docs/verification.mdx?collection=docs&hash=1777116218688"
+import * as docs_5 from "../content/docs/sdk.mdx?collection=docs&hash=1777116218688"
+import * as docs_4 from "../content/docs/quickstart.mdx?collection=docs&hash=1777116218688"
+import * as docs_3 from "../content/docs/publishing.mdx?collection=docs&hash=1777116218688"
+import * as docs_2 from "../content/docs/index.mdx?collection=docs&hash=1777116218688"
+import * as docs_1 from "../content/docs/cli.mdx?collection=docs&hash=1777116218688"
+import * as docs_0 from "../content/docs/api.mdx?collection=docs&hash=1777116218688"
+import { _runtime } from "fumadocs-mdx"
+import * as _source from "../source.config"
+export const docs = _runtime.docs<typeof _source.docs>([{ info: {"path":"api.mdx","absolutePath":"/Users/beachbum/Projects/agent-research/agent-memory-market-protocol/ui/content/docs/api.mdx"}, data: docs_0 }, { info: {"path":"cli.mdx","absolutePath":"/Users/beachbum/Projects/agent-research/agent-memory-market-protocol/ui/content/docs/cli.mdx"}, data: docs_1 }, { info: {"path":"index.mdx","absolutePath":"/Users/beachbum/Projects/agent-research/agent-memory-market-protocol/ui/content/docs/index.mdx"}, data: docs_2 }, { info: {"path":"publishing.mdx","absolutePath":"/Users/beachbum/Projects/agent-research/agent-memory-market-protocol/ui/content/docs/publishing.mdx"}, data: docs_3 }, { info: {"path":"quickstart.mdx","absolutePath":"/Users/beachbum/Projects/agent-research/agent-memory-market-protocol/ui/content/docs/quickstart.mdx"}, data: docs_4 }, { info: {"path":"sdk.mdx","absolutePath":"/Users/beachbum/Projects/agent-research/agent-memory-market-protocol/ui/content/docs/sdk.mdx"}, data: docs_5 }, { info: {"path":"verification.mdx","absolutePath":"/Users/beachbum/Projects/agent-research/agent-memory-market-protocol/ui/content/docs/verification.mdx"}, data: docs_6 }], [{"info":{"path":"meta.json","absolutePath":"/Users/beachbum/Projects/agent-research/agent-memory-market-protocol/ui/content/docs/meta.json"},"data":{"title":"Documentation","pages":["index","quickstart","publishing","cli","verification","api","sdk"]}}])

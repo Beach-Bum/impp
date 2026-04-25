@@ -1,43 +1,55 @@
 'use client';
 
-import { Heading, Button, Label, TextInput, FormControl, Select } from '@primer/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function PolicyScreen() {
   return (
-    <div className="amm-page">
-      <Heading style={{ marginBottom: '4px' }}>Policy center</Heading>
-      <p className="amm-screen-subtitle">Control budgets, risk gates, and allowed runtime scopes.</p>
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <h1 className="mb-1 text-2xl font-light">Policy center</h1>
+      <p className="mb-6 text-sm text-muted-foreground">Control budgets, risk gates, and allowed runtime scopes.</p>
 
-      <div className="amm-grid amm-grid-2col">
-        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
-          <Heading as="h2" style={{ fontSize: '14px', marginBottom: '16px' }}>Current policy snapshot</Heading>
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap', marginBottom: '8px' }}>
-            <Label variant="secondary">Auto-buy cap: $2,000</Label>
-            <Label variant="attention">Human approval above Medium</Label>
-            <Label variant="danger">Auto-revoke: neg transfer &gt; 5%</Label>
-          </div>
-          <p style={{ marginTop: '8px' }}>Runtime scope: Retrieval only / no tool autonomy</p>
-        </div>
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Current policy snapshot</CardTitle></CardHeader>
+          <CardContent>
+            <div className="mb-2 flex flex-wrap gap-1">
+              <Badge variant="secondary">Auto-buy cap: $2,000</Badge>
+              <Badge variant="outline">Human approval above Medium</Badge>
+              <Badge variant="destructive">Auto-revoke: neg transfer &gt; 5%</Badge>
+            </div>
+            <p className="mt-2 text-sm leading-relaxed">Runtime scope: Retrieval only / no tool autonomy</p>
+          </CardContent>
+        </Card>
 
-        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
-          <Heading as="h2" style={{ fontSize: '14px', marginBottom: '16px' }}>Controls</Heading>
-          <FormControl style={{ marginBottom: '16px' }}>
-            <FormControl.Label>Auto-buy cap</FormControl.Label>
-            <TextInput defaultValue="2000" type="number" />
-          </FormControl>
-          <FormControl style={{ marginBottom: '16px' }}>
-            <FormControl.Label>Allowed runtime scope</FormControl.Label>
-            <Select>
-              <Select.Option value="retrieval">Retrieval only / no tool autonomy</Select.Option>
-              <Select.Option value="guarded">Retrieval + guarded tools</Select.Option>
-              <Select.Option value="full">Full autonomy</Select.Option>
-            </Select>
-          </FormControl>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '16px' }}>
-            <Button variant="primary">Save policy</Button>
-            <Button variant="danger">Reset changes</Button>
-          </div>
-        </div>
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Controls</CardTitle></CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Auto-buy cap</Label>
+              <Input defaultValue="2000" type="number" className="mt-1" />
+            </div>
+            <div>
+              <Label>Allowed runtime scope</Label>
+              <Select defaultValue="retrieval">
+                <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="retrieval">Retrieval only / no tool autonomy</SelectItem>
+                  <SelectItem value="guarded">Retrieval + guarded tools</SelectItem>
+                  <SelectItem value="full">Full autonomy</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex gap-2 pt-2">
+              <Button>Save policy</Button>
+              <Button variant="destructive">Reset changes</Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

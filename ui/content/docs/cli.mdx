@@ -1,0 +1,127 @@
+---
+title: CLI Reference
+description: Complete reference for the impp command-line tool. Covers verify, search, publish, and attach commands.
+---
+
+# CLI Reference
+
+Install the `impp` CLI via pip. All commands operate on local artifact files or registry identifiers.
+
+```bash
+pip install impp
+```
+
+## impp verify
+
+Verifies an artifact's Ed25519 certificate and runs the local integrity checks. Exits non-zero if verification fails.
+
+**Verify a local file:**
+```bash
+$ impp verify defi-risk-memory.json
+```
+
+**Verify with explicit public key:**
+```bash
+$ impp verify defi-risk-memory.json --pubkey registry.pub
+```
+
+**Verify against live registry (re-checks certificate freshness):**
+```bash
+$ impp verify defi-risk-memory.json --remote
+```
+
+### Options
+
+| Flag | Description |
+|------|-------------|
+| `--pubkey <path>` | Path to registry public key file |
+| `--remote` | Re-verify against live registry |
+| `--offline` | Use bundled public key, no network |
+| `--json` | Output results as JSON |
+| `--quiet` | Suppress output, exit code only |
+
+## impp search
+
+Queries the IMPP registry. Results are sorted by trust score descending.
+
+**Search by domain:**
+```bash
+$ impp search --domain cybersec
+```
+
+**Filter by minimum trust score:**
+```bash
+$ impp search --domain defi --min-trust 80
+```
+
+**Full-text search with JSON output:**
+```bash
+$ impp search "contract review" --json
+```
+
+### Options
+
+| Flag | Description |
+|------|-------------|
+| `--domain <name>` | Filter by domain (defi, cybersec, legal, etc.) |
+| `--min-trust <n>` | Minimum trust score (0-100) |
+| `--json` | Output as JSON array |
+| `--limit <n>` | Max results (default: 20) |
+| `--sort <field>` | Sort by field (trust, date, name) |
+
+## impp publish
+
+Submits an artifact to the registry. IMPP runs adversarial probes and, if they pass, issues a signed Ed25519 certificate. The artifact becomes publicly searchable once the certificate is issued.
+
+**Publish with domain tag:**
+```bash
+$ impp publish my-artifact.json --domain defi
+```
+
+**Publish and set visibility to unlisted:**
+```bash
+$ impp publish my-artifact.json --domain legal --unlisted
+```
+
+**Dry-run (local verification only, no submission):**
+```bash
+$ impp publish my-artifact.json --dry-run
+```
+
+### Options
+
+| Flag | Description |
+|------|-------------|
+| `--domain <name>` | Domain tag (required) |
+| `--unlisted` | Don't show in public search results |
+| `--dry-run` | Run verification locally without submitting |
+| `--description <text>` | Short description of the artifact |
+| `--version <semver>` | Version string (default: v1.0) |
+
+## impp attach
+
+Attaches a verified artifact to a named agent profile. Records the attachment in the local manifest and sets the rollback threshold.
+
+**Attach to a named agent:**
+```bash
+$ impp attach defi-risk-memory.json --agent my-agent
+```
+
+**Attach with auto-detach rule on negative transfer:**
+```bash
+$ impp attach defi-risk-memory.json --agent my-agent --rollback-threshold 5
+```
+
+**List currently attached artifacts:**
+```bash
+$ impp attach --list --agent my-agent
+```
+
+### Options
+
+| Flag | Description |
+|------|-------------|
+| `--agent <name>` | Target agent profile name (required) |
+| `--rollback-threshold <n>` | Auto-detach after n negative transfer events |
+| `--list` | List all attached artifacts for an agent |
+| `--detach` | Remove an attached artifact |
