@@ -7,6 +7,7 @@ from .bias_probe import run_bias_probe
 from .consistency_probe import run_consistency_probe
 from .stego_probe import run_stego_probe
 from .overfit_probe import run_overfit_probe
+from .pii_probe import run_pii_probe
 
 
 def run_all_probes(
@@ -83,6 +84,11 @@ def run_all_probes(
             f"FAIL_OVERRIDE:negative_transfer_efficiency ({transfer_efficiency:.1f}%)"
         )
 
+    # PII probe (separate gate, does not affect adversarial score)
+    pii_result = run_pii_probe(artifact_content)
+    if pii_result["pii_detected"]:
+        all_flags.extend(pii_result["flags"])
+
     return {
         "aggregate_score": round(aggregate, 1),
         "bias_score": round(bias_score, 1),
@@ -91,10 +97,12 @@ def run_all_probes(
         "overfit_score": round(overfit_score, 1),
         "verdict": verdict,
         "all_flags": all_flags,
+        "pii_detected": pii_result["pii_detected"],
         "probe_details": {
             "bias": bias_result,
             "consistency": consistency_result,
             "stego": stego_result,
             "overfit": overfit_result,
+            "pii": pii_result,
         },
     }

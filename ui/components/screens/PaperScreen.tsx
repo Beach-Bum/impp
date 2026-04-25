@@ -24,7 +24,7 @@ const keyResults: [string, string, string][] = [
 ];
 
 const probes = [
-  { name: 'Embedding steganography detection', desc: "Scans memory vectors for hidden payloads or adversarial perturbations injected into embedding space. Flags artifacts whose vector distributions diverge from expected norms." },
+  { name: 'Steganography detection', desc: "Scans artifact content for hidden instructions or adversarial payloads encoded in text structure. Flags artifacts with concealed directives that could steer consumer agent behavior." },
   { name: 'Overfit probe (train/test distribution shift)', desc: "Measures whether the memory artifact has overfit to the authoring agent's training distribution. Compares activation patterns against held-out evaluation sets to detect memorization." },
   { name: 'Negative transfer risk assessment', desc: "Estimates the probability that attaching the artifact will degrade the consumer agent's performance on its existing task set. Uses proxy benchmarks to score interference." },
   { name: 'Cross-model compatibility check', desc: "Validates that the memory artifact's structure, token assumptions, and retrieval patterns are compatible with the target consumer architecture." },
@@ -51,7 +51,7 @@ export default function PaperScreen() {
     <TooltipProvider>
       <div className="mx-auto max-w-5xl px-5 py-8">
         <h1 className="mb-1 text-2xl font-light">Inter-Model Memory Protocol (IMPP)</h1>
-        <p className="mb-6 text-sm text-muted-foreground">Research paper · Agent Memory Market Protocol</p>
+        <p className="mb-6 text-sm text-muted-foreground">Research paper · Interoperable Memory Publishing Protocol</p>
 
         <section className="mb-8">
           <h2 className="mb-2 text-xl font-light">Abstract</h2>
@@ -62,8 +62,8 @@ export default function PaperScreen() {
                 verifying, and transferring structured memory between AI agents. Memory artifacts are
                 cryptographically signed with Ed25519 certificates after passing a battery of five adversarial
                 probes designed to detect steganography, overfitting, negative transfer risk, cross-model
-                incompatibility, and staleness. IMPP enables a trust-scored marketplace where agents can
-                safely acquire verified knowledge from other agents, regardless of model family or architecture.
+                incompatibility, and staleness. IMPP enables a trust-scored registry where agents can
+                safely install verified knowledge from other agents, regardless of model family or architecture.
                 Our experiments demonstrate +8-14% transfer effectiveness across GPT-4o and Claude, with a
                 94.7% adversarial detection rate and sub-two-second verification times over a 56-artifact,
                 two-domain corpus.
@@ -77,7 +77,7 @@ export default function PaperScreen() {
           <Card>
             <CardContent className="pt-6">
               <div className="mb-3 flex flex-wrap gap-1">
-                <Badge>Peer reviewed</Badge>
+                <Badge>Preprint</Badge>
                 <Badge variant="secondary">Cross-model verified</Badge>
               </div>
               <Table>
@@ -148,16 +148,19 @@ export default function PaperScreen() {
                 combination of the five probe results. The weights reflect the relative severity of each failure mode:
               </p>
               <CodeBlock language="python">{`trust_score = (
-    0.25 * steganography_clear   +
-    0.20 * overfit_safe           +
-    0.25 * negative_transfer_low  +
-    0.15 * compatibility_ok       +
-    0.15 * freshness_ok
-) * 100`}</CodeBlock>
+    0.50 * transfer_efficiency  +
+    0.30 * adversarial_clean    +  # (100 - adversarial_risk)
+    0.20 * freshness
+)
+
+# Adversarial risk thresholds:
+#   0-30  = PASS  (clean)
+#  31-50  = WARN  (review recommended)
+#  51-100 = FAIL  (reject)`}</CodeBlock>
               <p className="mt-3 text-sm text-muted-foreground">
-                Artifacts scoring below 60 are rejected. Scores between 60-80 are published with a caution label.
-                Scores above 80 are marked as verified. The registry re-evaluates freshness weekly and may
-                downgrade scores if staleness is detected.
+                The adversarial risk score is a weighted composite of four probes: bias (30%), consistency (25%),
+                steganography (25%), and overfitting (20%). Artifacts with risk above 50 are rejected. The registry
+                re-evaluates freshness weekly and may downgrade scores if staleness is detected.
               </p>
             </CardContent>
           </Card>
@@ -173,12 +176,12 @@ export default function PaperScreen() {
               </CollapsibleTrigger>
             </div>
             <CollapsibleContent className="mt-2">
-              <CodeBlock language="bibtex">{`@article{memorymarket2026,
-  title   = {IMPP: Inter-Model Memory Protocol for
-             Verified Agent Knowledge Transfer},
-  author  = {Memory Market Research},
+              <CodeBlock language="bibtex">{`@article{karlovich2026agent,
+  title   = {Agent Memory Markets: A Verification Protocol
+             for Cross-Model Knowledge Transfer},
+  author  = {Karlovich, Ned},
   year    = {2026},
-  url     = {https://memorymarket.ai/paper},
+  url     = {https://impp.sh/paper},
   note    = {56-artifact corpus, cross-model experiments,
              Ed25519 verification pipeline}
 }`}</CodeBlock>

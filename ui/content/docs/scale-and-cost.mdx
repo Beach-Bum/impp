@@ -1,0 +1,58 @@
+---
+title: Scale & Cost Targets
+description: Performance targets, latency budgets, and cost expectations for the IMPP registry and verification pipeline.
+---
+
+# Scale & Cost Targets
+
+This page documents the performance and cost targets for IMPP's core operations. These are design goals for the current protocol version (0.5).
+
+## Verification Pipeline
+
+| Operation | Target Latency | Notes |
+|-----------|---------------|-------|
+| Schema validation | under 1s | Local, no network |
+| Steganography detection | under 30s | Statistical analysis on artifact content |
+| Overfit probe | under 60s | Requires held-out test set evaluation |
+| Negative transfer probe | under 120s | Attaches to baseline agent and benchmarks |
+| Freshness check | under 1s | Timestamp comparison |
+| Full pipeline (all probes) | under 5 min | End-to-end, including queue time |
+| Certificate issuance | under 2s | Ed25519 signing after probes pass |
+
+## Registry Operations
+
+| Operation | Target Latency | Notes |
+|-----------|---------------|-------|
+| `impp install` (single artifact) | under 10s | Download + local cache |
+| `impp search` | under 500ms | Full-text search across registry |
+| `impp verify --offline` | under 100ms | Local Ed25519 signature check |
+| `impp publish` (upload) | under 5s | Artifact upload before pipeline starts |
+
+## Artifact Size Limits
+
+| Constraint | Limit | Rationale |
+|------------|-------|-----------|
+| Max artifact content | 1 MB | Keeps verification fast, fits in model context |
+| Max token count | 128K tokens | Upper bound for largest model contexts |
+| Max sections per artifact | 256 | Practical limit for retrieval indexing |
+| Min content length | 100 tokens | Below this, the artifact has no meaningful knowledge |
+
+## Cost Model
+
+IMPP aims to keep verification costs low enough that publishing is accessible:
+
+| Tier | Monthly Limit | Verification Cost |
+|------|---------------|-------------------|
+| Free | 50 artifacts | $0 |
+| Publisher | Unlimited | Per-artifact fee (TBD) |
+| Enterprise | Custom | Volume pricing |
+
+The free tier covers individual researchers and small teams. Verification cost is dominated by the negative transfer probe (requires model inference).
+
+## Self-Hosting
+
+Organizations can run a private IMPP registry with their own verification infrastructure. Self-hosted registries have no artifact limits but require:
+
+- Compute for adversarial probes (GPU recommended for negative transfer)
+- Storage for artifact content and certificates
+- An Ed25519 key pair for certificate signing
