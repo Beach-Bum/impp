@@ -5,6 +5,11 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
+import { Badge } from '@/components/ui/badge';
+import { Kbd } from '@/components/ui/kbd';
+import { CodeBlock } from '@/components/ui/code-block';
 
 const devBlogs = [
   { title: 'Cross-Model Transfer Upgrade', date: '2026-04-09' },
@@ -20,10 +25,10 @@ const securityAdvisories = [
 ];
 
 const newPackages = [
-  { name: 'impp/defi-risk-assessment', version: 'v2.1', age: '2h ago' },
-  { name: 'impp/cybersec-threat-intel', version: 'v1.4', age: '1d ago' },
-  { name: 'impp/code-review-patterns', version: 'v0.9', age: '2d ago' },
-  { name: 'impp/medical-literature', version: 'v1.0', age: '4d ago' },
+  { name: 'impp/defi-risk-assessment', version: 'v2.1', age: '2h ago', domain: 'DeFi', trust: 94.2 },
+  { name: 'impp/cybersec-threat-intel', version: 'v1.4', age: '1d ago', domain: 'CyberSec', trust: 91.8 },
+  { name: 'impp/code-review-patterns', version: 'v0.9', age: '2d ago', domain: 'Engineering', trust: 87.3 },
+  { name: 'impp/medical-literature', version: 'v1.0', age: '4d ago', domain: 'Research', trust: 85.1 },
 ];
 
 const freshDocs = [
@@ -38,12 +43,17 @@ export default function LandingScreen() {
     <>
       {/* Search bar */}
       <div className="border-b bg-muted/40 py-3">
-        <div className="mx-auto flex max-w-5xl gap-0 px-5">
-          <Input
-            placeholder="Search packages..."
-            className="rounded-r-none text-lg"
-          />
-          <Button className="rounded-l-none" render={<Link href="/leaderboard" />}>
+        <div className="mx-auto flex max-w-5xl items-center gap-2 px-5">
+          <div className="relative flex-1">
+            <Input
+              placeholder="Search packages..."
+              className="text-lg pr-16"
+            />
+            <div className="absolute right-2 top-1/2 -translate-y-1/2">
+              <Kbd>⌘K</Kbd>
+            </div>
+          </div>
+          <Button render={<Link href="/leaderboard" />}>
             Search
           </Button>
         </div>
@@ -52,7 +62,16 @@ export default function LandingScreen() {
       {/* Tagline */}
       <div className="border-b bg-background py-2.5">
         <div className="mx-auto max-w-5xl px-5 text-sm text-muted-foreground">
-          <strong className="text-foreground">IMPP</strong> is the agent memory registry. It aggregates and publishes <strong className="text-foreground">56</strong> verified AI agent memory packages installable with <code className="rounded bg-muted px-1.5 py-0.5 text-xs">impp</code>.
+          <strong className="text-foreground">IMPP</strong> is the agent memory registry. It aggregates and publishes{' '}
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <strong className="cursor-help text-foreground underline decoration-dotted">56</strong>
+              </TooltipTrigger>
+              <TooltipContent>28 DeFi + 28 CyberSec artifacts</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          {' '}verified AI agent memory packages installable with <code className="rounded bg-muted px-1.5 py-0.5 text-xs">impp</code>.
         </div>
       </div>
 
@@ -66,29 +85,29 @@ export default function LandingScreen() {
             <p className="mb-2 text-sm text-muted-foreground">
               The <code className="rounded bg-muted px-1 py-0.5 text-xs">impp</code> CLI is at the root of your project, referencing your artifact dependencies. Add it to your agent&apos;s configuration.
             </p>
-            <pre className="mb-4 rounded border bg-muted/50 p-3 text-xs leading-relaxed">{`{
+            <CodeBlock language="json">{`{
   "require": {
     "impp/defi-risk-assessment": "^2.1",
     "impp/cybersec-threat-intel": "^1.4"
   }
-}`}</pre>
+}`}</CodeBlock>
 
             <h3 className="mb-1 mt-4 text-sm font-semibold">Install IMPP In Your Project</h3>
             <p className="mb-2 text-sm text-muted-foreground">Run this in your terminal to get the latest IMPP CLI.</p>
-            <pre className="mb-4 rounded border bg-muted/50 p-3 text-xs">$ pip install impp</pre>
+            <CodeBlock language="bash">pip install impp</CodeBlock>
 
             <h3 className="mb-1 mt-4 text-sm font-semibold">Install Dependencies</h3>
             <p className="mb-2 text-sm text-muted-foreground">Download the artifacts in your <code className="rounded bg-muted px-1 py-0.5 text-xs">impp.json</code>.</p>
-            <pre className="mb-4 rounded border bg-muted/50 p-3 text-xs">$ impp install</pre>
+            <CodeBlock language="bash">impp install</CodeBlock>
 
             <h3 className="mb-1 mt-4 text-sm font-semibold">Autoload Dependencies</h3>
             <p className="mb-2 text-sm text-muted-foreground">
               For best runtime integration, let IMPP handle artifact loading. All artifacts are accessible as <code className="rounded bg-muted px-1 py-0.5 text-xs">impp.artifacts.*</code>.
             </p>
-            <pre className="mb-4 rounded border bg-muted/50 p-3 text-xs">{`import impp
-artifacts = impp.autoload()`}</pre>
+            <CodeBlock language="python">{`import impp
+artifacts = impp.autoload()`}</CodeBlock>
 
-            <p className="text-sm text-muted-foreground">
+            <p className="mt-4 text-sm text-muted-foreground">
               For additional info, <Link href="/docs" className="underline hover:text-foreground">see the IMPP docs</Link> on the basics of installing and using artifacts.
             </p>
           </div>
@@ -100,25 +119,25 @@ artifacts = impp.autoload()`}</pre>
             <p className="mb-2 text-sm text-muted-foreground">
               Put a file named <code className="rounded bg-muted px-1 py-0.5 text-xs">impp.json</code> at the root of your package&apos;s repository, containing:
             </p>
-            <pre className="mb-4 rounded border bg-muted/50 p-3 text-xs leading-relaxed">{`{
+            <CodeBlock language="json">{`{
   "name": "your-org/your-artifact",
   "description": "A brief description",
   "version": "1.0.0",
   "domain": "defi",
   "require": {}
-}`}</pre>
+}`}</CodeBlock>
 
             <h3 className="mb-1 mt-4 text-sm font-semibold">Validate The File</h3>
             <p className="mb-2 text-sm text-muted-foreground">
               Run <code className="rounded bg-muted px-1 py-0.5 text-xs">impp verify</code> to check that your file is valid for submission.
             </p>
-            <pre className="mb-4 rounded border bg-muted/50 p-3 text-xs">$ impp verify --local my-artifact.json</pre>
+            <CodeBlock language="bash">impp verify --local my-artifact.json</CodeBlock>
 
             <h3 className="mb-1 mt-4 text-sm font-semibold">Submit The File</h3>
             <p className="mb-2 text-sm text-muted-foreground">
               Use <code className="rounded bg-muted px-1 py-0.5 text-xs">impp publish</code> to submit your package to the registry.
             </p>
-            <pre className="mb-4 rounded border bg-muted/50 p-3 text-xs">$ impp publish my-artifact.json</pre>
+            <CodeBlock language="bash">impp publish my-artifact.json</CodeBlock>
 
             <h3 className="mb-1 mt-4 text-sm font-semibold">Manage Private Packages</h3>
             <p className="mb-2 text-sm text-muted-foreground">
@@ -193,17 +212,42 @@ artifacts = impp.autoload()`}</pre>
 
           <div>
             <h3 className="mb-1 text-lg font-light">New packages <span className="text-xs text-muted-foreground">56 verified memory packages</span></h3>
-            <Table>
-              <TableBody>
-                {newPackages.map((item) => (
-                  <TableRow key={item.name}>
-                    <TableCell><Link href="/leaderboard" className="hover:underline">{item.name}</Link></TableCell>
-                    <TableCell className="text-xs">{item.version}</TableCell>
-                    <TableCell className="text-right text-xs text-muted-foreground">{item.age}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <TooltipProvider>
+              <Table>
+                <TableBody>
+                  {newPackages.map((item) => (
+                    <TableRow key={item.name}>
+                      <TableCell>
+                        <HoverCard>
+                          <HoverCardTrigger>
+                            <Link href="/leaderboard" className="hover:underline">{item.name}</Link>
+                          </HoverCardTrigger>
+                          <HoverCardContent className="w-64">
+                            <div className="space-y-1">
+                              <p className="text-sm font-semibold">{item.name}</p>
+                              <div className="flex gap-1">
+                                <Badge variant="outline">{item.domain}</Badge>
+                                <Badge variant="secondary">{item.version}</Badge>
+                              </div>
+                              <div className="flex items-center gap-1 pt-1">
+                                <Tooltip>
+                                  <TooltipTrigger>
+                                    <span className="text-xs text-muted-foreground">Trust: {item.trust}/100</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>Composite score from 5 adversarial probes</TooltipContent>
+                                </Tooltip>
+                              </div>
+                            </div>
+                          </HoverCardContent>
+                        </HoverCard>
+                      </TableCell>
+                      <TableCell className="text-xs">{item.version}</TableCell>
+                      <TableCell className="text-right text-xs text-muted-foreground">{item.age}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TooltipProvider>
           </div>
 
           <div>

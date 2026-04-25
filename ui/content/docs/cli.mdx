@@ -11,6 +11,15 @@ Install the `impp` CLI via pip. All commands operate on local artifact files or 
 pip install impp
 ```
 
+<Tabs defaultValue="verify">
+  <TabsList>
+    <TabsTrigger value="verify">verify</TabsTrigger>
+    <TabsTrigger value="search">search</TabsTrigger>
+    <TabsTrigger value="publish">publish</TabsTrigger>
+    <TabsTrigger value="attach">attach</TabsTrigger>
+  </TabsList>
+
+  <TabsContent value="verify">
 ## impp verify
 
 Verifies an artifact's Ed25519 certificate and runs the local integrity checks. Exits non-zero if verification fails.
@@ -26,6 +35,12 @@ $ impp verify defi-risk-memory.json --pubkey registry.pub
 ```
 
 **Verify against live registry (re-checks certificate freshness):**
+
+<Alert>
+  <AlertTitle>Network required</AlertTitle>
+  <AlertDescription>The --remote flag requires an active network connection to the IMPP registry. Use --offline for air-gapped environments.</AlertDescription>
+</Alert>
+
 ```bash
 $ impp verify defi-risk-memory.json --remote
 ```
@@ -39,7 +54,9 @@ $ impp verify defi-risk-memory.json --remote
 | `--offline` | Use bundled public key, no network |
 | `--json` | Output results as JSON |
 | `--quiet` | Suppress output, exit code only |
+  </TabsContent>
 
+  <TabsContent value="search">
 ## impp search
 
 Queries the IMPP registry. Results are sorted by trust score descending.
@@ -68,7 +85,9 @@ $ impp search "contract review" --json
 | `--json` | Output as JSON array |
 | `--limit <n>` | Max results (default: 20) |
 | `--sort <field>` | Sort by field (trust, date, name) |
+  </TabsContent>
 
+  <TabsContent value="publish">
 ## impp publish
 
 Submits an artifact to the registry. IMPP runs adversarial probes and, if they pass, issues a signed Ed25519 certificate. The artifact becomes publicly searchable once the certificate is issued.
@@ -97,7 +116,9 @@ $ impp publish my-artifact.json --dry-run
 | `--dry-run` | Run verification locally without submitting |
 | `--description <text>` | Short description of the artifact |
 | `--version <semver>` | Version string (default: v1.0) |
+  </TabsContent>
 
+  <TabsContent value="attach">
 ## impp attach
 
 Attaches a verified artifact to a named agent profile. Records the attachment in the local manifest and sets the rollback threshold.
@@ -125,3 +146,5 @@ $ impp attach --list --agent my-agent
 | `--rollback-threshold <n>` | Auto-detach after n negative transfer events |
 | `--list` | List all attached artifacts for an agent |
 | `--detach` | Remove an attached artifact |
+  </TabsContent>
+</Tabs>
