@@ -1,0 +1,63 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# Databases
+*.db
+*.sqlite
+
+# Testing
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Vercel
+.vercel/
+
+# Node
+node_modules/
+
+# Data (private research data)
+data/raw/
+data/private/
+data/labels/
+data/poisoned/
+data/buyer_eval/
+
+# Experiment runs and logs
+runs/
+wandb/
+mlruns/
+logs/
+
+# Notebooks
+*.ipynb_checkpoints/
+
+# Local tooling
+.gstack/
+
+# Build artifacts
+ui/.next/
+ui/out/
+ui/tsconfig.tsbuildinfo

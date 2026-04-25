@@ -1,0 +1,12 @@
+{
+  "title": "Documentation",
+  "pages": [
+    "index",
+    "quickstart",
+    "publishing",
+    "cli",
+    "verification",
+    "api",
+    "sdk"
+  ]
+}

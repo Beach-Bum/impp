@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use IMPP in your research, please cite it as below."
+title: "Agent Memory Markets: A Verification Protocol for Cross-Model Knowledge Transfer"
+type: article
+authors:
+  - family-names: "Karlovich"
+    given-names: "Ned"
+    orcid: ""
+date-released: "2026-04-01"
+url: "https://impp.sh"
+repository-code: "https://github.com/Beach-Bum/impp"
+license: "Apache-2.0"
+keywords:
+  - agent memory
+  - knowledge transfer
+  - verification protocol
+  - trust scoring
+  - adversarial probes
+  - AI safety
