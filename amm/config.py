@@ -45,7 +45,9 @@ TRUST_WEIGHTS = {
 
 # API server
 API_BASE_URL = os.environ.get("AMM_API_URL", "https://api.memorymarket.ai")
-JWT_SECRET = os.environ.get("AMM_JWT_SECRET", "dev-secret-change-me")
+JWT_SECRET = os.environ.get("AMM_JWT_SECRET")
+if not JWT_SECRET:
+    raise RuntimeError("AMM_JWT_SECRET environment variable must be set")
 JWT_ALGORITHM = "HS256"
 FREE_TIER_MONTHLY_LIMIT = 50
 
