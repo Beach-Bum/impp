@@ -108,11 +108,17 @@ An open package registry for verified AI agent memory artifacts — modeled afte
 ## What's left to build
 
 ### High priority
-- **Seed Supabase** with initial data (port seed_marketplace.py)
-- **Set Vercel env vars**: `NEXT_PUBLIC_API_URL` pointing to Railway
-- **Run migration SQL** in Supabase dashboard
+- **Seed Supabase**: SUPABASE_URL and SUPABASE_SERVICE_KEY are not set locally. seed_marketplace.py still uses SQLite — it needs to be adapted to use supabase-py or run via Railway where those env vars are set. To run: set `SUPABASE_URL=https://wfwhttevczinakrbvswr.supabase.co` and `SUPABASE_SERVICE_KEY=<service_role_key>` then run `python seed_marketplace.py`. The migration SQL still needs to be run in the Supabase dashboard first.
+- **Run migration SQL** in Supabase dashboard: `supabase/migrations/20260424000000_initial_schema.sql`
 - **More experiment trials**: need Anthropic API credits for statistical power
-- **Wire Compare/Transactions/Payments pages to real API** (still mock data)
+- **Add /api/transactions endpoint** to api_server.py (currently falls back to mock data in UI)
+
+### Completed 2026-04-25
+- ✅ `NEXT_PUBLIC_API_URL` set on Vercel production → `https://memory-market-api-production.up.railway.app`
+- ✅ CompareScreen, TransactionsScreen, PaymentsScreen wired to live API with mock fallback
+- ✅ Fumadocs /docs 500 fixed (fumadocs-mdx v11 returns files as function; normalized for fumadocs-core v15)
+- ✅ Old design files (DESIGN_TRUTH.html, landing-packagist*.html, impp-greens.css) confirmed removed
+- ✅ Build passes (23 static pages, /docs dynamic)
 
 ### Medium priority
 - **Baseline comparisons**: show artifacts beat few-shot exemplars
@@ -124,7 +130,6 @@ An open package registry for verified AI agent memory artifacts — modeled afte
 - **Red-team adversarial framework**: test against MINJA, AgentPoison, BackdoorAgent
 - **Economic model simulation**: run pricing/slashing with real data
 - **Paper submission**: final proofread, compile LaTeX, ArXiv upload
-- **Clean up old files**: public/DESIGN_TRUTH.html, public/landing-packagist*.html, public/impp-greens.css
 
 ## Key decisions
 
