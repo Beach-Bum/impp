@@ -38,7 +38,7 @@ Thumbs.db
 # Node
 node_modules/
 
-# Data (private research data)
+# Data (private research data stays out of public repo)
 data/raw/
 data/private/
 data/labels/
@@ -51,11 +51,15 @@ wandb/
 mlruns/
 logs/
 
-# Notebooks
+# Notebooks (may contain paths, API calls, labels)
 *.ipynb_checkpoints/
 
-# Local tooling
+# gstack (local tooling)
 .gstack/
+
+# Internal docs (contain infrastructure URLs, strategy)
+PROJECT_MEMORY.md
+DESIGN.md
 
 # Build artifacts
 ui/.next/
