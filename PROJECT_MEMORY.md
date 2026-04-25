@@ -107,18 +107,35 @@ An open package registry for verified AI agent memory artifacts — modeled afte
 
 ## What's left to build
 
+### Next major deliverable: Import Pipeline + Staged Trust
+- **Spec**: `spec/import-pipeline.md` — full spec for bootstrapping registry with real artifacts
+- **Staged trust**: Imported → Parsed → Evaluated → Verified → Curated (not everything is "verified" on import)
+- **Sources**: GitHub (priority 1), HuggingFace, academic repos, awesome-lists
+- **Pipeline**: discover → normalize → fingerprint → evaluate → sign → publish
+- **Public framing**: "247 artifacts: 18 verified · 47 evaluated · 183 parsed" (honest counts)
+- **Phase 1**: Schema + GitHub adapter + trust state badges in UI
+- **Phase 2**: Evaluation pipeline wired to existing verification engine
+- **Phase 3**: HuggingFace + academic adapters + manual curation
+- **Phase 4**: Scheduled crawls, cross-source dedup, community submissions
+
 ### High priority
-- **Seed Supabase**: SUPABASE_URL and SUPABASE_SERVICE_KEY are not set locally. seed_marketplace.py still uses SQLite — it needs to be adapted to use supabase-py or run via Railway where those env vars are set. To run: set `SUPABASE_URL=https://wfwhttevczinakrbvswr.supabase.co` and `SUPABASE_SERVICE_KEY=<service_role_key>` then run `python seed_marketplace.py`. The migration SQL still needs to be run in the Supabase dashboard first.
+- **Seed Supabase**: SUPABASE_URL and SUPABASE_SERVICE_KEY not set locally. Need migration SQL first, then seed.
 - **Run migration SQL** in Supabase dashboard: `supabase/migrations/20260424000000_initial_schema.sql`
+- **DB schema update**: Add trust_state, source columns, import_runs table (see spec)
 - **More experiment trials**: need Anthropic API credits for statistical power
 - **Add /api/transactions endpoint** to api_server.py (currently falls back to mock data in UI)
 
 ### Completed 2026-04-25
-- ✅ `NEXT_PUBLIC_API_URL` set on Vercel production → `https://memory-market-api-production.up.railway.app`
+- ✅ Full shadcn/ui migration from Primer + styled-components
+- ✅ CodeBlock component with copy-to-clipboard across all screens
+- ✅ Accordion, Tooltip, Breadcrumb, HoverCard, AlertDialog, Progress, Collapsible enrichment
+- ✅ Fumadocs MDX overrides (pre→CodeBlock, Accordion, Alert, Tabs, Card, Badge)
+- ✅ Enriched quickstart.mdx + cli.mdx with interactive components
+- ✅ `NEXT_PUBLIC_API_URL` set on Vercel production → Railway
 - ✅ CompareScreen, TransactionsScreen, PaymentsScreen wired to live API with mock fallback
-- ✅ Fumadocs /docs 500 fixed (fumadocs-mdx v11 returns files as function; normalized for fumadocs-core v15)
-- ✅ Old design files (DESIGN_TRUTH.html, landing-packagist*.html, impp-greens.css) confirmed removed
-- ✅ Build passes (23 static pages, /docs dynamic)
+- ✅ Fumadocs /docs 500 fixed
+- ✅ Old design files confirmed removed
+- ✅ Build passes (23+ static pages, /docs dynamic)
 
 ### Medium priority
 - **Baseline comparisons**: show artifacts beat few-shot exemplars
