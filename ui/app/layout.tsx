@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import { Geist, Geist_Mono } from 'next/font/google';
+import { RootProvider } from 'fumadocs-ui/provider/next';
 import { cn } from '@/lib/utils';
 import './globals.css';
 import AppShell from '@/components/AppShell';
@@ -22,9 +23,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={cn(geist.variable, geistMono.variable)}>
       <body className="font-sans antialiased">
-        <PrivyWrapper>
-          <AppShell>{children}</AppShell>
-        </PrivyWrapper>
+        <RootProvider>
+          <PrivyWrapper>
+            <AppShell>{children}</AppShell>
+          </PrivyWrapper>
+        </RootProvider>
       </body>
     </html>
   );
