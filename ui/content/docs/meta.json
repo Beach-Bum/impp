@@ -4,8 +4,12 @@
     "index",
     "quickstart",
     "publishing",
+    "attach-modes",
     "cli",
     "verification",
+    "revocation",
+    "privacy-and-licensing",
+    "scale-and-cost",
     "api",
     "sdk"
   ]

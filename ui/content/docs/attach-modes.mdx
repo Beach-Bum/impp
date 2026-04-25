@@ -1,0 +1,83 @@
+---
+title: Attach Modes
+description: How agents consume IMPP artifacts at runtime. Covers the four attach modes and their tradeoffs.
+---
+
+# Attach Modes
+
+When an agent installs an IMPP artifact, it needs a strategy for incorporating that knowledge at runtime. IMPP defines four **attach modes** that control how artifact content is delivered to the receiving model.
+
+## Overview
+
+| Mode | How It Works | Best For |
+|------|-------------|----------|
+| `prepend_policy` | Artifact content is prepended to the system prompt | Small artifacts (under 4K tokens), persistent context |
+| `few_shot_examples` | Artifact sections are injected as few-shot examples | Task-specific calibration, pattern demonstration |
+| `retrieval_only` | Artifact content is indexed and retrieved on demand | Large artifacts, selective knowledge access |
+| `tool_policy` | Artifact content is exposed as tool/function descriptions | Agentic workflows, structured decision-making |
+
+## `prepend_policy`
+
+The simplest mode. The full artifact content is prepended to the agent's system prompt on every invocation.
+
+```python
+import impp
+
+artifact = impp.load("defi-risk-assessment@v2.1")
+artifact.attach(mode="prepend_policy")
+```
+
+**Tradeoffs:**
+- Lowest latency (no retrieval step)
+- Uses context window on every call, even when irrelevant
+- Best for small, always-relevant artifacts (risk policies, compliance rules)
+
+## `few_shot_examples`
+
+Artifact sections are formatted as input/output pairs and injected into the prompt as few-shot demonstrations.
+
+```python
+artifact.attach(mode="few_shot_examples", max_examples=5)
+```
+
+**Tradeoffs:**
+- Strong calibration effect — the model mimics demonstrated patterns
+- Requires artifacts with clearly separable sections
+- Token cost scales with example count
+
+## `retrieval_only`
+
+The artifact content is indexed locally. At runtime, the agent's query is matched against artifact sections, and only relevant sections are injected into context.
+
+```python
+artifact.attach(mode="retrieval_only", top_k=3)
+```
+
+**Tradeoffs:**
+- Scales to large artifacts without exhausting context
+- Adds retrieval latency (~50-200ms depending on index size)
+- Relevance depends on query quality
+
+## `tool_policy`
+
+Artifact knowledge is exposed as tool descriptions or function schemas. The model decides when to invoke the knowledge based on task context.
+
+```python
+artifact.attach(mode="tool_policy")
+```
+
+**Tradeoffs:**
+- Most flexible — model decides when knowledge is relevant
+- Requires a model that supports tool/function calling
+- Higher autonomy, lower predictability
+
+## Choosing a Mode
+
+The right mode depends on artifact size, how often the knowledge is relevant, and the agent's architecture:
+
+- **Always relevant + small** → `prepend_policy`
+- **Calibration / demonstration** → `few_shot_examples`
+- **Large reference corpus** → `retrieval_only`
+- **Agentic decision-making** → `tool_policy`
+
+Modes can be changed at runtime without re-publishing. The artifact content is the same — only the delivery strategy differs.
