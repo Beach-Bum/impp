@@ -1,0 +1,12 @@
+experiment,domain,trial,model_seller,model_buyer,item_count,expert_avg_error,novice_avg_error,buyer_avg_error,transfer_efficiency_pct
+same_model,defi,1,claude-sonnet-4,claude-sonnet-4,8,4.5,7.0,3.0,57.14
+same_model,defi,2,claude-sonnet-4,claude-sonnet-4,8,3.0,7.375,4.625,37.29
+same_model,defi,3,claude-sonnet-4,claude-sonnet-4,8,2.5,7.875,2.125,73.02
+same_model,cybersec,1,claude-sonnet-4,claude-sonnet-4,8,2.75,18.125,3.625,80.00
+same_model,cybersec,2,claude-sonnet-4,claude-sonnet-4,8,2.75,17.75,3.75,78.87
+same_model,cybersec,3,claude-sonnet-4,claude-sonnet-4,8,6.125,18.125,6.25,65.52
+cross_model,defi,1,claude-sonnet-4,gpt-4o-manual,32,,,5.19
+cross_model_full,defi,1,claude-sonnet-4,gpt-4o-manual,32,,,5.19
+cross_model_sanitized,defi,1,claude-sonnet-4,gpt-4o-manual,32,,,6.03
+cross_model_novice,defi,1,,gpt-4o-manual,32,,,6.00
+poisoned,defi,1,claude-sonnet-4,claude-sonnet-4,8,,7.375,10.25,-39.00
