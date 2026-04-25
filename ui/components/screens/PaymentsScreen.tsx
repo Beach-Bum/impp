@@ -1,13 +1,22 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { PAYMENT_RAILS, getUserProfile } from '@/lib/directory';
+import { Spinner } from '@/components/ui/spinner';
+import { fetchUserProfile, type UserProfileRecord } from '@/lib/api';
+import { PAYMENT_RAILS } from '@/lib/directory';
 
 export default function PaymentsScreen() {
-  const user = getUserProfile();
+  const [user, setUser] = useState<UserProfileRecord | null>(null);
+
+  useEffect(() => {
+    fetchUserProfile().then(setUser);
+  }, []);
+
+  if (!user) return <div className="mx-auto max-w-5xl px-5 py-8"><Spinner /></div>;
 
   return (
     <div className="mx-auto max-w-5xl px-5 py-8">

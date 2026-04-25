@@ -78,3 +78,74 @@ export async function fetchHealth(): Promise<HealthResponse> {
   if (!res.ok) throw new Error(`API error: ${res.status}`);
   return res.json();
 }
+
+export type TransactionRecord = {
+  id: string;
+  assetId: string;
+  sellerId: string;
+  buyerId: string;
+  amountUsd: number;
+  rail: string;
+  status: string;
+  createdAt: string;
+  notes: string;
+};
+
+const MOCK_TRANSACTIONS: TransactionRecord[] = [
+  { id: 'txn-1001', assetId: 'demo-3', sellerId: 'sentinel-labs', buyerId: 'founder', amountUsd: 12, rail: 'USDC Escrow', status: 'Released', createdAt: '2026-04-24T09:12:00Z', notes: 'Fraud escalation pack attached to Support-17 after sandbox pass.' },
+  { id: 'txn-1002', assetId: 'demo-2', sellerId: 'neuroforge', buyerId: 'founder', amountUsd: 8, rail: 'x402 Agentic Wallet', status: 'Metered', createdAt: '2026-04-24T10:48:00Z', notes: 'Per-request scoring attachment with spend cap and signed capability token.' },
+  { id: 'txn-1003', assetId: 'demo-5', sellerId: 'cipher-collective', buyerId: 'founder', amountUsd: 3.5, rail: 'USDC Escrow', status: 'Held', createdAt: '2026-04-24T11:30:00Z', notes: 'Held pending additional adversarial review because seller is agent-wallet tier.' },
+];
+
+export async function fetchTransactions(): Promise<TransactionRecord[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/transactions`);
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const data = await res.json();
+    return data.transactions;
+  } catch {
+    return MOCK_TRANSACTIONS;
+  }
+}
+
+export type UserProfileRecord = {
+  id: string;
+  displayName: string;
+  orgName: string;
+  walletAddress: string;
+  defaultPaymentRail: string;
+  spendingPolicy: string;
+  moderationPolicy: string;
+  purchaseApprovals: string[];
+};
+
+const MOCK_USER_PROFILE: UserProfileRecord = {
+  id: 'founder',
+  displayName: 'Market Operator',
+  orgName: 'AMM Labs',
+  walletAddress: '0xA2A...402',
+  defaultPaymentRail: 'USDC on Base with escrow release',
+  spendingPolicy: 'Auto-buy under $2,000 for low-risk verified sellers. Human approval above medium risk.',
+  moderationPolicy: 'Only verified sellers can list. Agent wallets require stake, attestation keys, and rate limits.',
+  purchaseApprovals: ['Low risk / verified seller', 'USDC escrow', 'No raw payload until post-purchase'],
+};
+
+export async function fetchUserProfile(id = 'founder'): Promise<UserProfileRecord> {
+  try {
+    const res = await fetch(`${API_BASE}/api/identity/${id}`);
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
+    const data = await res.json();
+    return {
+      id: data.id,
+      displayName: data.display_name || 'Unknown',
+      orgName: data.org_name || '',
+      walletAddress: data.wallet_address || '—',
+      defaultPaymentRail: data.default_payment_rail || 'USDC',
+      spendingPolicy: data.spending_policy || '',
+      moderationPolicy: data.moderation_policy || '',
+      purchaseApprovals: data.purchase_approvals || [],
+    };
+  } catch {
+    return MOCK_USER_PROFILE;
+  }
+}
