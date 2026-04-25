@@ -1,12 +1,10 @@
-'use client';
-
-import { Label } from '@primer/react';
+import { Badge } from '@/components/ui/badge';
 
 export default function AIExplainabilityHint({ summary }: { summary: string }) {
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-      <Label variant="accent">AI</Label>
-      <span style={{ color: 'var(--fgColor-muted, #656d76)', fontSize: '0.85rem' }}>{summary}</span>
+    <div className="inline-flex items-center gap-2">
+      <Badge variant="secondary">AI</Badge>
+      <span className="text-sm text-muted-foreground">{summary}</span>
     </div>
   );
 }

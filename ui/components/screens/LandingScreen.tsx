@@ -1,7 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { Button, Heading, Label } from '@primer/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { RippleButton, RippleButtonRipples } from '@/components/animate-ui/components/buttons/ripple';
 
 const trustPoints = [
   'Verified sellers',
@@ -35,63 +38,82 @@ const businessModel = [
 
 export default function LandingScreen() {
   return (
-    <div className="amm-page">
-      <div className="amm-hero">
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <div className="grid gap-8 lg:grid-cols-2">
         <div>
-          <Label variant="accent" style={{ marginBottom: "8px" }}>memorymarket.ai</Label>
-          <Heading as="h1" style={{ fontSize: "40px", lineHeight: 1.1, marginBottom: "16px" }}>
+          <Badge className="mb-2">memorymarket.ai</Badge>
+          <h1 className="mb-4 text-4xl font-light leading-tight">
             The marketplace for verified agent memory.
-          </Heading>
-          <p className="amm-screen-subtitle" style={{ fontSize: '1.1rem', maxWidth: 760 }}>
+          </h1>
+          <p className="mb-4 text-lg text-muted-foreground" style={{ maxWidth: 760 }}>
             Buy, compare, audit, and deploy verified memory artifacts for AI agents with seller verification, sandbox testing, and controlled payment rails.
           </p>
-          <div className="amm-action-row" style={{ marginTop: '1rem', flexWrap: 'wrap' }}>
-            <Button as={Link} href="/market">Browse market</Button>
-            <Button as={Link} href="/signup" variant="invisible">Create account</Button>
-            <Button as={Link} href="/sandbox" variant="invisible">Open sandbox</Button>
+          <div className="flex flex-wrap gap-2">
+            <Link href="/leaderboard">
+              <RippleButton>
+                Browse market
+                <RippleButtonRipples />
+              </RippleButton>
+            </Link>
+            <Link href="/signup">
+              <RippleButton variant="ghost">
+                Create account
+                <RippleButtonRipples />
+              </RippleButton>
+            </Link>
+            <Link href="/sandbox">
+              <RippleButton variant="ghost">
+                Open sandbox
+                <RippleButtonRipples />
+              </RippleButton>
+            </Link>
           </div>
         </div>
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '8px', padding: '16px', backgroundColor: 'var(--bgColor-muted, #f6f8fa)' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Why buyers trust it</Heading>
-          <div className="amm-inline-tags" style={{ marginBottom: '1rem' }}>
-            <Label variant="success">Verified</Label>
-            <Label variant="accent">Sandboxed</Label>
-            <Label variant="secondary">Escrow-ready</Label>
-          </div>
-          <div className="amm-card-stack">
-            {trustPoints.map((point) => (
-              <span key={point} className="amm-subtle">• {point}</span>
-            ))}
-          </div>
-        </div>
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Why buyers trust it</CardTitle></CardHeader>
+          <CardContent>
+            <div className="mb-3 flex flex-wrap gap-1">
+              <Badge>Verified</Badge>
+              <Badge variant="secondary">Sandboxed</Badge>
+              <Badge variant="outline">Escrow-ready</Badge>
+            </div>
+            <div className="space-y-1.5 text-sm text-muted-foreground">
+              {trustPoints.map((point) => (
+                <div key={point}>{point}</div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="amm-grid amm-grid-3col" style={{ marginTop: '2rem' }}>
+      <div className="mt-8 grid gap-6 sm:grid-cols-3">
         {howItWorks.map((item) => (
-          <div key={item.title} style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-            <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>{item.title}</Heading>
-            <p style={{ margin: 0 }}>{item.body}</p>
-          </div>
+          <Card key={item.title}>
+            <CardHeader><CardTitle className="text-xl font-light">{item.title}</CardTitle></CardHeader>
+            <CardContent><p className="text-sm">{item.body}</p></CardContent>
+          </Card>
         ))}
       </div>
 
-      <div className="amm-grid amm-grid-2col" style={{ marginTop: '2rem' }}>
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>How Memory Market makes money</Heading>
-          <div className="amm-card-stack">
-            {businessModel.map((line) => (
-              <span key={line} className="amm-subtle">• {line}</span>
-            ))}
-          </div>
-        </div>
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Get started</Heading>
-          <div className="amm-card-stack">
-            <Button as={Link} href="/waitlist">Join waitlist</Button>
-            <Button as={Link} href="/seller-apply" variant="invisible">Request seller access</Button>
-            <Button as={Link} href="/payments" variant="invisible">View payment rails</Button>
-          </div>
-        </div>
+      <div className="mt-8 grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">How Memory Market makes money</CardTitle></CardHeader>
+          <CardContent>
+            <div className="space-y-1.5 text-sm text-muted-foreground">
+              {businessModel.map((line) => (
+                <div key={line}>{line}</div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Get started</CardTitle></CardHeader>
+          <CardContent className="flex flex-col gap-2">
+            <Button render={<Link href="/waitlist" />}>Join waitlist</Button>
+            <Button variant="ghost" render={<Link href="/seller-apply" />}>Request seller access</Button>
+            <Button variant="ghost" render={<Link href="/preview/payments" />}>View payment rails</Button>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

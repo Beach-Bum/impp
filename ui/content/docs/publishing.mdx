@@ -1,0 +1,108 @@
+---
+title: Publishing Guide
+description: How to publish a verified memory artifact to the IMPP registry. Covers the artifact schema, submission workflow, and versioning.
+---
+
+# Publishing Guide
+
+Follow these steps to go from raw agent experience to a published, verified artifact.
+
+## Workflow
+
+1. Export your agent's memory using the IMPP artifact schema
+2. Run local verification to catch issues before submission
+3. Choose a domain tag that reflects the artifact's subject area
+4. Submit with `impp publish` — the probe pipeline runs server-side
+5. Wait for the certificate (typically under 5 minutes)
+6. The artifact is now publicly searchable with a trust score and signed certificate
+
+## Artifact Schema
+
+The minimal artifact schema:
+
+```json
+{
+  "impp_version": "0.5",
+  "name": "my-artifact",
+  "version": "v1.0",
+  "domain": "engineering",
+  "description": "Short description of what this memory encodes",
+  "embeddings": [],
+  "metadata": {
+    "source_model": "claude-sonnet-4",
+    "created_at": "2026-04-25T00:00:00Z"
+  }
+}
+```
+
+### Required Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `impp_version` | string | Protocol version (currently `"0.5"`) |
+| `name` | string | Artifact name, lowercase with hyphens |
+| `version` | string | Semantic version (e.g., `"v1.0"`) |
+| `domain` | string | Domain tag: `defi`, `cybersec`, `legal`, `engineering`, etc. |
+| `embeddings` | array | Vector embeddings representing the memory |
+| `metadata.source_model` | string | Model that generated the artifact |
+| `metadata.created_at` | string | ISO 8601 timestamp |
+
+### Optional Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `description` | string | Human-readable description |
+| `metadata.training_data` | string | Description of training data sources |
+| `metadata.embedding_dim` | number | Embedding dimension size |
+| `tags` | array | Additional searchable tags |
+
+## Pre-Publish Check
+
+Run a dry-run to catch issues locally before submitting:
+
+```bash
+$ impp publish my-artifact.json --dry-run
+✓ Schema valid
+✓ Embeddings: 768-dim, 1024 vectors
+✓ Metadata complete
+⚠ No description provided (recommended)
+Ready to publish
+```
+
+## Submit
+
+```bash
+$ impp publish my-artifact.json --domain defi
+Uploading... done
+Running verification pipeline...
+  ✓ Schema integrity
+  ✓ Embedding steganography check
+  ✓ Overfit probe
+  ✓ Negative transfer probe
+  ✓ Freshness check
+
+Certificate issued:
+  Trust score: 87.3
+  Expires: 2026-07-25
+  ID: defi/my-artifact@v1.0
+```
+
+## Versioning
+
+Use semantic versioning:
+
+- **Major** — Breaking changes to the embedding space (different dimensions, incompatible format)
+- **Minor** — Additional training data, metadata corrections, improved quality
+- **Patch** — Metadata-only fixes
+
+A new certificate is issued for each published version. Previous versions remain accessible and independently verifiable.
+
+## Updating an Artifact
+
+Publish a new version with an incremented version number:
+
+```bash
+$ impp publish my-artifact-v2.json --domain defi --version v2.0
+```
+
+The registry maintains the full version history. Agents attached to `v1.x` are not automatically upgraded.

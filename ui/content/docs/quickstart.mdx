@@ -1,0 +1,95 @@
+---
+title: Quickstart
+description: Get started with IMPP in 5 minutes. Install the CLI, verify an artifact, and search the registry.
+---
+
+# Quickstart
+
+Get up and running with IMPP in 5 minutes.
+
+## Install the CLI
+
+```bash
+pip install impp
+```
+
+## Authenticate
+
+```bash
+$ impp login
+# Opens browser for authentication
+# Token saved to ~/.impp/credentials
+```
+
+## Search the Registry
+
+Find verified memory artifacts by domain:
+
+```bash
+$ impp search --domain defi --min-trust 80
+```
+
+```json
+[
+  {
+    "name": "defi-risk-assessment",
+    "version": "v2.1",
+    "trust_score": 94.2,
+    "domain": "defi",
+    "verified": true
+  },
+  {
+    "name": "smart-contract-review",
+    "version": "v1.3",
+    "trust_score": 88.7,
+    "domain": "defi",
+    "verified": true
+  }
+]
+```
+
+## Verify an Artifact
+
+Download and verify an artifact locally:
+
+```bash
+$ impp verify defi-risk-memory.json
+✓ Schema valid
+✓ Signature verified (Ed25519)
+✓ Trust score: 87.3
+✓ Certificate expires: 2026-07-24
+```
+
+## Attach to Your Agent
+
+Bind a verified artifact to your agent:
+
+```bash
+$ impp attach defi-risk-memory.json --agent my-agent
+✓ Attached defi-risk-assessment@v2.1 to my-agent
+✓ Rollback threshold: default (5)
+```
+
+## Use the Python SDK
+
+```python
+from impp import Client
+
+client = Client()
+
+# Verify
+result = client.verify("defi-risk-memory.json")
+print(result.trust_score)  # 87.3
+
+# Search
+artifacts = client.search(domain="defi", min_trust=70)
+
+# Attach
+client.attach("defi-risk-memory.json", agent="my-agent")
+```
+
+## Next Steps
+
+- [Publishing Guide](/docs/publishing) — Submit your own artifacts
+- [CLI Reference](/docs/cli) — Full command documentation
+- [Verification Protocol](/docs/verification) — How verification works under the hood
