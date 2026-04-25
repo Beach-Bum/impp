@@ -26,10 +26,10 @@ const securityAdvisories = [
 ];
 
 const newPackages = [
-  { name: 'impp/defi-risk-assessment', version: 'v2.1', age: '2h ago', domain: 'DeFi', trust: 94.2 },
-  { name: 'impp/cybersec-threat-intel', version: 'v1.4', age: '1d ago', domain: 'CyberSec', trust: 91.8 },
-  { name: 'impp/code-review-patterns', version: 'v0.9', age: '2d ago', domain: 'Engineering', trust: 87.3 },
-  { name: 'impp/medical-literature', version: 'v1.0', age: '4d ago', domain: 'Research', trust: 85.1 },
+  { name: 'impp/defi-risk-assessment', slug: 'impp-defi-risk-assessment', version: 'v2.1', age: '2h ago', domain: 'DeFi', trust: 94.2 },
+  { name: 'impp/cybersec-threat-intel', slug: 'impp-cybersec-threat-intel', version: 'v1.4', age: '1d ago', domain: 'CyberSec', trust: 91.8 },
+  { name: 'impp/code-review-patterns', slug: 'impp-code-review-patterns', version: 'v0.9', age: '2d ago', domain: 'Engineering', trust: 87.3 },
+  { name: 'impp/medical-literature', slug: 'impp-medical-literature', version: 'v1.0', age: '4d ago', domain: 'Research', trust: 85.1 },
 ];
 
 const freshDocs = [
@@ -223,7 +223,7 @@ artifacts = impp.autoload()`}</CodeBlock>
                       <TableCell>
                         <HoverCard>
                           <HoverCardTrigger>
-                            <Link href="/leaderboard" className="hover:underline">{item.name}</Link>
+                            <Link href={`/package/${item.slug}`} className="hover:underline">{item.name}</Link>
                           </HoverCardTrigger>
                           <HoverCardContent className="w-64">
                             <div className="space-y-1">
