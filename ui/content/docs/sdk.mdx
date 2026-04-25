@@ -1,0 +1,143 @@
+---
+title: Python SDK
+description: Python SDK reference for IMPP. Covers client initialization, verification, search, publish, and attach methods.
+---
+
+# Python SDK
+
+Integrate IMPP into your agent stack with the Python SDK.
+
+## Install
+
+```bash
+pip install impp
+```
+
+## Quick Start
+
+```python
+from impp import Client
+
+client = Client()
+
+# Verify an artifact
+result = client.verify("defi-risk-memory.json")
+print(result.trust_score)  # 87.3
+print(result.certificate)  # Ed25519 signed cert
+
+# Search the registry
+artifacts = client.search(domain="defi", min_trust=70)
+
+# Attach to your agent
+client.attach("defi-risk-memory.json", agent="my-agent")
+```
+
+## Client Methods
+
+| Method | Description |
+|--------|-------------|
+| `client.verify(path)` | Run adversarial probes, return trust score |
+| `client.search(**kwargs)` | Search registry by domain, trust, tags |
+| `client.attach(path, agent)` | Attach verified memory to agent |
+| `client.publish(path)` | Publish artifact to registry |
+| `client.certificate(path)` | Get Ed25519 signed certificate |
+
+## Verify
+
+```python
+result = client.verify("artifact.json")
+
+result.trust_score      # float: 0-100
+result.certificate      # dict: Ed25519 certificate
+result.probes           # list: individual probe results
+result.passed           # bool: all probes passed
+result.expires_at       # str: ISO 8601 expiry
+```
+
+### Options
+
+```python
+result = client.verify(
+    "artifact.json",
+    pubkey="path/to/registry.pub",  # custom public key
+    remote=True,                     # re-check against live registry
+    offline=True,                    # use bundled key, no network
+)
+```
+
+## Search
+
+```python
+artifacts = client.search(
+    domain="defi",
+    min_trust=70,
+    q="risk assessment",
+    limit=10,
+    sort="trust",
+)
+
+for a in artifacts:
+    print(f"{a.name}@{a.version}: {a.trust_score}")
+```
+
+## Publish
+
+```python
+result = client.publish(
+    "my-artifact.json",
+    domain="defi",
+    description="DeFi risk assessment memory",
+    version="v1.0",
+)
+
+print(result.artifact_id)   # "defi/my-artifact@v1.0"
+print(result.trust_score)   # 87.3
+print(result.certificate)   # Ed25519 certificate
+```
+
+## Attach
+
+```python
+client.attach(
+    "defi-risk-memory.json",
+    agent="my-agent",
+    rollback_threshold=5,  # auto-detach after 5 negative transfer events
+)
+
+# List attached artifacts
+attached = client.list_attached(agent="my-agent")
+
+# Detach
+client.detach("defi-risk-memory.json", agent="my-agent")
+```
+
+## Error Handling
+
+```python
+from impp import Client, VerificationError, PublishError
+
+client = Client()
+
+try:
+    result = client.verify("artifact.json")
+except VerificationError as e:
+    print(f"Verification failed: {e.probe}")  # which probe failed
+    print(f"Details: {e.details}")
+
+try:
+    client.publish("artifact.json", domain="defi")
+except PublishError as e:
+    print(f"Publish failed: {e.reason}")
+```
+
+## Configuration
+
+```python
+client = Client(
+    api_url="https://api.impp.sh/v1",  # default
+    token="your-token",                 # or set IMPP_TOKEN env var
+    timeout=30,                         # request timeout in seconds
+)
+```
+
+The client reads `IMPP_TOKEN` from environment variables if no token is passed explicitly. Credentials saved by `impp login` are also picked up automatically.
