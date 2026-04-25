@@ -10,6 +10,11 @@ import { Badge } from '@/components/ui/badge';
 import { Kbd } from '@/components/ui/kbd';
 import { CodeBlock } from '@/components/ui/code-block';
 import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
+import {
+  PreviewCard,
+  PreviewCardTrigger,
+  PreviewCardPanel,
+} from '@/components/animate-ui/components/base/preview-card';
 
 const devBlogs = [
   { title: 'Cross-Model Transfer Upgrade', date: '2026-04-09' },
@@ -220,7 +225,28 @@ artifacts = impp.autoload()`}</CodeBlock>
                   {newPackages.map((item) => (
                     <TableRow key={item.name}>
                       <TableCell>
-                        <Link href={`/package/${item.slug}`} className="hover:underline">{item.name}</Link>
+                        <PreviewCard>
+                          <PreviewCardTrigger
+                            render={<Link href={`/package/${item.slug}`} />}
+                            className="hover:underline"
+                          >
+                            {item.name}
+                          </PreviewCardTrigger>
+                          <PreviewCardPanel className="w-72">
+                            <div className="space-y-1.5">
+                              <p className="text-sm font-semibold">{item.name}</p>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="outline" className="text-[10px]">{item.version}</Badge>
+                                <Badge variant="secondary" className="text-[10px]">{item.domain}</Badge>
+                              </div>
+                              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                                <span>Trust: <strong className="text-foreground">{item.trust}</strong>/100</span>
+                                <span>{item.age}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground">Click to view full package details</p>
+                            </div>
+                          </PreviewCardPanel>
+                        </PreviewCard>
                       </TableCell>
                       <TableCell className="text-xs">{item.version}</TableCell>
                       <TableCell className="text-right text-xs text-muted-foreground">{item.age}</TableCell>
