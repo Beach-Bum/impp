@@ -1,0 +1,40 @@
+{"domain": "defi", "split": "core", "item_id": "AlphaLend", "description": "Lending protocol with algorithmic interest rates"}
+{"domain": "defi", "split": "core", "item_id": "YieldMaxi", "description": "Yield aggregator with auto-compounding strategies"}
+{"domain": "defi", "split": "core", "item_id": "StableSwap", "description": "Stablecoin DEX with concentrated liquidity"}
+{"domain": "defi", "split": "core", "item_id": "PerpDEX", "description": "Perpetual futures DEX with virtual AMM"}
+{"domain": "defi", "split": "core", "item_id": "BridgeX", "description": "Cross-chain bridge with multi-sig validation"}
+{"domain": "defi", "split": "core", "item_id": "NFTFi", "description": "NFT-collateralized lending platform"}
+{"domain": "defi", "split": "core", "item_id": "MegaYield", "description": "High-APY farming protocol with leveraged positions"}
+{"domain": "defi", "split": "core", "item_id": "DAOTreasury", "description": "DAO treasury management with diversified allocations"}
+{"domain": "defi", "split": "extended", "item_id": "LiquidStake", "description": "Liquid staking derivative protocol"}
+{"domain": "defi", "split": "extended", "item_id": "RestakeHub", "description": "Restaking aggregator for shared security"}
+{"domain": "defi", "split": "extended", "item_id": "RWAVault", "description": "Real-world asset tokenization vault"}
+{"domain": "defi", "split": "extended", "item_id": "PredictFi", "description": "Prediction market protocol"}
+{"domain": "defi", "split": "extended", "item_id": "CDPMint", "description": "Collateralized debt position stablecoin minter"}
+{"domain": "defi", "split": "extended", "item_id": "OptionsVault", "description": "Options vault with covered call strategies"}
+{"domain": "defi", "split": "extended", "item_id": "InsurePool", "description": "DeFi insurance pool with risk tranches"}
+{"domain": "defi", "split": "extended", "item_id": "PayChannel", "description": "Payment channel network for micro-transactions"}
+{"domain": "defi", "split": "extended", "item_id": "PrivacyPool", "description": "Privacy-preserving liquidity pool"}
+{"domain": "defi", "split": "extended", "item_id": "LaunchPad", "description": "Token launchpad with tiered participation"}
+{"domain": "defi", "split": "extended", "item_id": "CrossAgg", "description": "Cross-chain DEX aggregator"}
+{"domain": "defi", "split": "extended", "item_id": "FlashMint", "description": "Flash mint stablecoin protocol"}
+{"domain": "defi", "split": "extended", "item_id": "LeverageLend", "description": "Leveraged lending with recursive borrowing"}
+{"domain": "defi", "split": "extended", "item_id": "GovLock", "description": "Governance token locking with vote escrow"}
+{"domain": "defi", "split": "extended", "item_id": "OracleNet", "description": "Decentralized oracle network"}
+{"domain": "defi", "split": "extended", "item_id": "MetaYield", "description": "Meta-yield optimizer across chains"}
+{"domain": "defi", "split": "extended", "item_id": "SynthPerp", "description": "Synthetic perpetual futures protocol"}
+{"domain": "defi", "split": "extended", "item_id": "AtomicSwap", "description": "Atomic cross-chain swap protocol"}
+{"domain": "defi", "split": "extended", "item_id": "LiqLocker", "description": "Liquidity locker with time-locked positions"}
+{"domain": "defi", "split": "extended", "item_id": "YieldSplit", "description": "Yield splitting protocol for fixed/variable rates"}
+{"domain": "defi", "split": "extended", "item_id": "DerivBridge", "description": "Derivatives bridge for cross-chain options"}
+{"domain": "defi", "split": "extended", "item_id": "PoolRouter", "description": "Smart order router across AMM pools"}
+{"domain": "defi", "split": "extended", "item_id": "StakeDAO", "description": "Staking DAO with protocol-owned liquidity"}
+{"domain": "defi", "split": "extended", "item_id": "CreditLine", "description": "Under-collateralized credit line protocol"}
+{"domain": "cybersec", "split": "core", "item_id": "HeartbleedDB", "description": "Database service vulnerable to Heartbleed-style memory disclosure"}
+{"domain": "cybersec", "split": "core", "item_id": "CloudLeak", "description": "Cloud storage misconfiguration with public bucket exposure"}
+{"domain": "cybersec", "split": "core", "item_id": "SQLi-Legacy", "description": "Legacy web app with SQL injection in search endpoint"}
+{"domain": "cybersec", "split": "core", "item_id": "PrivEsc-Container", "description": "Container escape via privileged mode and host mount"}
+{"domain": "cybersec", "split": "core", "item_id": "XSS-Stored", "description": "Stored XSS in user profile rendering"}
+{"domain": "cybersec", "split": "core", "item_id": "APIKeyExposure", "description": "API key exposure in client-side JavaScript bundle"}
+{"domain": "cybersec", "split": "core", "item_id": "FirmwareRCE", "description": "IoT firmware with unauthenticated command injection"}
+{"domain": "cybersec", "split": "core", "item_id": "DNSRebind", "description": "Internal service accessible via DNS rebinding attack"}
