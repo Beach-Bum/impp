@@ -9,7 +9,7 @@ export default function MemoryMarketLogo({
   size?: number;
   style?: CSSProperties;
 }) {
-  const fill = inverse ? '#ffffff' : '#020202';
+  const fill = 'currentColor';
 
   return (
     <svg
