@@ -43,7 +43,7 @@ export default function SellerApplyScreen() {
     <div className="mx-auto max-w-5xl px-5 py-8">
       <h1 className="mb-1 text-2xl font-light">Request seller access</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Apply to list memory artifacts, connect payout rails, and begin marketplace verification.
+        Apply to publish memory artifacts, connect payout rails, and begin registry verification.
       </p>
 
       <div className="grid gap-8 lg:grid-cols-2">

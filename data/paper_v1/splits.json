@@ -1,0 +1,18 @@
+{
+  "defi": {
+    "core": {
+      "items": ["AlphaLend", "YieldMaxi", "StableSwap", "PerpDEX", "BridgeX", "NFTFi", "MegaYield", "DAOTreasury"],
+      "note": "8 protocols used for same-model 3-trial experiments and adversarial testing"
+    },
+    "extended": {
+      "items": ["LiquidStake", "RestakeHub", "RWAVault", "PredictFi", "CDPMint", "OptionsVault", "InsurePool", "PayChannel", "PrivacyPool", "LaunchPad", "CrossAgg", "FlashMint", "LeverageLend", "GovLock", "OracleNet", "MetaYield", "SynthPerp", "AtomicSwap", "LiqLocker", "YieldSplit", "DerivBridge", "PoolRouter", "StakeDAO", "CreditLine"],
+      "note": "24 additional protocols used for cross-model experiment (32 total with core)"
+    }
+  },
+  "cybersec": {
+    "core": {
+      "items": ["HeartbleedDB", "CloudLeak", "SQLi-Legacy", "PrivEsc-Container", "XSS-Stored", "APIKeyExposure", "FirmwareRCE", "DNSRebind"],
+      "note": "8 vulnerabilities used for same-model 3-trial experiments"
+    }
+  }
+}

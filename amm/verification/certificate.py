@@ -13,7 +13,7 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import (
 )
 from cryptography.hazmat.primitives import serialization
 
-from ..config import CERTIFICATE_EXPIRY_DAYS, CERTS_DIR
+from ..config import CERTIFICATE_EXPIRY_DAYS, CERTS_DIR, CRL_PATH
 
 
 @dataclass
@@ -183,3 +183,46 @@ def generate_certificate(
         cert.sign(signing_key)
 
     return cert
+
+
+# ── Certificate Revocation List (CRL) ─────────────────────────────────
+
+
+def load_crl(path: Path | None = None) -> list[dict]:
+    """Load the Certificate Revocation List."""
+    path = path or CRL_PATH
+    if not path.exists():
+        return []
+    return json.loads(path.read_text())
+
+
+def save_crl(entries: list[dict], path: Path | None = None) -> None:
+    """Save the Certificate Revocation List."""
+    path = path or CRL_PATH
+    path.write_text(json.dumps(entries, indent=2))
+
+
+def revoke_certificate(
+    cert_id: str,
+    reason: str = "publisher_request",
+    crl_path: Path | None = None,
+) -> dict:
+    """Add a certificate to the revocation list.
+
+    Returns the CRL entry.
+    """
+    entry = {
+        "cert_id": cert_id,
+        "revoked_at": datetime.now(timezone.utc).isoformat(),
+        "reason": reason,
+    }
+    crl = load_crl(crl_path)
+    crl.append(entry)
+    save_crl(crl, crl_path)
+    return entry
+
+
+def check_revocation(cert_id: str, crl_path: Path | None = None) -> bool:
+    """Check if a certificate has been revoked. Returns True if revoked."""
+    crl = load_crl(crl_path)
+    return any(entry["cert_id"] == cert_id for entry in crl)
