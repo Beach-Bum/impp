@@ -57,6 +57,10 @@ logs/
 # gstack (local tooling)
 .gstack/
 
+# Internal docs (contain infrastructure URLs, strategy)
+PROJECT_MEMORY.md
+DESIGN.md
+
 # Build artifacts
 ui/.next/
 ui/out/
