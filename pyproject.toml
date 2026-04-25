@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "impp"
+version = "0.5.0"
+description = "IMPP — The Agent Memory Registry CLI"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.39.0",
+    "cryptography>=44.0.0",
+    "click>=8.1.0",
+    "httpx>=0.27.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+server = [
+    "fastapi>=0.115.0",
+    "uvicorn>=0.34.0",
+    "PyJWT>=2.8.0",
+    "psycopg2-binary>=2.9.0",
+]
+
+[project.scripts]
+impp = "amm.cli:main"
+
+[project.urls]
+Homepage = "https://impp.sh"
+Documentation = "https://impp.sh/docs"
+Repository = "https://github.com/Beach-Bum/impp"
+
+[tool.setuptools.packages.find]
+include = ["amm*"]

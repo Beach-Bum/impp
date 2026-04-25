@@ -1,0 +1,24 @@
+# Default: project lead reviews everything
+*                                       @Beach-Bum
+
+# CI/CD and security-sensitive files
+/.github/                               @Beach-Bum
+/.github/CODEOWNERS                     @Beach-Bum
+/.github/workflows/                     @Beach-Bum
+
+# Cryptographic and verification code
+/amm/verification/                      @Beach-Bum
+/amm/adversarial/                       @Beach-Bum
+
+# Scoring and trust
+/amm/config.py                          @Beach-Bum
+/amm/registry/trust.py                  @Beach-Bum
+
+# Schemas
+/schemas/                               @Beach-Bum
+
+# Paper and research
+/paper/                                 @Beach-Bum
+
+# Frontend
+/ui/                                    @Beach-Bum

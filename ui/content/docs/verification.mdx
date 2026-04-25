@@ -1,0 +1,81 @@
+---
+title: Verification Protocol
+description: How IMPP verifies memory artifacts. Covers the Ed25519 certificate format, adversarial probe suite, and offline verification.
+---
+
+# Verification Protocol
+
+Every artifact published to the IMPP registry undergoes a multi-stage verification pipeline before receiving a signed certificate.
+
+## Ed25519 Certificate Format
+
+Certificates are compact Ed25519 signatures over a canonical JSON representation of the artifact header. The header includes the artifact hash, domain, trust score, and expiry timestamp.
+
+```json
+{
+  "artifact_id": "defi-risk-assessment@v2.1",
+  "domain": "defi",
+  "trust_score": 94.2,
+  "issued_at": "2026-04-24T10:00:00Z",
+  "expires_at": "2026-07-24T10:00:00Z",
+  "signature": "base64url(Ed25519_sig)",
+  "pubkey": "base64url(registry_pubkey)"
+}
+```
+
+Certificates expire after 90 days by default. Artifact owners can re-verify to issue a fresh certificate without re-publishing.
+
+## Adversarial Probe Suite
+
+Before issuance, artifacts are subjected to the following probes. A failing probe blocks certification.
+
+| Probe | What It Checks |
+|-------|---------------|
+| **Embedding Steganography** | Hidden payloads in vector representations |
+| **Overfit Probe** | Whether the artifact memorises its training set rather than generalising |
+| **Negative Transfer** | Performance degradation when attached to a clean baseline agent |
+| **Freshness Check** | Flags artifacts whose source data is older than the domain threshold |
+| **Schema Integrity** | Validates all required fields and version constraints are present |
+
+### Probe Details
+
+**Embedding Steganography Detection** runs statistical analysis on the embedding space to detect unusual patterns that could encode hidden instructions or payloads. Uses KL-divergence against reference distributions.
+
+**Overfit Probe** evaluates the artifact against held-out test sets from the same domain. An artifact that performs significantly better on its training distribution than on the test set is flagged.
+
+**Negative Transfer Probe** attaches the artifact to a clean baseline agent and measures task performance before and after. A statistically significant drop in baseline tasks indicates negative transfer.
+
+**Freshness Check** compares the artifact's source data timestamps against domain-specific thresholds. DeFi artifacts with data older than 30 days are flagged. Cybersecurity artifacts have a 90-day threshold.
+
+**Schema Integrity** validates the IMPP artifact schema: required fields (`impp_version`, `name`, `version`, `domain`, `embeddings`, `metadata`), version format, and embedding dimensions.
+
+## Trust Score Computation
+
+The trust score is a weighted composite:
+
+```
+trust_score = (
+  0.30 * cross_model_transfer_effectiveness +
+  0.25 * adversarial_probe_pass_rate +
+  0.20 * embedding_quality_score +
+  0.15 * freshness_score +
+  0.10 * schema_completeness
+)
+```
+
+Scores range from 0 to 100. Artifacts below 50 are not certified.
+
+## Offline Verification
+
+Certificates can be verified without network access using the bundled registry public key. The key is pinned in the CLI at install time and rotated annually.
+
+```bash
+$ impp verify artifact.json --offline --pubkey ~/.impp/registry.pub
+```
+
+The offline check validates:
+1. Ed25519 signature over the canonical header
+2. Certificate expiry timestamp
+3. Artifact hash matches the signed hash
+
+It does **not** re-run the adversarial probes (those require server-side infrastructure).

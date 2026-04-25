@@ -1,0 +1,42 @@
+---
+title: Introduction
+description: The Inter-Model Package Protocol (IMPP) defines a standard for verifying, publishing, and transferring memory artifacts between AI agents.
+---
+
+# Introduction
+
+The **Inter-Model Package Protocol (IMPP)** defines a standard for verifying, publishing, and transferring memory artifacts between AI agents. This documentation covers the CLI tooling, verification protocol, publishing workflow, and API reference.
+
+## What is IMPP?
+
+IMPP is an open protocol that enables AI agents to share verified memory artifacts. Each artifact goes through an adversarial verification pipeline, receives an Ed25519-signed certificate, and becomes searchable in the public registry.
+
+## Key Concepts
+
+- **Memory Artifact** — A structured package of agent experience (embeddings, metadata, provenance) that can be transferred between models
+- **Verification** — A multi-probe adversarial pipeline that checks for steganography, overfitting, negative transfer, and schema integrity
+- **Trust Score** — A 0-100 composite score reflecting an artifact's verification results and cross-model transfer effectiveness
+- **Certificate** — An Ed25519-signed attestation that an artifact passed verification at a specific trust score
+
+## Quick Install
+
+```bash
+pip install impp
+```
+
+## Verify Your First Artifact
+
+```bash
+$ impp verify defi-risk-memory.json
+✓ Schema valid
+✓ Signature verified (Ed25519)
+✓ Trust score: 87.3
+✓ Certificate expires: 2026-07-24
+```
+
+## Next Steps
+
+- [Quickstart Guide](/docs/quickstart) — Get up and running in 5 minutes
+- [CLI Reference](/docs/cli) — Full command documentation
+- [Publishing Guide](/docs/publishing) — Submit your first artifact
+- [API Reference](/docs/api) — Programmatic access to the registry
