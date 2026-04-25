@@ -1,7 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Heading, Label, TextInput, Textarea } from '@primer/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8100';
 
@@ -34,69 +38,67 @@ export default function WaitlistScreen() {
   }
 
   return (
-    <div className="amm-page">
-      <Heading style={{ marginBottom: '4px' }}>Join the waitlist</Heading>
-      <p className="amm-screen-subtitle">
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <h1 className="mb-1 text-2xl font-light">Join the waitlist</h1>
+      <p className="mb-6 text-sm text-muted-foreground">
         Get updates on verified seller onboarding, sandbox access, and private-market features.
       </p>
 
-      <div className="amm-grid amm-grid-2col">
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Request access</Heading>
-          {success ? (
-            <p style={{ color: 'var(--fgColor-success, green)' }}>Thanks! We'll be in touch.</p>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div className="amm-card-stack">
-                <TextInput
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Request access</CardTitle></CardHeader>
+          <CardContent>
+            {success ? (
+              <p className="text-sm text-green-600 dark:text-green-400">Thanks! We&apos;ll be in touch.</p>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                <Input
                   placeholder="Email address"
-                  block
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   type="email"
                   required
                 />
-                <TextInput
+                <Input
                   placeholder="Name or team"
-                  block
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                 />
-                <TextInput
+                <Input
                   placeholder="Company"
-                  block
                   value={company}
                   onChange={(e) => setCompany(e.target.value)}
                 />
                 <Textarea
                   placeholder="What do you want to use Memory Market for?"
                   rows={5}
-                  block
                   value={useCase}
                   onChange={(e) => setUseCase(e.target.value)}
                 />
                 <Button type="submit" disabled={loading}>
                   {loading ? 'Submitting...' : 'Join waitlist'}
                 </Button>
-                {error && <span style={{ color: 'var(--fgColor-danger, red)', fontSize: '14px' }}>{error}</span>}
-              </div>
-            </form>
-          )}
-        </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+              </form>
+            )}
+          </CardContent>
+        </Card>
 
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>What you’ll get</Heading>
-          <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
-            <Label variant="accent">Sandbox access</Label>
-            <Label variant="secondary">Seller onboarding</Label>
-            <Label variant="secondary">Private markets</Label>
-          </div>
-          <div className="amm-card-stack">
-            <span className="amm-subtle">• Early access to sandbox scorecards and artifact trials</span>
-            <span className="amm-subtle">• Updates on buyer, seller, and agent-wallet onboarding</span>
-            <span className="amm-subtle">• Access to escrow, x402, and enterprise policy features</span>
-          </div>
-        </div>
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">What you&apos;ll get</CardTitle></CardHeader>
+          <CardContent>
+            <div className="mb-3 flex flex-wrap gap-1">
+              <Badge>Sandbox access</Badge>
+              <Badge variant="secondary">Seller onboarding</Badge>
+              <Badge variant="outline">Private markets</Badge>
+            </div>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <div>Early access to sandbox scorecards and artifact trials</div>
+              <div>Updates on buyer, seller, and agent-wallet onboarding</div>
+              <div>Access to escrow, x402, and enterprise policy features</div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

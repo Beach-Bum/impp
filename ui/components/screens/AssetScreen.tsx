@@ -2,18 +2,21 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Heading, Button, Label, Flash, Spinner } from '@primer/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
+import { Tabs, TabsContent, TabsContents, TabsList, TabsTrigger } from '@/components/animate-ui/components/animate/tabs';
+import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { fetchListings, fetchPreview, fetchTrust, ListingRecord } from '@/lib/api';
 import CheckoutDialog from '@/components/CheckoutDialog';
-
-const tabList = ['overview', 'provenance', 'safety', 'trust', 'payload'] as const;
 
 export default function AssetScreen({ slug }: { slug: string }) {
   const [listing, setListing] = useState<ListingRecord | null>(null);
   const [preview, setPreview] = useState<any>(null);
   const [trust, setTrust] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState('overview');
   const [showCheckout, setShowCheckout] = useState(false);
   const router = useRouter();
 
@@ -37,126 +40,122 @@ export default function AssetScreen({ slug }: { slug: string }) {
     load();
   }, [slug]);
 
-  if (loading) return <div className="amm-page"><Spinner size="medium" /></div>;
-  if (!listing) return <div className="amm-page"><Flash variant="danger">Artifact not found.</Flash></div>;
+  if (loading) return <div className="mx-auto max-w-5xl px-5 py-8"><Spinner /></div>;
+  if (!listing) return <div className="mx-auto max-w-5xl px-5 py-8"><Alert variant="destructive"><AlertDescription>Artifact not found.</AlertDescription></Alert></div>;
 
   return (
-    <div className="amm-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '16px' }}>
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <div className="mb-4 flex items-start justify-between">
         <div>
-          <Heading>{listing.title}</Heading>
-          <span className="amm-subtle">
+          <h1 className="text-2xl font-light">{listing.title}</h1>
+          <p className="text-sm text-muted-foreground">
             {listing.domain} · Trust: {listing.trust_score ?? '—'}/100 · Price: ${listing.price_usd.toFixed(2)}
-          </span>
+          </p>
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <Button variant="invisible">Sandbox</Button>
-          <Button variant="invisible">Compare</Button>
-          <Button variant="primary" onClick={() => setShowCheckout(true)}>Acquire</Button>
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
-          <Heading as="h3" style={{ fontSize: '14px', marginBottom: '8px' }}>Summary</Heading>
-          <p>{listing.description}</p>
-        </div>
-        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
-          <Heading as="h3" style={{ fontSize: '14px', marginBottom: '8px' }}>Key metrics</Heading>
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            <Label variant="success">Lift +{listing.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</Label>
-            <Label variant="secondary">Adversarial {listing.latest_adversarial_score?.toFixed(0) ?? '—'}/100</Label>
-            <Label variant="secondary">Verifications: {listing.verification_count}</Label>
-          </div>
-          <p className="amm-subtle" style={{ marginTop: '8px' }}>License: {listing.license_type}</p>
-        </div>
-        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
-          <Heading as="h3" style={{ fontSize: '14px', marginBottom: '8px' }}>Decision cues</Heading>
-          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
-            {listing.trust_score != null && listing.trust_score >= 80 && <Label variant="success">High trust</Label>}
-            {listing.latest_adversarial_score != null && listing.latest_adversarial_score < 30 && <Label variant="success">Clean adversarial</Label>}
-            {listing.verification_count > 0 && <Label variant="accent">Verified</Label>}
-          </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" size="sm">Sandbox</Button>
+          <Button variant="ghost" size="sm">Compare</Button>
+          <Button size="sm" onClick={() => setShowCheckout(true)}>Acquire</Button>
         </div>
       </div>
 
-      <div style={{ display: 'flex', gap: '0', borderBottom: '1px solid #d0d7de', marginBottom: '16px' }}>
-        {tabList.map((t) => (
-          <button
-            key={t}
-            onClick={() => setTab(t)}
-            style={{
-              padding: '8px 16px',
-              cursor: 'pointer',
-              background: 'none',
-              border: 'none',
-              borderBottom: tab === t ? '2px solid #0969da' : '2px solid transparent',
-              fontWeight: tab === t ? 600 : 400,
-              color: tab === t ? '#0969da' : '#656d76',
-              fontSize: '14px',
-            }}
-          >
-            {t.charAt(0).toUpperCase() + t.slice(1)}
-          </button>
-        ))}
-      </div>
-
-      {tab === 'overview' && preview && (
-        <div className="amm-grid amm-grid-2col">
-          <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', overflow: 'hidden' }}>
-            <div style={{ padding: '16px', borderBottom: '1px solid #d0d7de' }}>
-              <Heading as="h3" style={{ fontSize: '14px' }}>Artifact preview</Heading>
+      <div className="mb-4 grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-semibold">Summary</CardTitle></CardHeader>
+          <CardContent><p className="text-sm">{listing.description}</p></CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-semibold">Key metrics</CardTitle></CardHeader>
+          <CardContent>
+            <div className="mb-2 flex flex-wrap gap-1">
+              <Badge>Lift +{listing.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</Badge>
+              <Badge variant="secondary">Adversarial {listing.latest_adversarial_score?.toFixed(0) ?? '—'}/100</Badge>
+              <Badge variant="outline">Verifications: {listing.verification_count}</Badge>
             </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-              <tbody>
-                {[
-                  ['Domain', `${preview.domain?.category}:${preview.domain?.subcategory}`],
-                  ['Format', preview.knowledge_summary?.format],
-                  ['Token count', preview.knowledge_summary?.token_count?.toLocaleString()],
-                  ['Model', preview.provenance?.model],
-                  ['Training rounds', preview.provenance?.training_rounds],
-                  ['Expert avg error', preview.attestation?.expert_avg_error?.toFixed(2)],
-                  ['Transfer efficiency', `${preview.attestation?.transfer_efficiency_pct?.toFixed(1)}%`],
-                ].map(([k, v]) => (
-                  <tr key={String(k)} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
-                    <td style={{ padding: '8px 12px', fontWeight: 500, color: 'var(--fgColor-muted)' }}>{k}</td>
-                    <td style={{ padding: '8px 12px' }}>{v}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
-            <Heading as="h3" style={{ fontSize: '14px', marginBottom: '8px' }}>Artifact hash</Heading>
-            <code style={{ padding: '8px', backgroundColor: '#f6f8fa', borderRadius: '3px', display: 'block', fontSize: '11px', wordBreak: 'break-all' }}>
-              {listing.artifact_hash}
-            </code>
-            <p className="amm-subtle" style={{ marginTop: '8px' }}>Content-addressed SHA-256.</p>
-          </div>
-        </div>
-      )}
+            <p className="text-xs text-muted-foreground">License: {listing.license_type}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader><CardTitle className="text-sm font-semibold">Decision cues</CardTitle></CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-1">
+              {listing.trust_score != null && listing.trust_score >= 80 && <Badge>High trust</Badge>}
+              {listing.latest_adversarial_score != null && listing.latest_adversarial_score < 30 && <Badge>Clean adversarial</Badge>}
+              {listing.verification_count > 0 && <Badge variant="secondary">Verified</Badge>}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-      {tab === 'trust' && (
-        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
-          <Heading as="h3" style={{ fontSize: '14px', marginBottom: '8px' }}>Trust history</Heading>
-          {trust ? (
-            <pre style={{ padding: '16px', backgroundColor: '#f6f8fa', borderRadius: '3px', fontSize: '11px', overflow: 'auto', whiteSpace: 'pre-wrap' }}>
-              {trust.report}
-            </pre>
-          ) : <span>No trust history available.</span>}
-        </div>
-      )}
+      <Tabs defaultValue="overview">
+        <TabsList>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="provenance">Provenance</TabsTrigger>
+          <TabsTrigger value="safety">Safety</TabsTrigger>
+          <TabsTrigger value="trust">Trust</TabsTrigger>
+          <TabsTrigger value="payload">Payload</TabsTrigger>
+        </TabsList>
 
-      {tab === 'payload' && (
-        <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px' }}>
-          <Heading as="h3" style={{ fontSize: '14px', marginBottom: '8px' }}>Payload manifest</Heading>
-          <pre style={{ padding: '16px', backgroundColor: '#f6f8fa', borderRadius: '3px', fontSize: '11px' }}>
-{`artifact_hash: ${listing.artifact_hash}
-domain: ${listing.domain}
-license: ${listing.license_type}`}
-          </pre>
-        </div>
-      )}
+        <TabsContents>
+        <TabsContent value="overview">
+          {preview && (
+            <div className="grid gap-4 lg:grid-cols-2">
+              <Card>
+                <CardHeader><CardTitle className="text-sm font-semibold">Artifact preview</CardTitle></CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableBody>
+                      {[
+                        ['Domain', `${preview.domain?.category}:${preview.domain?.subcategory}`],
+                        ['Format', preview.knowledge_summary?.format],
+                        ['Token count', preview.knowledge_summary?.token_count?.toLocaleString()],
+                        ['Model', preview.provenance?.model],
+                        ['Training rounds', preview.provenance?.training_rounds],
+                        ['Expert avg error', preview.attestation?.expert_avg_error?.toFixed(2)],
+                        ['Transfer efficiency', `${preview.attestation?.transfer_efficiency_pct?.toFixed(1)}%`],
+                      ].map(([k, v]) => (
+                        <TableRow key={String(k)}>
+                          <TableCell className="font-medium text-muted-foreground">{k}</TableCell>
+                          <TableCell>{v}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader><CardTitle className="text-sm font-semibold">Artifact hash</CardTitle></CardHeader>
+                <CardContent>
+                  <code className="block rounded bg-muted p-2 text-xs break-all">{listing.artifact_hash}</code>
+                  <p className="mt-2 text-xs text-muted-foreground">Content-addressed SHA-256.</p>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="trust">
+          <Card>
+            <CardHeader><CardTitle className="text-sm font-semibold">Trust history</CardTitle></CardHeader>
+            <CardContent>
+              {trust ? (
+                <pre className="rounded bg-muted p-4 text-xs overflow-auto whitespace-pre-wrap">{trust.report}</pre>
+              ) : <span className="text-sm text-muted-foreground">No trust history available.</span>}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="payload">
+          <Card>
+            <CardHeader><CardTitle className="text-sm font-semibold">Payload manifest</CardTitle></CardHeader>
+            <CardContent>
+              <pre className="rounded bg-muted p-4 text-xs">{`artifact_hash: ${listing.artifact_hash}\ndomain: ${listing.domain}\nlicense: ${listing.license_type}`}</pre>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        </TabsContents>
+      </Tabs>
+
       {showCheckout && (
         <CheckoutDialog
           listingId={listing.id}
@@ -164,7 +163,7 @@ license: ${listing.license_type}`}
           priceUsd={listing.price_usd}
           domain={listing.domain}
           onClose={() => setShowCheckout(false)}
-          onSuccess={() => router.push('/portfolio')}
+          onSuccess={() => router.push('/preview/portfolio')}
         />
       )}
     </div>

@@ -2,17 +2,16 @@
 
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import { Heading, TextInput, Button, Label, Flash, Spinner } from '@primer/react';
-import { SearchIcon } from '@primer/octicons-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
+import { Search } from 'lucide-react';
 import { fetchListings, ListingRecord } from '@/lib/api';
 import { getSellerProfile } from '@/lib/directory';
-
-function trustScheme(score: number | null): 'success' | 'danger' | 'secondary' {
-  if (score === null) return 'secondary';
-  if (score >= 80) return 'success';
-  if (score >= 50) return 'secondary';
-  return 'danger';
-}
 
 export default function MarketScreen() {
   const [query, setQuery] = useState('');
@@ -38,128 +37,117 @@ export default function MarketScreen() {
   const domains = Array.from(new Set(listings.map((l) => l.domain.split(':')[0])));
 
   return (
-    <div className="amm-page">
-      <Heading style={{ marginBottom: '4px' }}>Marketplace</Heading>
-      <p className="amm-screen-subtitle">
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <h1 className="mb-1 text-2xl font-light">Marketplace</h1>
+      <p className="mb-6 text-sm text-muted-foreground">
         Search by outcome, shortlist governed assets, and compare before you attach anything.
       </p>
 
-      <Flash style={{ marginBottom: '16px' }}>
-        <Label variant="accent">AI</Label>{' '}
-        Ranking blends transfer lift, adversarial score, trust, and freshness.
-      </Flash>
+      <Alert className="mb-4">
+        <AlertDescription>
+          <Badge variant="secondary" className="mr-2">AI</Badge>
+          Ranking blends transfer lift, adversarial score, trust, and freshness.
+        </AlertDescription>
+      </Alert>
 
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', flexWrap: 'wrap', alignItems: 'end' }}>
-        <div style={{ flex: 1, minWidth: 300 }}>
-          <TextInput
-            leadingVisual={SearchIcon}
+      <div className="mb-4 flex flex-wrap items-end gap-2">
+        <div className="relative min-w-[300px] flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
             placeholder="Search by domain, objective, or workflow"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            style={{ width: '100%' }}
+            className="pl-9"
           />
         </div>
-        <Button>Filter sheet</Button>
-        <Button as={Link} href="/compare" variant="invisible">Compare tray</Button>
+        <Button variant="outline">Filter sheet</Button>
+        <Button variant="ghost" render={<Link href="/compare" />}>Compare tray</Button>
       </div>
 
-      <div style={{ display: 'flex', gap: '4px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        {domains.map((d) => (
-          <Label key={d} variant="secondary">{d}</Label>
-        ))}
+      <div className="mb-4 flex flex-wrap gap-1">
+        {domains.map((d) => <Badge key={d} variant="secondary">{d}</Badge>)}
       </div>
 
       {loading ? (
-        <Spinner size="medium" />
+        <Spinner />
       ) : error ? (
-        <Flash variant="danger">Failed to load: {error}. Is the API server running?</Flash>
+        <Alert variant="destructive"><AlertDescription>Failed to load: {error}. Is the API server running?</AlertDescription></Alert>
       ) : (
-        <div className="amm-grid amm-grid-2col">
-          <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', overflow: 'hidden' }}>
-            <div style={{ padding: '16px', borderBottom: '1px solid #d0d7de' }}>
-              <Heading as="h2" style={{ fontSize: '14px' }}>Memory Artifacts</Heading>
-              <span className="amm-subtle">{listings.length} verified artifacts available</span>
-            </div>
-            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--borderColor-default, #d0d7de)' }}>
-                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>Asset</th>
-                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>Lift</th>
-                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>Trust</th>
-                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>Adversarial</th>
-                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>License</th>
-                  <th style={{ textAlign: 'left', padding: '8px 12px', fontWeight: 600 }}>Price</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((l) => {
-                  const seller = getSellerProfile(l.seller_id);
-                  return (
-                    <tr key={l.id} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
-                      <td style={{ padding: '10px 12px' }}>
-                        <Link href={`/asset/${l.id}`} style={{ color: 'var(--fgColor-accent, #0969da)', textDecoration: 'none', fontWeight: 600 }}>
-                          {l.title}
-                        </Link>
-                        <br />
-                        <span className="amm-subtle">{l.domain}</span>
-                        <br />
-                        <Link href={`/sellers/${l.seller_id}`} className="amm-subtle">
-                          {seller?.name || l.seller_id}
-                        </Link>
-                      </td>
-                      <td style={{ padding: '10px 12px' }}>
-                        <Label variant="success">+{l.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</Label>
-                      </td>
-                      <td style={{ padding: '10px 12px' }}>
-                        <Label variant={trustScheme(l.trust_score)}>
-                          {l.trust_score != null ? `${l.trust_score}/100` : '—'}
-                        </Label>
-                      </td>
-                      <td style={{ padding: '10px 12px' }}>
-                        {l.latest_adversarial_score?.toFixed(0) ?? '—'}/100
-                      </td>
-                      <td style={{ padding: '10px 12px' }}>{l.license_type}</td>
-                      <td style={{ padding: '10px 12px' }}>${l.price_usd.toFixed(2)}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-            {filtered[0] && (
-              <div className="amm-selected">
-                <span style={{ fontWeight: 'bold' }}>Top artifact</span>
-                <p className="amm-subtle">
-                  {filtered[0].title} — trust {filtered[0].trust_score}/100, lift +{filtered[0].latest_transfer_efficiency?.toFixed(1)}%
-                </p>
-                <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                  <Button size="small" as={Link} href={`/audit/${filtered[0].id}`} variant="invisible">Audit</Button>
-                  <Button size="small" as={Link} href="/compare" variant="invisible">Compare</Button>
-                  <Button size="small" variant="primary">Acquire</Button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', padding: '16px' }}>
-            <Heading as="h2" style={{ fontSize: '14px', marginBottom: '16px' }}>Shortlist</Heading>
-            <div className="amm-card-stack">
-              {filtered.slice(0, 3).map((l) => (
-                <div key={l.id} style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px', marginBottom: '8px' }}>
-                  <span style={{ fontWeight: 'bold' }}>{l.title}</span>
-                  <br />
-                  <span className="amm-subtle">{l.domain} — {l.license_type}</span>
-                  <div style={{ display: 'flex', gap: '4px', marginTop: '8px' }}>
-                    <Label variant="success">Lift +{l.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</Label>
-                    <Label variant={trustScheme(l.trust_score)}>Trust {l.trust_score ?? '—'}</Label>
+        <div className="grid gap-8 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-xl font-light">Memory Artifacts</CardTitle>
+              <p className="text-xs text-muted-foreground">{listings.length} verified artifacts available</p>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Asset</TableHead>
+                    <TableHead>Lift</TableHead>
+                    <TableHead>Trust</TableHead>
+                    <TableHead>Adversarial</TableHead>
+                    <TableHead>License</TableHead>
+                    <TableHead>Price</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filtered.map((l) => {
+                    const seller = getSellerProfile(l.seller_id);
+                    return (
+                      <TableRow key={l.id}>
+                        <TableCell>
+                          <Link href={`/asset/${l.id}`} className="font-semibold hover:underline">{l.title}</Link>
+                          <div className="text-xs text-muted-foreground">{l.domain}</div>
+                          <Link href={`/sellers/${l.seller_id}`} className="text-xs text-muted-foreground hover:underline">
+                            {seller?.name || l.seller_id}
+                          </Link>
+                        </TableCell>
+                        <TableCell><Badge>+{l.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</Badge></TableCell>
+                        <TableCell><Badge variant="outline">{l.trust_score != null ? `${l.trust_score}/100` : '—'}</Badge></TableCell>
+                        <TableCell>{l.latest_adversarial_score?.toFixed(0) ?? '—'}/100</TableCell>
+                        <TableCell>{l.license_type}</TableCell>
+                        <TableCell>${l.price_usd.toFixed(2)}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
+              </Table>
+              {filtered[0] && (
+                <div className="border-t p-4">
+                  <span className="font-bold">Top artifact</span>
+                  <p className="mb-2 mt-1 text-xs text-muted-foreground">
+                    {filtered[0].title} — trust {filtered[0].trust_score}/100, lift +{filtered[0].latest_transfer_efficiency?.toFixed(1)}%
+                  </p>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="ghost" render={<Link href={`/audit/${filtered[0].id}`} />}>Audit</Button>
+                    <Button size="sm" variant="ghost" render={<Link href="/compare" />}>Compare</Button>
+                    <Button size="sm">Acquire</Button>
                   </div>
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
-                    <Button size="small" variant="invisible" as={Link} href={`/asset/${l.id}`}>Review</Button>
-                    <Button size="small" variant="invisible" as={Link} href={`/sellers/${l.seller_id}`}>Seller</Button>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="text-xl font-light">Shortlist</CardTitle></CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              {filtered.slice(0, 3).map((l) => (
+                <div key={l.id} className="rounded-md border p-4">
+                  <span className="font-bold">{l.title}</span>
+                  <div className="text-xs text-muted-foreground">{l.domain} — {l.license_type}</div>
+                  <div className="mt-2 flex gap-1">
+                    <Badge>Lift +{l.latest_transfer_efficiency?.toFixed(1) ?? '—'}%</Badge>
+                    <Badge variant="outline">Trust {l.trust_score ?? '—'}</Badge>
+                  </div>
+                  <div className="mt-2 flex gap-2">
+                    <Button size="sm" variant="ghost" render={<Link href={`/asset/${l.id}`} />}>Review</Button>
+                    <Button size="sm" variant="ghost" render={<Link href={`/sellers/${l.seller_id}`} />}>Seller</Button>
                   </div>
                 </div>
               ))}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

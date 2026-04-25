@@ -1,7 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Button, Heading, Label, Select, TextInput, Textarea } from '@primer/react';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8100';
 
@@ -35,79 +40,76 @@ export default function SellerApplyScreen() {
   }
 
   return (
-    <div className="amm-page">
-      <Heading style={{ marginBottom: '4px' }}>Request seller access</Heading>
-      <p className="amm-screen-subtitle">
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <h1 className="mb-1 text-2xl font-light">Request seller access</h1>
+      <p className="mb-6 text-sm text-muted-foreground">
         Apply to list memory artifacts, connect payout rails, and begin marketplace verification.
       </p>
 
-      <div className="amm-grid amm-grid-2col">
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Seller application</Heading>
-          {success ? (
-            <p style={{ color: 'var(--fgColor-success, green)' }}>Thanks! We'll be in touch.</p>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              <div className="amm-card-stack">
-                <TextInput
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Seller application</CardTitle></CardHeader>
+          <CardContent>
+            {success ? (
+              <p className="text-sm text-green-600 dark:text-green-400">Thanks! We&apos;ll be in touch.</p>
+            ) : (
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+                <Input
                   placeholder="Name or organization"
-                  block
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
                 />
-                <TextInput
+                <Input
                   placeholder="Contact email"
-                  block
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   type="email"
                   required
                 />
-                <TextInput
+                <Input
                   placeholder="Payout wallet"
-                  block
                   value={wallet}
                   onChange={(e) => setWallet(e.target.value)}
                 />
-                <Select
-                  block
-                  value={sellerType}
-                  onChange={(e) => setSellerType(e.target.value)}
-                >
-                  <Select.Option value="verified">Verified seller</Select.Option>
-                  <Select.Option value="institutional">Institutional seller</Select.Option>
-                  <Select.Option value="agent-wallet">Agent wallet seller</Select.Option>
+                <Select value={sellerType} onValueChange={(v) => v && setSellerType(v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="verified">Verified seller</SelectItem>
+                    <SelectItem value="institutional">Institutional seller</SelectItem>
+                    <SelectItem value="agent-wallet">Agent wallet seller</SelectItem>
+                  </SelectContent>
                 </Select>
                 <Textarea
                   placeholder="Describe the memory artifacts you want to list"
                   rows={5}
-                  block
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
                 <Button type="submit" disabled={loading}>
                   {loading ? 'Submitting...' : 'Submit application'}
                 </Button>
-                {error && <span style={{ color: 'var(--fgColor-danger, red)', fontSize: '14px' }}>{error}</span>}
-              </div>
-            </form>
-          )}
-        </div>
+                {error && <p className="text-sm text-destructive">{error}</p>}
+              </form>
+            )}
+          </CardContent>
+        </Card>
 
-        <div style={{ border: '1px solid var(--borderColor-default, #d8dee4)', borderRadius: '6px', padding: '16px' }}>
-          <Heading as="h2" style={{ fontSize: "16px", marginBottom: "8px" }}>Verification requirements</Heading>
-          <div className="amm-inline-tags" style={{ marginBottom: '12px' }}>
-            <Label variant="success">Identity</Label>
-            <Label variant="accent">Stake</Label>
-            <Label variant="secondary">Escrow</Label>
-          </div>
-          <div className="amm-card-stack">
-            <span className="amm-subtle">• Identity or org verification is required before public listing.</span>
-            <span className="amm-subtle">• Sellers may need collateral or delayed payout release depending on trust tier.</span>
-            <span className="amm-subtle">• Agent-wallet sellers should expect signed allowance and spend-cap requirements.</span>
-          </div>
-        </div>
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Verification requirements</CardTitle></CardHeader>
+          <CardContent>
+            <div className="mb-3 flex flex-wrap gap-1">
+              <Badge>Identity</Badge>
+              <Badge variant="secondary">Stake</Badge>
+              <Badge variant="outline">Escrow</Badge>
+            </div>
+            <div className="space-y-2 text-sm text-muted-foreground">
+              <div>Identity or org verification is required before public listing.</div>
+              <div>Sellers may need collateral or delayed payout release depending on trust tier.</div>
+              <div>Agent-wallet sellers should expect signed allowance and spend-cap requirements.</div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

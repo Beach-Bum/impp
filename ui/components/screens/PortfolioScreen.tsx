@@ -1,17 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Heading, Label, Flash, Spinner } from '@primer/react';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Spinner } from '@/components/ui/spinner';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8100';
 
-type PortfolioAgent = { id: string; name: string; memory: string; status: string; trust_score: number; transfer_efficiency: number; last_eval: string; };
-type PortfolioAlert = { id: string; title: string; severity: string; summary: string; };
+type PortfolioAgent = { id: string; name: string; memory: string; status: string; trust_score: number; transfer_efficiency: number; last_eval: string };
+type PortfolioAlert = { id: string; title: string; severity: string; summary: string };
 
-function statusVariant(s: string): 'success' | 'danger' | 'attention' | 'secondary' {
-  if (s === 'Healthy') return 'success';
-  if (s === 'Blocked') return 'danger';
-  if (s === 'Warning') return 'attention';
+function statusVariant(s: string): 'default' | 'destructive' | 'secondary' | 'outline' {
+  if (s === 'Healthy') return 'default';
+  if (s === 'Blocked') return 'destructive';
+  if (s === 'Warning') return 'outline';
   return 'secondary';
 }
 
@@ -36,73 +40,81 @@ export default function PortfolioScreen() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="amm-page"><Spinner size="medium" /></div>;
+  if (loading) return <div className="mx-auto max-w-5xl px-5 py-8"><Spinner /></div>;
 
   return (
-    <div className="amm-page">
-      <Heading style={{ marginBottom: '4px' }}>Control tower</Heading>
-      <p className="amm-screen-subtitle">Watch live artifacts, verification posture, and drift state.</p>
+    <div className="mx-auto max-w-5xl px-5 py-8">
+      <h1 className="mb-1 text-2xl font-light">Control tower</h1>
+      <p className="mb-6 text-sm text-muted-foreground">Watch live artifacts, verification posture, and drift state.</p>
 
-      <div className="amm-metric-grid">
+      <div className="mb-8 grid grid-cols-2 gap-4 md:grid-cols-4">
         {[
           ['Active listings', stats?.active_listings ?? 0],
           ['Verifications', stats?.verifications ?? 0],
           ['Feedback', stats?.feedback_received ?? 0],
           ['Monthly spend', `$${stats?.monthly_spend?.toFixed(0) ?? 0}`],
         ].map(([label, value]) => (
-          <div key={String(label)} className="amm-metric-tile">
-            <span className="amm-metric-label">{label}</span>
-            <span className="amm-metric-value">{value}</span>
-          </div>
+          <Card key={String(label)}>
+            <CardContent className="pt-4">
+              <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</div>
+              <div className="mt-1 text-xl font-semibold">{value}</div>
+            </CardContent>
+          </Card>
         ))}
       </div>
 
-      <div className="amm-grid amm-grid-2col">
-        <div style={{ border: '1px solid #d0d7de', borderRadius: '6px', overflow: 'hidden' }}>
-          <div style={{ padding: '16px', borderBottom: '1px solid #d0d7de' }}>
-            <Heading as="h2" style={{ fontSize: '14px' }}>Verified artifacts</Heading>
-          </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px' }}>
-            <thead>
-              <tr style={{ borderBottom: '1px solid var(--borderColor-default, #d0d7de)' }}>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Artifact</th>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Domain</th>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Status</th>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Trust</th>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Transfer Eff.</th>
-                <th style={{ textAlign: 'left', padding: '8px 12px' }}>Last eval</th>
-              </tr>
-            </thead>
-            <tbody>
-              {agents.map((a) => (
-                <tr key={a.id} style={{ borderBottom: '1px solid var(--borderColor-muted, #d8dee4)' }}>
-                  <td style={{ padding: '8px 12px', fontWeight: 600 }}>{a.name}</td>
-                  <td style={{ padding: '8px 12px' }}>{a.memory}</td>
-                  <td style={{ padding: '8px 12px' }}><Label variant={statusVariant(a.status)}>{a.status}</Label></td>
-                  <td style={{ padding: '8px 12px' }}>{a.trust_score?.toFixed(1)}/100</td>
-                  <td style={{ padding: '8px 12px' }}>{a.transfer_efficiency?.toFixed(1)}%</td>
-                  <td style={{ padding: '8px 12px' }}>{a.last_eval?.slice(0, 10)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      <div className="grid gap-8 lg:grid-cols-2">
+        <Card>
+          <CardHeader><CardTitle className="text-xl font-light">Verified artifacts</CardTitle></CardHeader>
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Artifact</TableHead>
+                  <TableHead>Domain</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Trust</TableHead>
+                  <TableHead>Transfer Eff.</TableHead>
+                  <TableHead>Last eval</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {agents.map((a) => (
+                  <TableRow key={a.id}>
+                    <TableCell className="font-semibold">{a.name}</TableCell>
+                    <TableCell>{a.memory}</TableCell>
+                    <TableCell><Badge variant={statusVariant(a.status)}>{a.status}</Badge></TableCell>
+                    <TableCell>{a.trust_score?.toFixed(1)}/100</TableCell>
+                    <TableCell>{a.transfer_efficiency?.toFixed(1)}%</TableCell>
+                    <TableCell>{a.last_eval?.slice(0, 10)}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
 
-        <div className="amm-card-stack">
+        <div className="flex flex-col gap-3">
           {alerts.length > 0 ? alerts.map((a) => (
-            <Flash key={a.id} variant={a.severity === 'Blocked' ? 'danger' : 'warning'}>
-              <strong>{a.title}</strong><br />{a.summary}
-            </Flash>
+            <Alert key={a.id} variant={a.severity === 'Blocked' ? 'destructive' : 'default'}>
+              <AlertTitle>{a.title}</AlertTitle>
+              <AlertDescription>{a.summary}</AlertDescription>
+            </Alert>
           )) : (
-            <Flash variant="success"><strong>All clear</strong> — no drift alerts or safety issues.</Flash>
+            <Alert>
+              <AlertTitle>All clear</AlertTitle>
+              <AlertDescription>No drift alerts or safety issues.</AlertDescription>
+            </Alert>
           )}
-          <div style={{ padding: '16px', border: '1px solid #d0d7de', borderRadius: '6px', marginTop: '8px' }}>
-            <Heading as="h3" style={{ fontSize: '14px', marginBottom: '8px' }}>Policy</Heading>
-            <span className="amm-subtle" style={{ display: 'block' }}>Auto-buy cap: $2,000</span>
-            <span className="amm-subtle" style={{ display: 'block' }}>Human approval above Medium risk</span>
-            <span className="amm-subtle" style={{ display: 'block' }}>Auto-revoke on negative transfer &gt; 5%</span>
-            <span className="amm-subtle" style={{ display: 'block' }}>Scope: retrieval only / no tool autonomy</span>
-          </div>
+          <Card>
+            <CardHeader><CardTitle className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Policy</CardTitle></CardHeader>
+            <CardContent className="space-y-1 text-sm text-muted-foreground">
+              <div>Auto-buy cap: $2,000</div>
+              <div>Human approval above Medium risk</div>
+              <div>Auto-revoke on negative transfer &gt; 5%</div>
+              <div>Scope: retrieval only / no tool autonomy</div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>
