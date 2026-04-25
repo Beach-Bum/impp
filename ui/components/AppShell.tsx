@@ -2,26 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { routes } from '@/lib/routes';
 import MemoryMarketLogo from '@/components/MemoryMarketLogo';
-import { Moon, Sun } from 'lucide-react';
+import { ThemeTogglerButton } from '@/components/animate-ui/components/buttons/theme-toggler';
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const [dark, setDark] = useState(false);
-
-  useEffect(() => {
-    const saved = localStorage.getItem('impp-dark');
-    if (saved === '1') setDark(true);
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('impp-dark', dark ? '1' : '0');
-    document.documentElement.classList.toggle('dark', dark);
-  }, [dark]);
 
   return (
     <>
@@ -57,15 +45,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               Sign in
             </Button>
 
-            <Button
+            <ThemeTogglerButton
               variant="ghost"
-              size="icon"
-              className="h-8 w-8"
-              onClick={() => setDark(!dark)}
+              size="sm"
+              modes={['light', 'dark']}
               aria-label="Toggle color mode"
-            >
-              {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            </Button>
+            />
           </nav>
         </div>
       </header>

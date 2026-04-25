@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { CodeBlock } from '@/components/ui/code-block';
+import { CodeTabs } from '@/components/animate-ui/components/animate/code-tabs';
 
 const pythonMethods = [
   ['client.verify(path)', 'Run adversarial probes, return trust score'],
@@ -45,7 +46,10 @@ export default function SDKScreen() {
             <CardContent className="space-y-4">
               <div>
                 <p className="mb-2 text-sm text-muted-foreground">Install</p>
-                <CodeBlock language="bash">pip install impp</CodeBlock>
+                <CodeTabs
+                  codes={{ pip: 'pip install impp', pipx: 'pipx install impp', uv: 'uv pip install impp' }}
+                  lang="bash"
+                />
               </div>
 
               <div>
