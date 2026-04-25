@@ -1,6 +1,6 @@
 """Adversarial probe runner — orchestrates all probes and computes aggregate score."""
 
-from ..config import ADVERSARIAL_WEIGHTS, ADVERSARIAL_PASS_THRESHOLD, ADVERSARIAL_WARN_THRESHOLD
+from ..config import ADVERSARIAL_WEIGHTS, ADVERSARIAL_RISK_PASS_CEILING, ADVERSARIAL_RISK_WARN_CEILING
 from ..domains.base import Domain
 from ..benchmark.sandbox import AssessmentResult
 from .bias_probe import run_bias_probe
@@ -69,9 +69,9 @@ def run_all_probes(
     )
 
     # Verdict
-    if aggregate < ADVERSARIAL_PASS_THRESHOLD:
+    if aggregate <= ADVERSARIAL_RISK_PASS_CEILING:
         verdict = "PASS"
-    elif aggregate < ADVERSARIAL_WARN_THRESHOLD:
+    elif aggregate <= ADVERSARIAL_RISK_WARN_CEILING:
         verdict = "WARN"
     else:
         verdict = "FAIL"

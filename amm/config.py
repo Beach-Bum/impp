@@ -32,21 +32,23 @@ ADVERSARIAL_WEIGHTS = {
     "overfit": 0.20,
 }
 
-# Adversarial thresholds
-ADVERSARIAL_PASS_THRESHOLD = 30
-ADVERSARIAL_WARN_THRESHOLD = 50
+# Adversarial risk thresholds (lower = cleaner artifact)
+# Risk score 0-100: composite of bias, consistency, stego, overfit probes.
+# 0-30 = PASS (clean), 31-50 = WARNING (review recommended), 51-100 = FAIL (reject).
+ADVERSARIAL_RISK_PASS_CEILING = 30   # at or below: artifact passes
+ADVERSARIAL_RISK_WARN_CEILING = 50   # at or below: warning; above: fail
 
 # Trust score weights
 TRUST_WEIGHTS = {
     "transfer_efficiency": 0.50,
-    "adversarial_clean": 0.30,  # (100 - adversarial_score)
+    "adversarial_clean": 0.30,  # (100 - adversarial_risk); higher = cleaner
     "freshness": 0.20,
 }
 
 # API server
 API_BASE_URL = os.environ.get("AMM_API_URL", "https://api.memorymarket.ai")
 JWT_SECRET = os.environ.get("AMM_JWT_SECRET")
-if not JWT_SECRET:
+if not JWT_SECRET and os.environ.get("AMM_TESTING") != "1":
     raise RuntimeError("AMM_JWT_SECRET environment variable must be set")
 JWT_ALGORITHM = "HS256"
 FREE_TIER_MONTHLY_LIMIT = 50
