@@ -10,6 +10,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { Button } from '@/components/ui/button';
 import { CodeBlock } from '@/components/ui/code-block';
 import { ChevronDown } from 'lucide-react';
+import {
+  ScrollProgressProvider,
+  ScrollProgress,
+} from '@/components/animate-ui/primitives/animate/scroll-progress';
 
 const keyResults: [string, string, string][] = [
   ['Transfer Effectiveness (TE)', '+8-14% across models', 'Measured across GPT-4o and Claude Sonnet on held-out eval sets'],
@@ -42,6 +46,8 @@ export default function PaperScreen() {
   const [citationOpen, setCitationOpen] = useState(false);
 
   return (
+    <ScrollProgressProvider global>
+      <ScrollProgress className="fixed top-0 left-0 right-0 z-50 h-0.5 bg-primary origin-left" mode="width" />
     <TooltipProvider>
       <div className="mx-auto max-w-5xl px-5 py-8">
         <h1 className="mb-1 text-2xl font-light">Inter-Model Memory Protocol (IMPP)</h1>
@@ -181,5 +187,6 @@ export default function PaperScreen() {
         </section>
       </div>
     </TooltipProvider>
+    </ScrollProgressProvider>
   );
 }
