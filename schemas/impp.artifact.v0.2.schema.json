@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://impp.sh/schemas/impp.artifact.v0.2.schema.json",
+  "title": "IMPP Memory Artifact v0.2",
+  "description": "Schema for portable procedural and semantic memory artifacts in the Inter-Model Memory Protocol.",
+  "type": "object",
+  "required": ["impp_version", "version", "domain", "knowledge", "provenance", "attestation"],
+  "properties": {
+    "impp_version": {
+      "type": "string",
+      "const": "0.2",
+      "description": "Protocol version."
+    },
+    "version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$",
+      "description": "Semantic version of this artifact."
+    },
+    "artifact_type": {
+      "type": "string",
+      "enum": ["procedural", "semantic", "episodic_derived", "hybrid"],
+      "description": "Classification of the memory type encoded in this artifact."
+    },
+    "domain": {
+      "type": "object",
+      "required": ["category", "subcategory"],
+      "properties": {
+        "category": {
+          "type": "string",
+          "description": "Top-level domain tag (e.g., defi, cybersec, legal, engineering)."
+        },
+        "subcategory": {
+          "type": "string",
+          "description": "Specific area within the domain."
+        },
+        "scope": {
+          "type": "string",
+          "description": "Scope qualifier (e.g., protocol-level, application-level)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "knowledge": {
+      "type": "object",
+      "required": ["format", "content"],
+      "properties": {
+        "format": {
+          "type": "string",
+          "enum": ["markdown", "json", "text"],
+          "description": "Content format. Artifacts are text-first and model-independent."
+        },
+        "content": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The actual artifact text content."
+        },
+        "sections": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Named sections within the content for retrieval indexing."
+        },
+        "token_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Approximate token count of the content."
+        }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["agent_id", "model", "created_at"],
+      "properties": {
+        "agent_id": {
+          "type": "string",
+          "format": "uuid",
+          "description": "UUID of the originating agent."
+        },
+        "model": {
+          "type": "string",
+          "description": "Model that generated the artifact."
+        },
+        "training_rounds": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of training/refinement iterations."
+        },
+        "training_items": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Descriptions of source data used."
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time",
+          "description": "ISO 8601 timestamp of artifact creation."
+        },
+        "experiment_version": {
+          "type": "string",
+          "description": "Version of the experiment/pipeline that produced this artifact."
+        },
+        "license": {
+          "type": "string",
+          "enum": ["MIT", "Apache-2.0", "CC-BY-4.0", "CC-BY-SA-4.0", "CC-BY-NC-4.0", "proprietary"],
+          "description": "License governing use of this artifact."
+        },
+        "license_url": {
+          "type": "string",
+          "format": "uri",
+          "description": "URL to full license text (required for proprietary)."
+        },
+        "source_material": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "url": { "type": "string", "format": "uri" },
+              "license": { "type": "string" }
+            },
+            "required": ["name"]
+          },
+          "description": "Structured references to source data with licensing info."
+        }
+      },
+      "additionalProperties": false
+    },
+    "attestation": {
+      "type": "object",
+      "properties": {
+        "expert_avg_error": {
+          "type": "number",
+          "description": "Average absolute error of the expert baseline."
+        },
+        "transfer_efficiency_pct": {
+          "type": "number",
+          "description": "Percentage of expert-novice gap closed by the artifact."
+        },
+        "eval_items_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Number of evaluation items used."
+        },
+        "trials": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of independent evaluation trials."
+        },
+        "evaluation_suite": {
+          "type": "object",
+          "properties": {
+            "name": { "type": "string" },
+            "version": { "type": "string" },
+            "held_out_count": { "type": "integer" },
+            "benchmark_hash": { "type": "string" }
+          },
+          "description": "Metadata about the evaluation suite used for attestation."
+        }
+      },
+      "additionalProperties": false
+    },
+    "attach": {
+      "type": "object",
+      "properties": {
+        "supported_modes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["prepend_policy", "few_shot_examples", "retrieval_only", "tool_policy", "read_only_reference"]
+          },
+          "description": "Attach modes this artifact supports."
+        },
+        "default_mode": {
+          "type": "string",
+          "enum": ["prepend_policy", "few_shot_examples", "retrieval_only", "tool_policy", "read_only_reference"],
+          "description": "Recommended attach mode."
+        },
+        "prohibited_modes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["prepend_policy", "few_shot_examples", "retrieval_only", "tool_policy", "read_only_reference"]
+          },
+          "description": "Modes the publisher explicitly prohibits."
+        }
+      },
+      "additionalProperties": false
+    },
+    "card": {
+      "type": "object",
+      "properties": {
+        "intended_use": {
+          "type": "string",
+          "description": "What this artifact is designed for."
+        },
+        "contraindications": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Known scenarios where this artifact should NOT be used."
+        },
+        "known_failures": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Documented failure modes observed during evaluation."
+        },
+        "limitations": {
+          "type": "string",
+          "description": "General limitations and caveats."
+        }
+      },
+      "additionalProperties": false
+    },
+    "privacy": {
+      "type": "object",
+      "properties": {
+        "contains_pii": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether the artifact contains personally identifiable information."
+        },
+        "pii_redacted": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether PII redaction has been applied."
+        },
+        "data_jurisdiction": {
+          "type": "string",
+          "description": "Legal jurisdiction governing the source data (e.g., EU, US)."
+        }
+      },
+      "additionalProperties": false
+    },
+    "conflicts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "artifact": { "type": "string" },
+          "reason": { "type": "string" }
+        },
+        "required": ["artifact", "reason"]
+      },
+      "description": "Artifacts that conflict with this one (should not be attached simultaneously)."
+    },
+    "revocation": {
+      "type": "object",
+      "properties": {
+        "revoked": {
+          "type": "boolean",
+          "default": false
+        },
+        "revoked_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "revocation_reason": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": false
+    },
+    "hash": {
+      "type": "string",
+      "description": "SHA-256 content-addressed hash for integrity verification."
+    }
+  },
+  "additionalProperties": false
+}
