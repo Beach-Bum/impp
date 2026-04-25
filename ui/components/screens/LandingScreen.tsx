@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Table, TableBody, TableCell, TableRow } from '@/components/ui/table';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card';
 import { Badge } from '@/components/ui/badge';
 import { Kbd } from '@/components/ui/kbd';
 import { CodeBlock } from '@/components/ui/code-block';
@@ -221,28 +220,7 @@ artifacts = impp.autoload()`}</CodeBlock>
                   {newPackages.map((item) => (
                     <TableRow key={item.name}>
                       <TableCell>
-                        <HoverCard>
-                          <HoverCardTrigger render={<Link href={`/package/${item.slug}`} />} className="hover:underline">
-                            {item.name}
-                          </HoverCardTrigger>
-                          <HoverCardContent className="w-64">
-                            <div className="space-y-1">
-                              <p className="text-sm font-semibold">{item.name}</p>
-                              <div className="flex gap-1">
-                                <Badge variant="outline">{item.domain}</Badge>
-                                <Badge variant="secondary">{item.version}</Badge>
-                              </div>
-                              <div className="flex items-center gap-1 pt-1">
-                                <Tooltip>
-                                  <TooltipTrigger>
-                                    <span className="text-xs text-muted-foreground">Trust: {item.trust}/100</span>
-                                  </TooltipTrigger>
-                                  <TooltipContent>Composite score from 5 adversarial probes</TooltipContent>
-                                </Tooltip>
-                              </div>
-                            </div>
-                          </HoverCardContent>
-                        </HoverCard>
+                        <Link href={`/package/${item.slug}`} className="hover:underline">{item.name}</Link>
                       </TableCell>
                       <TableCell className="text-xs">{item.version}</TableCell>
                       <TableCell className="text-right text-xs text-muted-foreground">{item.age}</TableCell>
