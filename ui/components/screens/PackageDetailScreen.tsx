@@ -43,7 +43,7 @@ const PACKAGES: Record<string, PackageData> = {
     requires: { 'impp/core': '^1.0', 'impp/verification': '^0.5' },
     requiresDev: { 'impp/test-harness': '^1.0' },
     probes: [
-      { name: 'Embedding steganography', status: 'pass', score: 98 },
+      { name: 'Steganography detection', status: 'pass', score: 98 },
       { name: 'Overfit detection', status: 'pass', score: 95 },
       { name: 'Negative transfer risk', status: 'pass', score: 88 },
       { name: 'Cross-model compatibility', status: 'pass', score: 94 },
@@ -77,7 +77,7 @@ print(result.flags)       # List of risk factors
 ### Verification
 
 All versions pass the full IMPP adversarial probe battery:
-- Embedding steganography detection
+- Steganography detection detection
 - Overfit probe (train/test distribution shift)
 - Negative transfer risk assessment
 - Cross-model compatibility check
@@ -111,7 +111,7 @@ All versions pass the full IMPP adversarial probe battery:
     requires: { 'impp/core': '^1.0', 'impp/verification': '^0.5' },
     requiresDev: { 'impp/test-harness': '^1.0' },
     probes: [
-      { name: 'Embedding steganography', status: 'pass', score: 99 },
+      { name: 'Steganography detection', status: 'pass', score: 99 },
       { name: 'Overfit detection', status: 'pass', score: 96 },
       { name: 'Negative transfer risk', status: 'pass', score: 92 },
       { name: 'Cross-model compatibility', status: 'pass', score: 97 },
@@ -164,7 +164,7 @@ print(result.cvss_adjusted) # Context-adjusted CVSS score
     requires: { 'impp/core': '^1.0' },
     requiresDev: {},
     probes: [
-      { name: 'Embedding steganography', status: 'pass', score: 94 },
+      { name: 'Steganography detection', status: 'pass', score: 94 },
       { name: 'Overfit detection', status: 'pass', score: 88 },
       { name: 'Negative transfer risk', status: 'warn', score: 76 },
       { name: 'Cross-model compatibility', status: 'pass', score: 90 },
@@ -213,7 +213,7 @@ for finding in result.findings:
     requires: { 'impp/core': '^1.0', 'impp/verification': '^0.5' },
     requiresDev: {},
     probes: [
-      { name: 'Embedding steganography', status: 'pass', score: 92 },
+      { name: 'Steganography detection', status: 'pass', score: 92 },
       { name: 'Overfit detection', status: 'pass', score: 84 },
       { name: 'Negative transfer risk', status: 'warn', score: 72 },
       { name: 'Cross-model compatibility', status: 'pass', score: 88 },

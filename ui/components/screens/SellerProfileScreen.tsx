@@ -87,7 +87,7 @@ export default function SellerProfileScreen({ sellerId }: { sellerId: string }) 
               <div className="space-y-1 text-sm text-muted-foreground">
                 <div>Escrow release after sandbox pass</div>
                 <div>Stake can be slashed on fraud or rights breach</div>
-                <div>Royalty splits supported for co-signers and marketplaces</div>
+                <div>Royalty splits supported for co-signers and registries</div>
               </div>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Button render={<a href="/payments" />}>Payment rails</Button>

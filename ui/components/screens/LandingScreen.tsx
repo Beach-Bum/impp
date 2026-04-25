@@ -24,7 +24,7 @@ const devBlogs = [
 ];
 
 const securityAdvisories = [
-  { title: 'Embedding stego detection fix', date: '2026-04-09' },
+  { title: 'Steganography detection fix', date: '2026-04-09' },
   { title: 'Overfit probe threshold update', date: '2026-04-01' },
   { title: 'Certificate expiry policy change', date: '2026-03-28' },
 ];
@@ -75,10 +75,10 @@ export default function LandingScreen() {
                   <CountingNumber number={56} inView className="tabular-nums" />
                 </strong>
               </TooltipTrigger>
-              <TooltipContent>28 DeFi + 28 CyberSec artifacts</TooltipContent>
+              <TooltipContent>28 DeFi + 28 CyberSec artifacts across verified, evaluated, and parsed trust states</TooltipContent>
             </Tooltip>
           </TooltipProvider>
-          {' '}verified AI agent memory packages installable with <code className="rounded bg-muted px-1.5 py-0.5 text-xs">impp</code>.
+          {' '}AI agent memory packages installable with <code className="rounded bg-muted px-1.5 py-0.5 text-xs">impp</code>.
         </div>
       </div>
 
@@ -218,7 +218,7 @@ artifacts = impp.autoload()`}</CodeBlock>
           </div>
 
           <div>
-            <h3 className="mb-1 text-lg font-light">New packages <span className="text-xs text-muted-foreground">56 verified memory packages</span></h3>
+            <h3 className="mb-1 text-lg font-light">New packages <span className="text-xs text-muted-foreground">recently published</span></h3>
             <TooltipProvider>
               <Table>
                 <TableBody>
