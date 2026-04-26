@@ -2,15 +2,16 @@
 """Orchestrator for IMPP paper v1 experiments.
 
 Usage:
-    python experiments/run_paper_v1.py --dry-run          # validate setup only
-    python experiments/run_paper_v1.py --domain defi_risk  # run one domain
-    python experiments/run_paper_v1.py --trials 3          # full run
+    python experiments/run_paper_v1.py --dry-run                    # validate setup only
+    python experiments/run_paper_v1.py --dry-run --domain defi_risk # validate one domain
 
-Requires:
+    python experiments/run_paper_v1.py --live --domain defi_risk \
+        --conditions no_memory impp_artifact --trials 1             # real API calls
+
+Requires (for --live):
     ANTHROPIC_API_KEY  — for Claude-based conditions
-    OPENAI_API_KEY     — for cross-model conditions (optional)
 
-Conditions run per domain:
+Conditions:
     1. no_memory          — baseline, no artifact attached
     2. raw_context         — full artifact text dumped into context
     3. prompt_skill_file   — structured prompt-only skill file (no IMPP metadata)
@@ -20,20 +21,24 @@ Conditions run per domain:
     7. negative_transfer   — artifact from wrong domain (cybersec → defi or vice versa)
     8. poisoned_artifact   — deliberately manipulated artifact
 
-Each condition is evaluated on the domain's task set. Results are appended to
-data/paper_v1/results_v2.csv with columns:
-    run_id,domain,model,condition,attach_mode,task_id,score,error,cost_usd,latency_ms,is_sample
+Output:
+    --dry-run  → no output file (validation only)
+    --live     → appends to data/paper_v1/results_real.csv (is_sample=false)
+
+Sample fixtures in data/paper_v1/results.csv are never modified.
 """
 
 import argparse
 import csv
 import json
+import os
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "paper_v1"
-RESULTS_FILE = DATA_DIR / "results_v2.csv"
+REAL_RESULTS_FILE = DATA_DIR / "results_real.csv"
 
 CONDITIONS = [
     "no_memory",
@@ -46,10 +51,17 @@ CONDITIONS = [
     "poisoned_artifact",
 ]
 
-RESULT_COLUMNS = [
-    "run_id", "domain", "model", "condition", "attach_mode",
-    "task_id", "score", "error", "cost_usd", "latency_ms", "is_sample",
+LIVE_SUPPORTED = {"no_memory", "impp_artifact"}
+
+REAL_RESULT_COLUMNS = [
+    "run_id", "created_at", "domain", "model", "condition", "attach_mode",
+    "task_id", "predicted_score", "label", "error",
+    "cost_usd", "latency_ms", "is_sample", "notes",
 ]
+
+REQUIRED_ENV_VARS = {
+    "ANTHROPIC_API_KEY": "Required for all Claude-based live conditions",
+}
 
 
 def load_tasks(domain: str) -> list[dict]:
@@ -71,6 +83,20 @@ def load_labels() -> dict[str, float]:
     return labels
 
 
+def load_artifact(domain: str) -> dict | None:
+    """Load the first matching non-adversarial artifact for a domain."""
+    domain_map = {"defi": "defi_risk", "cybersec": "cybersec_vuln"}
+    target = domain_map.get(domain, domain)
+    with open(DATA_DIR / "artifacts_sanitized.jsonl") as f:
+        for line in f:
+            artifact = json.loads(line)
+            if artifact.get("is_sample") and not artifact.get("is_adversarial"):
+                scope = artifact.get("scope", {})
+                if scope.get("domain") == target:
+                    return artifact
+    return None
+
+
 def validate_setup(domain: str) -> bool:
     """Check that all required files exist and parse correctly."""
     ok = True
@@ -88,7 +114,6 @@ def validate_setup(domain: str) -> bool:
     print(f"Tasks for {domain}: {len(tasks)}")
     print(f"Labels loaded: {len(labels)}")
 
-    # Check all tasks have labels
     missing = [t["item_id"] for t in tasks if t["item_id"] not in labels]
     if missing:
         print(f"WARNING: {len(missing)} tasks missing labels: {missing[:5]}")
@@ -97,42 +122,13 @@ def validate_setup(domain: str) -> bool:
     return ok
 
 
-def run_condition(domain: str, condition: str, model: str, tasks: list[dict],
-                  labels: dict, trial: int, dry_run: bool) -> list[dict]:
-    """Run a single experimental condition. Returns result rows."""
-    run_id = f"{domain}_{condition}_t{trial}_{int(time.time())}"
-    results = []
-
-    for task in tasks:
-        if dry_run:
-            # Stub: would call LLM here
-            score = labels.get(task["item_id"], 50.0)
-            error = 0.0
-            cost = 0.0
-            latency = 0.0
-        else:
-            # TODO: wire up actual LLM calls via amm.benchmark
-            raise NotImplementedError(
-                f"Live experiment execution not yet wired. "
-                f"Use --dry-run to validate setup, or run run_experiment.py "
-                f"for the legacy single-condition runner."
-            )
-
-        results.append({
-            "run_id": run_id,
-            "domain": domain,
-            "model": model,
-            "condition": condition,
-            "attach_mode": _attach_mode_for_condition(condition),
-            "task_id": task["item_id"],
-            "score": score,
-            "error": error,
-            "cost_usd": cost,
-            "latency_ms": latency,
-            "is_sample": True,
-        })
-
-    return results
+def check_live_env() -> list[str]:
+    """Check that required env vars are set for live mode. Returns missing vars."""
+    missing = []
+    for var, desc in REQUIRED_ENV_VARS.items():
+        if not os.environ.get(var):
+            missing.append(f"  {var}: {desc}")
+    return missing
 
 
 def _attach_mode_for_condition(condition: str) -> str:
@@ -149,14 +145,120 @@ def _attach_mode_for_condition(condition: str) -> str:
     return mapping.get(condition, "unknown")
 
 
-def write_results(results: list[dict]) -> None:
-    file_exists = RESULTS_FILE.exists()
-    with open(RESULTS_FILE, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=RESULT_COLUMNS)
+def run_condition_live(domain: str, condition: str, model: str,
+                       tasks: list[dict], labels: dict, trial: int) -> list[dict]:
+    """Live run: make real API calls via amm.benchmark.sandbox."""
+    if condition not in LIVE_SUPPORTED:
+        raise NotImplementedError(
+            f"Condition '{condition}' is not yet implemented for --live. "
+            f"Supported: {sorted(LIVE_SUPPORTED)}"
+        )
+
+    # Late import so --dry-run never touches amm (which needs AMM_JWT_SECRET)
+    os.environ.setdefault("AMM_TESTING", "1")
+    from amm.api import create_client
+    from amm.domains import get_domain
+    from amm.benchmark.sandbox import evaluate_agent
+
+    domain_name_map = {"defi": "defi", "cybersec": "cybersec"}
+    amm_domain = get_domain(domain_name_map.get(domain, domain))
+    client = create_client()
+
+    # Filter to paper fixture task IDs for reproducibility
+    paper_task_ids = {t["item_id"] for t in tasks}
+    all_items = amm_domain.get_all_items()
+    items = [item for item in all_items if item.protocol in paper_task_ids]
+    matched_ids = {item.protocol for item in items}
+    missing_ids = paper_task_ids - matched_ids
+    if missing_ids:
+        preview = sorted(missing_ids)[:5]
+        raise RuntimeError(
+            f"{len(missing_ids)} paper fixture task IDs not found in "
+            f"amm_domain.get_all_items(): {preview}"
+        )
+    print(f"    Matched {len(items)}/{len(paper_task_ids)} paper fixture items "
+          f"(domain has {len(all_items)} total)")
+
+    run_id = f"live_{domain}_{condition}_t{trial}_{int(time.time())}"
+    now = datetime.now(timezone.utc).isoformat()
+
+    if condition == "no_memory":
+        print(f"    Evaluating novice baseline ({len(items)} items)...")
+        t0 = time.time()
+        agent_results = evaluate_agent(
+            client, amm_domain, items=items, memory="", model=model,
+        )
+        elapsed_ms = (time.time() - t0) * 1000
+
+    elif condition == "impp_artifact":
+        artifact = load_artifact(domain)
+        if not artifact:
+            raise RuntimeError(f"No artifact found for domain '{domain}'")
+        artifact_text = artifact.get("summary", "")
+        print(f"    Evaluating with IMPP artifact ({len(items)} items)...")
+        print(f"    Artifact: {artifact.get('name')} v{artifact.get('version')}")
+        system_prompt = amm_domain.get_buyer_system_prompt(artifact_text)
+        t0 = time.time()
+        agent_results = evaluate_agent(
+            client, amm_domain, items=items, model=model,
+            system_prompt_override=system_prompt,
+        )
+        elapsed_ms = (time.time() - t0) * 1000
+
+    else:
+        raise NotImplementedError(f"Condition '{condition}' not implemented for --live")
+
+    # Build result rows
+    results = []
+    for ar in agent_results:
+        true_score = labels.get(ar.protocol, ar.true_score)
+        results.append({
+            "run_id": run_id,
+            "created_at": now,
+            "domain": domain,
+            "model": model,
+            "condition": condition,
+            "attach_mode": _attach_mode_for_condition(condition),
+            "task_id": ar.protocol,
+            "predicted_score": ar.agent_score,
+            "label": true_score,
+            "error": abs(ar.agent_score - true_score),
+            "cost_usd": 0.0,  # TODO: extract from API response
+            "latency_ms": round(elapsed_ms / len(agent_results), 1),
+            "is_sample": False,
+            "notes": "",
+        })
+
+    return results
+
+
+def write_real_results(results: list[dict]) -> None:
+    """Append results to results_real.csv. Creates header if file is empty/new."""
+    file_exists = REAL_RESULTS_FILE.exists()
+    with open(REAL_RESULTS_FILE, "a", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=REAL_RESULT_COLUMNS)
         if not file_exists:
             writer.writeheader()
         writer.writerows(results)
-    print(f"Wrote {len(results)} rows to {RESULTS_FILE}")
+    print(f"Appended {len(results)} rows to {REAL_RESULTS_FILE}")
+
+
+def print_run_manifest(args, domain_key: str, live: bool, output_file: Path | None,
+                       total_rows: int) -> None:
+    """Print a run summary to stdout."""
+    print()
+    print("=" * 60)
+    print("RUN MANIFEST")
+    print("=" * 60)
+    print(f"  run_id:      {domain_key}_{int(time.time())}")
+    print(f"  domain:      {args.domain} (data key: {domain_key})")
+    print(f"  model:       {args.model}")
+    print(f"  conditions:  {args.conditions}")
+    print(f"  trials:      {args.trials}")
+    print(f"  live:        {live}")
+    print(f"  output_file: {output_file or 'none (dry-run)'}")
+    print(f"  total_rows:  {total_rows}")
+    print("=" * 60)
 
 
 def main():
@@ -169,19 +271,27 @@ def main():
                         help="Model to use")
     parser.add_argument("--conditions", nargs="+", default=CONDITIONS,
                         help="Conditions to run")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Validate setup without running experiments")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--dry-run", action="store_true",
+                      help="Validate setup without running experiments (default-safe)")
+    mode.add_argument("--live", action="store_true",
+                      help="Execute real API calls. Requires ANTHROPIC_API_KEY.")
     args = parser.parse_args()
+
+    # Safety: if neither --dry-run nor --live, default to dry-run
+    if not args.dry_run and not args.live:
+        args.dry_run = True
+        print("NOTE: Neither --dry-run nor --live specified. Defaulting to --dry-run.\n")
 
     # Map domain arg to data domain key
     domain_key = "defi" if args.domain == "defi_risk" else "cybersec"
 
-    print(f"IMPP Paper v1 Experiment Runner")
+    print("IMPP Paper v1 Experiment Runner")
     print(f"Domain: {args.domain} (data key: {domain_key})")
     print(f"Model: {args.model}")
     print(f"Trials: {args.trials}")
     print(f"Conditions: {args.conditions}")
-    print(f"Dry run: {args.dry_run}")
+    print(f"Mode: {'--live' if args.live else '--dry-run'}")
     print()
 
     if not validate_setup(domain_key):
@@ -190,7 +300,26 @@ def main():
 
     if args.dry_run:
         print("\n--dry-run: setup validated. No experiments executed.")
+        print_run_manifest(args, domain_key, live=False, output_file=None, total_rows=0)
         return
+
+    # Live mode checks
+    if args.live:
+        missing = check_live_env()
+        if missing:
+            print("\nERROR: Missing required environment variables for --live:")
+            for m in missing:
+                print(m)
+            print("\nSet them and retry, or use --dry-run to validate without API calls.")
+            sys.exit(1)
+
+        # Check for unsupported conditions
+        unsupported = [c for c in args.conditions if c not in LIVE_SUPPORTED]
+        if unsupported:
+            print(f"\nERROR: These conditions are not yet implemented for --live: {unsupported}")
+            print(f"Supported: {sorted(LIVE_SUPPORTED)}")
+            print("Remove unsupported conditions or use --dry-run.")
+            sys.exit(1)
 
     tasks = load_tasks(domain_key)
     labels = load_labels()
@@ -199,16 +328,19 @@ def main():
     for trial in range(1, args.trials + 1):
         for condition in args.conditions:
             print(f"\n--- Trial {trial}, Condition: {condition} ---")
-            results = run_condition(
+            results = run_condition_live(
                 domain_key, condition, args.model, tasks, labels, trial,
-                dry_run=args.dry_run,
             )
             all_results.extend(results)
 
-    if all_results:
-        write_results(all_results)
+            avg_error = sum(r["error"] for r in results) / len(results) if results else 0
+            print(f"    Items: {len(results)}, Avg error: {avg_error:.2f}")
 
-    print(f"\nDone. Total rows: {len(all_results)}")
+    if all_results:
+        write_real_results(all_results)
+
+    print_run_manifest(args, domain_key, live=True,
+                       output_file=REAL_RESULTS_FILE, total_rows=len(all_results))
 
 
 if __name__ == "__main__":
