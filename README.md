@@ -179,9 +179,11 @@ Production holdouts, live adversarial prompts, canary artifacts, abuse heuristic
 ```text
 impp/
 |-- paper/                          # Research paper drafts (CC-BY-4.0)
-|   |-- impp-portable-procedural-memory.md
-|   |-- agent-memory-markets.tex    # Legacy marketplace-first draft
-|   +-- agent-memory-markets.pdf
+|   |-- impp-portable-procedural-memory.md  # Active arXiv-track paper
+|   +-- legacy/                     # Legacy marketplace-first drafts
+|       |-- agent-memory-markets.tex
+|       |-- agent-memory-markets-v2.md
+|       +-- agent-memory-markets.pdf
 |-- docs/                           # Protocol docs
 |-- amm/                            # Core protocol package (Apache-2.0)
 |   |-- config.py
