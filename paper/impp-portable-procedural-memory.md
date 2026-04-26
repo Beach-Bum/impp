@@ -5,7 +5,7 @@ Working draft — protocol-first arXiv version
 
 ## Abstract
 
-AI agents increasingly rely on persistent memory: task traces, skill files, prompt refinements, domain heuristics, user preferences, and structured notes that improve behavior across interactions. Today, this memory is usually bound to a single application, framework, model provider, or deployment. We introduce IMPP, the Inter-Model Memory Protocol, a protocol for representing procedural and semantic agent memory as signed, versioned, evaluable artifacts. IMPP defines a memory-artifact schema, explicit attach modes describing how artifacts influence runtime behavior, provenance and privacy metadata, a staged trust ladder, and a verification pipeline combining supply-chain integrity checks with behavioral evaluation. We present a reference implementation and pilot experiments in DeFi risk assessment and cybersecurity vulnerability assessment. These experiments suggest that structured memory artifacts can transfer useful calibration behavior across agents, while also revealing important failure modes: benchmark leakage, anchoring, negative transfer, hidden instructions, and score gaming. We argue that portable agent memory should be treated as untrusted behavioral supply-chain material, requiring artifact cards, revocation, holdout evaluation, and adversarial testing before deployment. IMPP is a first step toward making learned agent behavior legible, portable, and governable.
+AI agents increasingly rely on persistent memory: task traces, skill files, prompt refinements, domain heuristics, user preferences, and structured notes that improve behavior across interactions. Today, this memory is usually bound to a single application, framework, model provider, or deployment. We introduce IMPP, the Inter-Model Memory Protocol, a protocol for representing procedural and semantic agent memory as signed, versioned, evaluable artifacts. IMPP defines a memory-artifact schema, explicit attach modes describing how artifacts influence runtime behavior, provenance and privacy metadata, a staged trust ladder, and a verification pipeline combining supply-chain integrity checks with behavioral evaluation. We present a reference implementation and pilot experiments in DeFi risk assessment and cybersecurity vulnerability assessment. Pilot results show mixed transfer: same-model Claude Sonnet evaluation on DeFi shows modest positive transfer (+5.6% TE), while cross-model GPT-4o transfer is slightly negative (-2.7%), and both models show negative transfer on cybersecurity tasks (-7.6% and -7.1% respectively). These results demonstrate that naive artifact attachment can produce zero or negative transfer, reinforcing the need for explicit attach semantics, model adaptation, verification, and negative-transfer testing. We argue that portable agent memory should be treated as untrusted behavioral supply-chain material, requiring artifact cards, revocation, holdout evaluation, and adversarial testing before deployment. IMPP is a first step toward making learned agent behavior legible, portable, and governable.
 
 ## 1. Introduction
 
@@ -157,21 +157,58 @@ Trust state is attached to a specific artifact version. New versions must be re-
 
 ## 8. Evaluation plan and pilot evidence
 
-The current prototype evaluates memory transfer in synthetic DeFi risk assessment and cybersecurity vulnerability assessment. The initial results are promising but pilot-scale. They should be interpreted as evidence that the protocol is worth studying, not as proof of universal transfer.
+The current prototype evaluates memory transfer in two synthetic domains: DeFi risk assessment (32 protocol items) and cybersecurity vulnerability assessment (8 items). We test two conditions: `no_memory` (baseline, no artifact) and `impp_artifact` (full IMPP artifact attached via `prepend_policy`). Each condition is evaluated across multiple independent trials.
 
-A credible evaluation suite should include:
+### 8.1 Experimental setup
 
-- no-memory baseline;
+We evaluate two model configurations:
+
+- **Same-model (Claude Sonnet via OpenRouter):** The artifact was produced by a Claude-family model and evaluated by the same model family. 3 trials per domain per condition.
+- **Cross-model (GPT-4o):** The artifact was produced by Claude and evaluated by GPT-4o, testing cross-model portability. 4 trials for DeFi, 3 trials for CyberSec, per condition.
+
+Each trial evaluates the same fixed task set. Transfer efficiency (TE) is computed as `(novice_MAE - artifact_MAE) / novice_MAE × 100`, where positive TE indicates the artifact improved performance over the no-memory baseline.
+
+### 8.2 Results
+
+| Domain | Model | Condition | MAE | Trials |
+|--------|-------|-----------|-----|--------|
+| DeFi | Claude Sonnet | impp_artifact | 7.38 ± 0.65 | 3 |
+| DeFi | Claude Sonnet | no_memory | 7.81 ± 0.41 | 3 |
+| DeFi | GPT-4o | impp_artifact | 8.03 ± 0.69 | 4 |
+| DeFi | GPT-4o | no_memory | 7.82 ± 0.24 | 4 |
+| CyberSec | Claude Sonnet | impp_artifact | 18.33 ± 0.85 | 3 |
+| CyberSec | Claude Sonnet | no_memory | 17.04 ± 1.23 | 3 |
+| CyberSec | GPT-4o | impp_artifact | 16.42 ± 0.75 | 3 |
+| CyberSec | GPT-4o | no_memory | 15.33 ± 1.83 | 3 |
+
+Per-model transfer efficiency:
+
+| Domain | Claude Sonnet TE | GPT-4o TE |
+|--------|-----------------|-----------|
+| DeFi | +5.6% | -2.7% |
+| CyberSec | -7.6% | -7.1% |
+
+### 8.3 Interpretation
+
+Pilot results show mixed transfer. DeFi same-model Claude evaluation shows a modest positive signal (+5.6% TE), suggesting the artifact provides some useful calibration when consumed by the same model family that produced it. Cross-model GPT-4o transfer on DeFi is slightly negative (-2.7%), consistent with the hypothesis that artifacts shaped by one model's reasoning style do not automatically help a different model. Both models show negative transfer on cybersecurity tasks, where the artifact appears to degrade performance below the no-memory baseline.
+
+These results do not support a claim of broad positive transfer. They do support three protocol-level conclusions:
+
+1. **Portable memory artifacts are feasible and evaluable.** The IMPP schema, attach mode, and verification pipeline can represent, deliver, and measure the effect of transferred memory.
+2. **Naive attachment can produce zero or negative transfer.** Attaching an artifact via `prepend_policy` without model adaptation or domain matching is insufficient. The protocol must support attach-mode selection, model-compatibility metadata, and negative-transfer detection.
+3. **Same-model transfer is more promising than cross-model transfer.** This is consistent with the intuition that procedural memory encodes model-specific reasoning patterns. Cross-model transfer likely requires artifact transformation or model-adaptive attach modes.
+
+### 8.4 Credible evaluation suite
+
+A complete evaluation should include conditions beyond the two tested here:
+
 - raw source context baseline;
 - RAG baseline;
 - prompt-only skill-file baseline;
-- IMPP artifact with declared attach mode;
 - attach-mode ablation;
-- negative-transfer tests;
-- adversarial artifact tests;
-- trust-score calibration.
-
-The current repository contains experiment infrastructure for trials, domains, cross-model buyer settings, sanitized artifacts, verification, storage, and JSON output. The next step is a public `data/paper_v1/` reproducibility package that regenerates the main tables.
+- negative-transfer tests (wrong-domain artifact);
+- adversarial artifact tests (poisoned artifact);
+- trust-score calibration against downstream outcomes.
 
 ## 9. Security and governance considerations
 
@@ -193,7 +230,15 @@ Public methodology should be transparent, but production holdouts and abuse prob
 
 ## 10. Limitations
 
-This work is preliminary. Current experiments use small synthetic domains and limited trials. Cross-model results are pilot evidence rather than statistically robust proof. The trust score is hand-weighted and requires calibration. Freshness, composability, revocation, and marketplace incentive dynamics remain under-tested. The paper should not claim that portable memory is universally safe or broadly generalizable.
+This work is preliminary. Known limitations include:
+
+- **Small scale.** Two synthetic domains, 32 and 8 items respectively, with 3-4 trials per condition per model. Effect sizes are small relative to trial variance. Larger item sets and more trials are needed before drawing strong conclusions about transfer magnitude.
+- **Mixed transfer results.** Only one of four domain-model combinations (DeFi / Claude Sonnet) shows positive transfer. Three show negative transfer. This is honest but means the protocol's value currently rests on feasibility and infrastructure, not demonstrated performance improvement.
+- **Benchmark leakage risk.** Public labels mean the model may have seen similar data during training. Transfer efficiency could reflect label familiarity rather than artifact quality.
+- **Single attach mode tested.** All experiments use `prepend_policy`. Other attach modes (`few_shot_examples`, `retrieval_only`, `tool_policy`) may produce different transfer characteristics.
+- **No model-adaptive attach.** The same artifact text is attached regardless of the consuming model. Model-specific reformulation or selective retrieval might improve cross-model transfer.
+- **Hand-weighted trust scores.** The verification pipeline weights (transfer efficiency 50%, adversarial cleanliness 30%, freshness 20%) are provisional and uncalibrated against downstream outcomes.
+- **Untested dynamics.** Freshness, composability, revocation, and marketplace incentive dynamics remain under-tested.
 
 ## 11. Discussion: registry before marketplace
 
@@ -210,4 +255,8 @@ The safer development sequence is:
 
 ## 12. Conclusion
 
-Agent memory will become valuable infrastructure only if it can be transferred without collapsing trust. IMPP proposes a protocol for making learned agent behavior legible, attachable, verifiable, and revocable. The strongest near-term claim is not that memory markets are inevitable. It is that portable procedural and semantic memory artifacts are plausible, useful, and risky enough to require protocol-level treatment.
+Agent memory will become valuable infrastructure only if it can be transferred without collapsing trust. IMPP proposes a protocol for making learned agent behavior legible, attachable, verifiable, and revocable.
+
+Our pilot results reinforce a conservative framing: portable memory artifacts are feasible and evaluable, but naive attachment can produce zero or negative transfer. The protocol must therefore include explicit attach semantics, model-compatibility metadata, verification pipelines, and negative-transfer testing as first-class concerns, not optional extensions.
+
+The strongest near-term claim is not that memory transfer reliably improves performance. It is that portable procedural and semantic memory artifacts are plausible, measurable, and risky enough to require protocol-level treatment. The path forward requires larger benchmarks, attach-mode ablation, model-adaptive delivery, and calibrated trust scoring.
