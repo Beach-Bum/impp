@@ -1,0 +1,61 @@
+{
+  "schema_version": "1.0",
+  "description": "Manifest for IMPP paper v1 experiment runs",
+  "conditions": [
+    {
+      "id": "no_memory",
+      "description": "Baseline with no artifact attached",
+      "attach_mode": "none",
+      "live_supported": true
+    },
+    {
+      "id": "raw_context",
+      "description": "Full artifact text dumped into context",
+      "attach_mode": "prepend_policy",
+      "live_supported": false
+    },
+    {
+      "id": "prompt_skill_file",
+      "description": "Structured prompt-only skill file (no IMPP metadata)",
+      "attach_mode": "prepend_policy",
+      "live_supported": false
+    },
+    {
+      "id": "impp_artifact",
+      "description": "Full IMPP artifact with declared attach mode",
+      "attach_mode": "prepend_policy",
+      "live_supported": true
+    },
+    {
+      "id": "retrieval_only",
+      "description": "RAG-style retrieval from artifact chunks",
+      "attach_mode": "retrieval_only",
+      "live_supported": false
+    },
+    {
+      "id": "few_shot",
+      "description": "Few-shot examples extracted from artifact",
+      "attach_mode": "few_shot_examples",
+      "live_supported": false
+    },
+    {
+      "id": "negative_transfer",
+      "description": "Artifact from wrong domain (cybersec → defi or vice versa)",
+      "attach_mode": "prepend_policy",
+      "live_supported": false
+    },
+    {
+      "id": "poisoned_artifact",
+      "description": "Deliberately manipulated artifact",
+      "attach_mode": "prepend_policy",
+      "live_supported": false
+    }
+  ],
+  "domains": ["defi_risk", "cybersec_vuln"],
+  "default_model": "claude-sonnet-4-20250514",
+  "default_trials": 3,
+  "output_files": {
+    "sample_results": "data/paper_v1/results.csv",
+    "real_results": "data/paper_v1/results_real.csv"
+  }
+}
