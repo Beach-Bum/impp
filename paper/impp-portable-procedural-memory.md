@@ -1,7 +1,9 @@
 # IMPP: A Protocol for Portable Procedural Memory in AI Agent Systems
 
-**Ned Karlovich**  
-Working draft — protocol-first arXiv version
+**Ned Karlovich**
+Working draft v0.3 — April 2026
+
+*This is a working draft with preliminary pilot results from two synthetic domains. The empirical evidence is mixed and small-scale. The primary contribution is the protocol design, not a performance claim.*
 
 ## Abstract
 
@@ -254,7 +256,7 @@ IMPP draws on several research threads. We summarize connections and distinction
 
 **Software supply-chain security.** Signed packages, provenance attestations, and transparency logs are established in software supply chains [10, 11]. IMPP adapts these patterns to behavioral artifacts, where the threat model includes not only tampering and impersonation but also prompt injection, hidden instructions, and negative transfer.
 
-**Evaluation and benchmark leakage.** Held-out evaluation is standard practice, but benchmark leakage is an active concern for LLM evaluation. IMPP's verification pipeline requires holdout evaluation and adversarial probes, and the pilot results in Section 8 illustrate the risk that public labels may inflate apparent transfer efficiency.
+**Evaluation and benchmark leakage.** Held-out evaluation is standard practice, but benchmark leakage is an active concern for LLM evaluation [12, 13]. IMPP's verification pipeline requires holdout evaluation and adversarial probes, and the pilot results in Section 8 illustrate the risk that public labels may inflate apparent transfer efficiency.
 
 ## 10. Security and governance considerations
 
@@ -331,4 +333,6 @@ The strongest near-term claim is not that memory transfer reliably improves perf
 
 [11] Sigstore Project. "Sigstore: Software Signing for Everyone." https://sigstore.dev, 2022.
 
-**TODO:** The benchmark leakage paragraph in Section 9 does not yet have a specific citation. A verified reference on LLM data contamination or evaluation benchmark leakage should be added before final arXiv submission.
+[12] C. Deng, Y. Zhao, X. Tang, M. Gerstein, and A. Cohan. "Investigating Data Contamination in Modern Benchmarks for Large Language Models." arXiv:2311.09783, 2023.
+
+[13] C. Xu, S. Guan, D. Greene, and M.-T. Kechadi. "Benchmark Data Contamination of Large Language Models: A Survey." arXiv:2406.04244, 2024.
