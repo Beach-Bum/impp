@@ -17,6 +17,12 @@ DATA_DIR = Path(__file__).parent.parent / "data" / "paper_v1"
 TABLES_DIR = Path(__file__).parent.parent / "paper" / "tables"
 
 
+SAMPLE_BANNER = (
+    "> **SAMPLE TABLE** — generated from synthetic/sample fixtures. "
+    "Do not cite as final empirical evidence."
+)
+
+
 def load_results() -> list[dict]:
     rows = []
     with open(DATA_DIR / "results.csv") as f:
@@ -26,14 +32,21 @@ def load_results() -> list[dict]:
     return rows
 
 
+def has_sample_rows(results: list[dict]) -> bool:
+    return any(r.get("is_sample", "").lower() == "true" for r in results)
+
+
 def generate_same_model_table(results: list[dict]) -> str:
     """Table 1: Same-model transfer efficiency across domains and trials."""
-    lines = [
+    lines = []
+    if has_sample_rows(results):
+        lines.extend([SAMPLE_BANNER, ""])
+    lines.extend([
         "## Table 1: Same-Model Transfer Results",
         "",
         "| Domain | Trial | Expert MAE | Novice MAE | Artifact MAE | TE (%) |",
         "|--------|-------|-----------|-----------|-------------|--------|",
-    ]
+    ])
 
     for domain in ["defi", "cybersec"]:
         domain_rows = [r for r in results
@@ -62,12 +75,15 @@ def generate_same_model_table(results: list[dict]) -> str:
 
 def generate_cross_model_table(results: list[dict]) -> str:
     """Table 2: Cross-model transfer (Claude -> GPT-4o)."""
-    lines = [
+    lines = []
+    if has_sample_rows(results):
+        lines.extend([SAMPLE_BANNER, ""])
+    lines.extend([
         "## Table 2: Cross-Model Transfer (Claude Sonnet -> GPT-4o)",
         "",
         "| Condition | Items | Avg Error |",
         "|-----------|-------|-----------|",
-    ]
+    ])
 
     conditions = [
         ("cross_model_novice", "GPT-4o novice (no artifact)"),
@@ -91,12 +107,13 @@ def generate_adversarial_table() -> str:
         adv = json.load(f)
 
     scores = adv["adversarial_scores"]
-    lines = [
+    lines = [SAMPLE_BANNER, ""]
+    lines.extend([
         "## Table 3: Adversarial Probe Results (Poisoned Artifact)",
         "",
         "| Probe | Score |",
         "|-------|-------|",
-    ]
+    ])
 
     probe_labels = {
         "bias_score": "Bias detection",
@@ -127,7 +144,10 @@ def generate_summary_table(results: list[dict]) -> str:
     cyber_te = [float(r["transfer_efficiency_pct"]) for r in results
                 if r["experiment"] == "same_model" and r["domain"] == "cybersec"]
 
-    lines = [
+    lines = []
+    if has_sample_rows(results):
+        lines.extend([SAMPLE_BANNER, ""])
+    lines.extend([
         "## Summary Statistics",
         "",
         "| Metric | Value |",
@@ -143,7 +163,7 @@ def generate_summary_table(results: list[dict]) -> str:
         "small item counts, benchmark leakage risk from public labels, "
         "prompt/model variance across runs, incomplete negative-transfer testing, "
         "uncalibrated trust-score weights.*",
-    ]
+    ])
     return "\n".join(lines)
 
 

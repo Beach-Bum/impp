@@ -1,3 +1,5 @@
+> **SAMPLE TABLE** — generated from synthetic/sample fixtures. Do not cite as final empirical evidence.
+
 ## Table 1: Same-Model Transfer Results
 
 | Domain | Trial | Expert MAE | Novice MAE | Artifact MAE | TE (%) |

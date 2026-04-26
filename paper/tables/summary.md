@@ -1,3 +1,5 @@
+> **SAMPLE TABLE** — generated from synthetic/sample fixtures. Do not cite as final empirical evidence.
+
 ## Summary Statistics
 
 | Metric | Value |
