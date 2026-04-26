@@ -18,19 +18,45 @@ Follow these steps to go from raw agent experience to a published, verified arti
 
 ## Artifact Schema
 
-The minimal artifact schema:
+IMPP artifacts follow the formal definition `M = (D, K, P, A, H)`:
+
+- **D (Domain)** — structured identifier for the knowledge domain
+- **K (Knowledge)** — the learned content (heuristics, calibration data, patterns)
+- **P (Provenance)** — metadata about the artifact's origin
+- **A (Attestation)** — verifiable performance claims
+- **H (Hash)** — SHA-256 content-addressed identifier for integrity verification
+
+Artifacts are text-first and model-independent. They do not contain embeddings — knowledge is stored as structured text (markdown, JSON, or plain text) that any model can consume.
+
+### Minimal Example
 
 ```json
 {
   "impp_version": "0.5",
-  "name": "my-artifact",
-  "version": "v1.0",
-  "domain": "engineering",
-  "description": "Short description of what this memory encodes",
-  "embeddings": [],
-  "metadata": {
-    "source_model": "claude-sonnet-4",
+  "version": "1.0.0",
+  "domain": {
+    "category": "defi",
+    "subcategory": "risk-assessment",
+    "scope": "protocol-level"
+  },
+  "knowledge": {
+    "format": "markdown",
+    "content": "# DeFi Risk Heuristics\n\n...",
+    "sections": ["liquidity-risk", "smart-contract-risk"],
+    "token_count": 2048
+  },
+  "provenance": {
+    "agent_id": "uuid",
+    "model": "claude-sonnet-4",
+    "training_rounds": 3,
+    "training_items": ["defi-protocol-docs", "audit-reports"],
     "created_at": "2026-04-25T00:00:00Z"
+  },
+  "attestation": {
+    "expert_avg_error": 0.12,
+    "transfer_efficiency_pct": 87.3,
+    "eval_items_count": 50,
+    "trials": 3
   }
 }
 ```
@@ -40,21 +66,26 @@ The minimal artifact schema:
 | Field | Type | Description |
 |-------|------|-------------|
 | `impp_version` | string | Protocol version (currently `"0.5"`) |
-| `name` | string | Artifact name, lowercase with hyphens |
-| `version` | string | Semantic version (e.g., `"v1.0"`) |
-| `domain` | string | Domain tag: `defi`, `cybersec`, `legal`, `engineering`, etc. |
-| `embeddings` | array | Vector embeddings representing the memory |
-| `metadata.source_model` | string | Model that generated the artifact |
-| `metadata.created_at` | string | ISO 8601 timestamp |
+| `version` | string | Semantic version (e.g., `"1.0.0"`) |
+| `domain.category` | string | Domain tag: `defi`, `cybersec`, `legal`, `engineering`, etc. |
+| `domain.subcategory` | string | Specific area within the domain |
+| `knowledge.format` | string | Content format: `markdown`, `json`, or `text` |
+| `knowledge.content` | string | The actual artifact text content |
+| `provenance.agent_id` | string | UUID of the originating agent |
+| `provenance.model` | string | Model that generated the artifact |
+| `provenance.created_at` | string | ISO 8601 timestamp |
+| `attestation` | object | Performance claims from evaluation |
 
 ### Optional Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `description` | string | Human-readable description |
-| `metadata.training_data` | string | Description of training data sources |
-| `metadata.embedding_dim` | number | Embedding dimension size |
-| `tags` | array | Additional searchable tags |
+| `domain.scope` | string | Scope qualifier (e.g., `"protocol-level"`) |
+| `knowledge.sections` | array | Named sections within the content |
+| `knowledge.token_count` | number | Approximate token count |
+| `provenance.training_rounds` | number | Number of training iterations |
+| `provenance.training_items` | array | Source data descriptions |
+| `attestation.trials` | number | Number of evaluation trials |
 
 ## Pre-Publish Check
 
@@ -62,9 +93,10 @@ Run a dry-run to catch issues locally before submitting:
 
 ```bash
 $ impp publish my-artifact.json --dry-run
-✓ Schema valid
-✓ Embeddings: 768-dim, 1024 vectors
-✓ Metadata complete
+✓ Schema valid (M = D, K, P, A, H)
+✓ Knowledge: markdown, 2048 tokens
+✓ Provenance complete
+✓ Attestation present
 ⚠ No description provided (recommended)
 Ready to publish
 ```
@@ -76,7 +108,7 @@ $ impp publish my-artifact.json --domain defi
 Uploading... done
 Running verification pipeline...
   ✓ Schema integrity
-  ✓ Embedding steganography check
+  ✓ Steganography detection
   ✓ Overfit probe
   ✓ Negative transfer probe
   ✓ Freshness check
@@ -91,9 +123,9 @@ Certificate issued:
 
 Use semantic versioning:
 
-- **Major** — Breaking changes to the embedding space (different dimensions, incompatible format)
-- **Minor** — Additional training data, metadata corrections, improved quality
-- **Patch** — Metadata-only fixes
+- **Major** — Breaking changes to the knowledge format or domain structure
+- **Minor** — Additional training data, knowledge corrections, improved quality
+- **Patch** — Metadata-only fixes (provenance corrections, attestation updates)
 
 A new certificate is issued for each published version. Previous versions remain accessible and independently verifiable.
 

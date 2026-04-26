@@ -19,6 +19,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 REGISTRY_DB_PATH = DATA_DIR / "registry.db"
 AMM_DIR = Path(os.environ.get("AMM_DIR", Path.home() / ".amm"))
 CERTS_DIR = AMM_DIR / "certs"
+CRL_PATH = AMM_DIR / "crl.json"
 
 # Verification
 CERTIFICATE_EXPIRY_DAYS = 90

@@ -41,7 +41,7 @@ export default function WaitlistScreen() {
     <div className="mx-auto max-w-5xl px-5 py-8">
       <h1 className="mb-1 text-2xl font-light">Join the waitlist</h1>
       <p className="mb-6 text-sm text-muted-foreground">
-        Get updates on verified seller onboarding, sandbox access, and private-market features.
+        Get updates on verified publisher onboarding, sandbox access, and private registry features.
       </p>
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -70,7 +70,7 @@ export default function WaitlistScreen() {
                   onChange={(e) => setCompany(e.target.value)}
                 />
                 <Textarea
-                  placeholder="What do you want to use Memory Market for?"
+                  placeholder="What do you want to use IMPP for?"
                   rows={5}
                   value={useCase}
                   onChange={(e) => setUseCase(e.target.value)}
@@ -89,8 +89,8 @@ export default function WaitlistScreen() {
           <CardContent>
             <div className="mb-3 flex flex-wrap gap-1">
               <Badge>Sandbox access</Badge>
-              <Badge variant="secondary">Seller onboarding</Badge>
-              <Badge variant="outline">Private markets</Badge>
+              <Badge variant="secondary">Publisher onboarding</Badge>
+              <Badge variant="outline">Private registries</Badge>
             </div>
             <div className="space-y-2 text-sm text-muted-foreground">
               <div>Early access to sandbox scorecards and artifact trials</div>

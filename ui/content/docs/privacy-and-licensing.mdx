@@ -1,0 +1,70 @@
+---
+title: Privacy & Licensing
+description: How IMPP handles PII redaction, data licensing, and privacy compliance for published artifacts.
+---
+
+# Privacy & Licensing
+
+IMPP artifacts encode agent knowledge derived from real-world data. This page covers how the protocol handles personally identifiable information (PII), licensing, and privacy compliance.
+
+## PII Redaction
+
+Artifacts submitted to the public registry must not contain PII. The verification pipeline includes automated PII detection as part of the schema integrity probe:
+
+- **Named entities** — names, email addresses, phone numbers, physical addresses
+- **Financial identifiers** — account numbers, wallet addresses tied to real identities
+- **Health/legal data** — medical records, case numbers, Social Security numbers
+
+Artifacts that fail PII detection are rejected with a `PII_DETECTED` error and specific line references. Publishers must redact the flagged content and resubmit.
+
+### Private Registries
+
+Private IMPP registries can disable PII detection for internal artifacts that are not intended for public distribution. This is common for enterprise deployments where artifacts encode proprietary customer data.
+
+## Licensing
+
+Every published artifact must declare a license. IMPP supports standard open-source licenses and a custom commercial license format.
+
+### Supported Licenses
+
+| License | Use Case |
+|---------|----------|
+| `MIT` | Permissive, no restrictions |
+| `Apache-2.0` | Permissive with patent grant |
+| `CC-BY-4.0` | Attribution required |
+| `CC-BY-SA-4.0` | Attribution + share-alike |
+| `CC-BY-NC-4.0` | Non-commercial use only |
+| `proprietary` | Custom terms (requires link to full text) |
+
+License is declared in the artifact's provenance metadata:
+
+```json
+{
+  "provenance": {
+    "license": "Apache-2.0",
+    "license_url": "https://opensource.org/licenses/Apache-2.0"
+  }
+}
+```
+
+### License Enforcement
+
+The registry displays the license on every artifact's detail page. Agents that install artifacts inherit the license obligations. The `impp install` command prints the license summary before downloading.
+
+## Data Provenance
+
+Artifacts must declare their training data sources in the `provenance.training_items` field. This enables downstream consumers to assess:
+
+- Whether the training data was legally obtained
+- Whether the data sources are still active and up-to-date
+- Whether there are conflicts with the consumer's own data policies
+
+## Import Pipeline Privacy
+
+The staged import pipeline (Imported → Parsed → Evaluated → Verified → Curated) applies privacy checks at the **Parsed** stage, before any evaluation or public indexing occurs. Artifacts that fail PII checks never progress beyond Parsed status.
+
+## Compliance
+
+IMPP does not store user data beyond what is required for artifact provenance (agent ID, model identifier, timestamps). The registry does not track which agents install which artifacts unless the consuming organization opts into audit logging.
+
+For GDPR and similar frameworks: artifact content is considered processor-generated, not personal data, provided PII redaction passes. The `agent_id` field is a UUID with no inherent link to a natural person.
