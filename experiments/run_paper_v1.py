@@ -64,12 +64,14 @@ PROVIDER_ENV_VARS = {
     "anthropic": {"ANTHROPIC_API_KEY": "Required for Claude-based conditions"},
     "gemini": {"GOOGLE_API_KEY": "Required for Gemini-based conditions"},
     "openai": {"OPENAI_API_KEY": "Required for OpenAI-based conditions"},
+    "openrouter": {"OPENROUTER_API_KEY": "Required for OpenRouter-based conditions"},
 }
 
 PROVIDER_DEFAULT_MODELS = {
     "anthropic": "claude-sonnet-4-20250514",
     "gemini": "gemini-2.5-flash",
     "openai": "gpt-4o",
+    "openrouter": "anthropic/claude-sonnet-4",
 }
 
 
@@ -198,6 +200,52 @@ def _create_llm_client(provider: str, model: str):
                         raise
 
         return GeminiClient(model)
+    elif provider == "openrouter":
+        from amm.api_base import LLMClient
+        import json as _json
+        import urllib.request
+        import urllib.error
+        from amm.config import API_RETRY_ATTEMPTS, API_RETRY_BASE_DELAY
+
+        class OpenRouterClient(LLMClient):
+            """Any model via OpenRouter's OpenAI-compatible API."""
+            def __init__(self, model_name: str):
+                self.model = model_name
+                self._api_key = os.environ["OPENROUTER_API_KEY"]
+
+            def call(self, system: str, user_message: str, max_tokens: int = 400) -> str:
+                url = "https://openrouter.ai/api/v1/chat/completions"
+                payload = _json.dumps({
+                    "model": self.model,
+                    "max_tokens": max_tokens,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": user_message},
+                    ],
+                }).encode("utf-8")
+                headers = {
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {self._api_key}",
+                }
+                for attempt in range(API_RETRY_ATTEMPTS):
+                    try:
+                        req = urllib.request.Request(url, data=payload, headers=headers)
+                        with urllib.request.urlopen(req, timeout=120) as resp:
+                            raw = resp.read().decode("utf-8")
+                        if not raw.strip():
+                            raise ValueError("Empty response from OpenRouter")
+                        data = _json.loads(raw)
+                        if "error" in data:
+                            raise ValueError(f"OpenRouter error: {data['error']}")
+                        return data["choices"][0]["message"]["content"]
+                    except (urllib.error.URLError, urllib.error.HTTPError,
+                            KeyError, ValueError, _json.JSONDecodeError):
+                        if attempt < API_RETRY_ATTEMPTS - 1:
+                            time.sleep(API_RETRY_BASE_DELAY * (2 ** attempt))
+                            continue
+                        raise
+
+        return OpenRouterClient(model)
     else:
         from amm.api import create_llm_client
         return create_llm_client(provider=provider, model=model)
@@ -326,7 +374,7 @@ def main():
                         help="Domain to evaluate")
     parser.add_argument("--trials", type=int, default=3, help="Number of trials")
     parser.add_argument("--provider", default="anthropic",
-                        choices=["anthropic", "gemini", "openai"],
+                        choices=["anthropic", "gemini", "openai", "openrouter"],
                         help="API provider (default: anthropic)")
     parser.add_argument("--model", default=None,
                         help="Model to use (defaults per provider)")
