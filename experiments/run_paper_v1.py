@@ -9,7 +9,8 @@ Usage:
         --conditions no_memory impp_artifact --trials 1             # real API calls
 
 Requires (for --live):
-    ANTHROPIC_API_KEY  — for Claude-based conditions
+    ANTHROPIC_API_KEY  — for --provider anthropic (default)
+    GOOGLE_API_KEY     — for --provider gemini
 
 Conditions:
     1. no_memory          — baseline, no artifact attached
@@ -59,8 +60,16 @@ REAL_RESULT_COLUMNS = [
     "cost_usd", "latency_ms", "is_sample", "notes",
 ]
 
-REQUIRED_ENV_VARS = {
-    "ANTHROPIC_API_KEY": "Required for all Claude-based live conditions",
+PROVIDER_ENV_VARS = {
+    "anthropic": {"ANTHROPIC_API_KEY": "Required for Claude-based conditions"},
+    "gemini": {"GOOGLE_API_KEY": "Required for Gemini-based conditions"},
+    "openai": {"OPENAI_API_KEY": "Required for OpenAI-based conditions"},
+}
+
+PROVIDER_DEFAULT_MODELS = {
+    "anthropic": "claude-sonnet-4-20250514",
+    "gemini": "gemini-2.5-flash",
+    "openai": "gpt-4o",
 }
 
 
@@ -122,10 +131,11 @@ def validate_setup(domain: str) -> bool:
     return ok
 
 
-def check_live_env() -> list[str]:
+def check_live_env(provider: str) -> list[str]:
     """Check that required env vars are set for live mode. Returns missing vars."""
+    required = PROVIDER_ENV_VARS.get(provider, {})
     missing = []
-    for var, desc in REQUIRED_ENV_VARS.items():
+    for var, desc in required.items():
         if not os.environ.get(var):
             missing.append(f"  {var}: {desc}")
     return missing
@@ -145,8 +155,57 @@ def _attach_mode_for_condition(condition: str) -> str:
     return mapping.get(condition, "unknown")
 
 
+def _create_llm_client(provider: str, model: str):
+    """Create an LLMClient for the given provider. Late import to avoid amm at dry-run."""
+    os.environ.setdefault("AMM_TESTING", "1")
+    if provider == "gemini":
+        from amm.api_base import LLMClient
+        import json as _json
+        import urllib.request
+        import urllib.error
+        from amm.config import API_RETRY_ATTEMPTS, API_RETRY_BASE_DELAY
+
+        class GeminiClient(LLMClient):
+            """Gemini via Google's native generateContent API."""
+            def __init__(self, model_name: str):
+                self.model = model_name
+                self._api_key = os.environ["GOOGLE_API_KEY"]
+
+            def call(self, system: str, user_message: str, max_tokens: int = 400) -> str:
+                url = (
+                    f"https://generativelanguage.googleapis.com/v1beta/"
+                    f"models/{self.model}:generateContent?key={self._api_key}"
+                )
+                payload = _json.dumps({
+                    "system_instruction": {"parts": [{"text": system}]},
+                    "contents": [{"parts": [{"text": user_message}]}],
+                    "generationConfig": {
+                        "maxOutputTokens": max_tokens,
+                        "thinkingConfig": {"thinkingBudget": 0},
+                    },
+                }).encode("utf-8")
+                headers = {"Content-Type": "application/json"}
+                for attempt in range(API_RETRY_ATTEMPTS):
+                    try:
+                        req = urllib.request.Request(url, data=payload, headers=headers)
+                        with urllib.request.urlopen(req, timeout=120) as resp:
+                            data = _json.loads(resp.read().decode("utf-8"))
+                        return data["candidates"][0]["content"]["parts"][0]["text"]
+                    except (urllib.error.URLError, urllib.error.HTTPError, KeyError):
+                        if attempt < API_RETRY_ATTEMPTS - 1:
+                            time.sleep(API_RETRY_BASE_DELAY * (2 ** attempt))
+                            continue
+                        raise
+
+        return GeminiClient(model)
+    else:
+        from amm.api import create_llm_client
+        return create_llm_client(provider=provider, model=model)
+
+
 def run_condition_live(domain: str, condition: str, model: str,
-                       tasks: list[dict], labels: dict, trial: int) -> list[dict]:
+                       tasks: list[dict], labels: dict, trial: int,
+                       provider: str = "anthropic") -> list[dict]:
     """Live run: make real API calls via amm.benchmark.sandbox."""
     if condition not in LIVE_SUPPORTED:
         raise NotImplementedError(
@@ -156,19 +215,18 @@ def run_condition_live(domain: str, condition: str, model: str,
 
     # Late import so --dry-run never touches amm (which needs AMM_JWT_SECRET)
     os.environ.setdefault("AMM_TESTING", "1")
-    from amm.api import create_client
     from amm.domains import get_domain
-    from amm.benchmark.sandbox import evaluate_agent
+    from amm.benchmark.sandbox import evaluate_agent_llm
 
     domain_name_map = {"defi": "defi", "cybersec": "cybersec"}
     amm_domain = get_domain(domain_name_map.get(domain, domain))
-    client = create_client()
+    llm_client = _create_llm_client(provider, model)
 
     # Filter to paper fixture task IDs for reproducibility
     paper_task_ids = {t["item_id"] for t in tasks}
     all_items = amm_domain.get_all_items()
-    items = [item for item in all_items if item.protocol in paper_task_ids]
-    matched_ids = {item.protocol for item in items}
+    items = [item for item in all_items if item.name in paper_task_ids]
+    matched_ids = {item.name for item in items}
     missing_ids = paper_task_ids - matched_ids
     if missing_ids:
         preview = sorted(missing_ids)[:5]
@@ -185,8 +243,8 @@ def run_condition_live(domain: str, condition: str, model: str,
     if condition == "no_memory":
         print(f"    Evaluating novice baseline ({len(items)} items)...")
         t0 = time.time()
-        agent_results = evaluate_agent(
-            client, amm_domain, items=items, memory="", model=model,
+        agent_results = evaluate_agent_llm(
+            llm_client, amm_domain, items=items,
         )
         elapsed_ms = (time.time() - t0) * 1000
 
@@ -199,8 +257,8 @@ def run_condition_live(domain: str, condition: str, model: str,
         print(f"    Artifact: {artifact.get('name')} v{artifact.get('version')}")
         system_prompt = amm_domain.get_buyer_system_prompt(artifact_text)
         t0 = time.time()
-        agent_results = evaluate_agent(
-            client, amm_domain, items=items, model=model,
+        agent_results = evaluate_agent_llm(
+            llm_client, amm_domain, items=items,
             system_prompt_override=system_prompt,
         )
         elapsed_ms = (time.time() - t0) * 1000
@@ -267,8 +325,11 @@ def main():
                         choices=["defi_risk", "cybersec_vuln"],
                         help="Domain to evaluate")
     parser.add_argument("--trials", type=int, default=3, help="Number of trials")
-    parser.add_argument("--model", default="claude-sonnet-4-20250514",
-                        help="Model to use")
+    parser.add_argument("--provider", default="anthropic",
+                        choices=["anthropic", "gemini", "openai"],
+                        help="API provider (default: anthropic)")
+    parser.add_argument("--model", default=None,
+                        help="Model to use (defaults per provider)")
     parser.add_argument("--conditions", nargs="+", default=CONDITIONS,
                         help="Conditions to run")
     mode = parser.add_mutually_exclusive_group()
@@ -283,11 +344,16 @@ def main():
         args.dry_run = True
         print("NOTE: Neither --dry-run nor --live specified. Defaulting to --dry-run.\n")
 
+    # Resolve model default per provider
+    if args.model is None:
+        args.model = PROVIDER_DEFAULT_MODELS.get(args.provider, "claude-sonnet-4-20250514")
+
     # Map domain arg to data domain key
     domain_key = "defi" if args.domain == "defi_risk" else "cybersec"
 
     print("IMPP Paper v1 Experiment Runner")
     print(f"Domain: {args.domain} (data key: {domain_key})")
+    print(f"Provider: {args.provider}")
     print(f"Model: {args.model}")
     print(f"Trials: {args.trials}")
     print(f"Conditions: {args.conditions}")
@@ -305,7 +371,7 @@ def main():
 
     # Live mode checks
     if args.live:
-        missing = check_live_env()
+        missing = check_live_env(args.provider)
         if missing:
             print("\nERROR: Missing required environment variables for --live:")
             for m in missing:
@@ -330,6 +396,7 @@ def main():
             print(f"\n--- Trial {trial}, Condition: {condition} ---")
             results = run_condition_live(
                 domain_key, condition, args.model, tasks, labels, trial,
+                provider=args.provider,
             )
             all_results.extend(results)
 
