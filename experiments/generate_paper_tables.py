@@ -193,30 +193,33 @@ def generate_summary_table(results: list[dict]) -> str:
 
 
 def generate_real_condition_table(results: list[dict]) -> str:
-    """Table: Per-condition MAE from real experiment runs."""
+    """Table: Per-condition MAE from real experiment runs, grouped by model."""
     lines = [
         "## Table: Condition Comparison (Real Runs)",
         "",
-        "| Domain | Condition | Items | MAE | Trials |",
-        "|--------|-----------|-------|-----|--------|",
+        "| Domain | Model | Condition | Items | MAE | Trials |",
+        "|--------|-------|-----------|-------|-----|--------|",
     ]
 
     for domain in ["defi", "cybersec"]:
         domain_rows = [r for r in results if r["domain"] == domain]
-        conditions = sorted(set(r["condition"] for r in domain_rows))
-        for condition in conditions:
-            cond_rows = [r for r in domain_rows if r["condition"] == condition]
-            run_ids = sorted(set(r["run_id"] for r in cond_rows))
-            trial_maes = []
-            for run_id in run_ids:
-                run_rows = [r for r in cond_rows if r["run_id"] == run_id]
-                mae = statistics.mean(float(r["error"]) for r in run_rows)
-                trial_maes.append(mae)
-            overall_mae = statistics.mean(trial_maes)
-            items = len([r for r in cond_rows if r["run_id"] == run_ids[0]])
-            lines.append(
-                f"| {domain} | {condition} | {items} | {overall_mae:.2f} | {len(run_ids)} |"
-            )
+        models = sorted(set(r["model"] for r in domain_rows))
+        for model in models:
+            model_rows = [r for r in domain_rows if r["model"] == model]
+            conditions = sorted(set(r["condition"] for r in model_rows))
+            for condition in conditions:
+                cond_rows = [r for r in model_rows if r["condition"] == condition]
+                run_ids = sorted(set(r["run_id"] for r in cond_rows))
+                trial_maes = []
+                for run_id in run_ids:
+                    run_rows = [r for r in cond_rows if r["run_id"] == run_id]
+                    mae = statistics.mean(float(r["error"]) for r in run_rows)
+                    trial_maes.append(mae)
+                overall_mae = statistics.mean(trial_maes)
+                items = len([r for r in cond_rows if r["run_id"] == run_ids[0]])
+                lines.append(
+                    f"| {domain} | {model} | {condition} | {items} | {overall_mae:.2f} | {len(run_ids)} |"
+                )
 
     lines.append("")
     lines.append("*MAE = mean absolute error averaged across trials. "
@@ -224,46 +227,79 @@ def generate_real_condition_table(results: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def _compute_condition_mae(rows: list[dict]) -> tuple[float, float, int, int]:
+    """Return (mean_mae, std_mae, n_trials, n_items) for a set of condition rows."""
+    run_ids = sorted(set(r["run_id"] for r in rows))
+    trial_maes = []
+    for run_id in run_ids:
+        run_rows = [r for r in rows if r["run_id"] == run_id]
+        mae = statistics.mean(float(r["error"]) for r in run_rows)
+        trial_maes.append(mae)
+    mean_mae = statistics.mean(trial_maes)
+    std_mae = statistics.stdev(trial_maes) if len(trial_maes) > 1 else 0
+    items = len([r for r in rows if r["run_id"] == run_ids[0]])
+    return mean_mae, std_mae, len(run_ids), items
+
+
 def generate_real_summary_table(results: list[dict]) -> str:
-    """Summary statistics from real experiment runs."""
+    """Summary statistics from real experiment runs, grouped by model."""
     lines = [
         "## Summary Statistics (Real Runs)",
+        "",
+        "### Per-Model Results",
         "",
         "| Metric | Value |",
         "|--------|-------|",
     ]
 
+    # Per-model MAE and TE
     for domain in ["defi", "cybersec"]:
         domain_rows = [r for r in results if r["domain"] == domain]
-        conditions = sorted(set(r["condition"] for r in domain_rows))
-        for condition in conditions:
-            cond_rows = [r for r in domain_rows if r["condition"] == condition]
-            run_ids = sorted(set(r["run_id"] for r in cond_rows))
-            trial_maes = []
-            for run_id in run_ids:
-                run_rows = [r for r in cond_rows if r["run_id"] == run_id]
-                mae = statistics.mean(float(r["error"]) for r in run_rows)
-                trial_maes.append(mae)
-            mean_mae = statistics.mean(trial_maes)
-            std_mae = statistics.stdev(trial_maes) if len(trial_maes) > 1 else 0
-            items = len([r for r in cond_rows if r["run_id"] == run_ids[0]])
-            lines.append(
-                f"| {domain} / {condition} MAE | {mean_mae:.2f} +/- {std_mae:.2f} "
-                f"(n={len(run_ids)}, {items} items) |"
-            )
+        models = sorted(set(r["model"] for r in domain_rows))
+        for model in models:
+            model_rows = [r for r in domain_rows if r["model"] == model]
+            conditions = sorted(set(r["condition"] for r in model_rows))
+            for condition in conditions:
+                cond_rows = [r for r in model_rows if r["condition"] == condition]
+                mean_mae, std_mae, n_trials, items = _compute_condition_mae(cond_rows)
+                lines.append(
+                    f"| {domain} / {model} / {condition} MAE | {mean_mae:.2f} +/- {std_mae:.2f} "
+                    f"(n={n_trials}, {items} items) |"
+                )
 
-    # TE if both no_memory and impp_artifact exist for a domain
+            # TE per model
+            if "no_memory" in conditions and "impp_artifact" in conditions:
+                novice_rows = [r for r in model_rows if r["condition"] == "no_memory"]
+                artifact_rows = [r for r in model_rows if r["condition"] == "impp_artifact"]
+                novice_mae, _, _, _ = _compute_condition_mae(novice_rows)
+                artifact_mae, _, _, _ = _compute_condition_mae(artifact_rows)
+                if novice_mae > 0:
+                    te = ((novice_mae - artifact_mae) / novice_mae) * 100
+                    lines.append(f"| {domain} / {model} TE (novice→artifact) | {te:.1f}% |")
+
+    # Pooled across models (exploratory)
+    lines.append("")
+    lines.append("### Pooled Across Models")
+    lines.append("")
+    lines.append("*Exploratory only — do not interpret as same-model transfer.*")
+    lines.append("")
+    lines.append("| Metric | Value |")
+    lines.append("|--------|-------|")
+
     for domain in ["defi", "cybersec"]:
         domain_rows = [r for r in results if r["domain"] == domain]
         conditions = set(r["condition"] for r in domain_rows)
         if "no_memory" in conditions and "impp_artifact" in conditions:
             novice_rows = [r for r in domain_rows if r["condition"] == "no_memory"]
             artifact_rows = [r for r in domain_rows if r["condition"] == "impp_artifact"]
-            novice_mae = statistics.mean(float(r["error"]) for r in novice_rows)
-            artifact_mae = statistics.mean(float(r["error"]) for r in artifact_rows)
+            novice_mae, _, n_nov, _ = _compute_condition_mae(novice_rows)
+            artifact_mae, _, n_art, _ = _compute_condition_mae(artifact_rows)
             if novice_mae > 0:
                 te = ((novice_mae - artifact_mae) / novice_mae) * 100
-                lines.append(f"| {domain} TE (novice→artifact) | {te:.1f}% |")
+                lines.append(
+                    f"| {domain} pooled TE | {te:.1f}% "
+                    f"(novice n={n_nov}, artifact n={n_art}) |"
+                )
 
     lines.append("")
     lines.append("*TE = transfer efficiency = (novice_MAE - artifact_MAE) / novice_MAE x 100. "
