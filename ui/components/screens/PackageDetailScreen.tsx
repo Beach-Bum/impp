@@ -13,6 +13,7 @@ import { CountingNumber } from '@/components/animate-ui/primitives/texts/countin
 import { CopyButton } from '@/components/animate-ui/components/buttons/copy';
 import { Shield, GitBranch, Clock, User, ExternalLink, FileText, Download } from 'lucide-react';
 import { ShareButton } from '@/components/animate-ui/components/community/share-button';
+import { getArtifactBySlug, type Artifact } from '@/lib/artifacts';
 
 // Package data keyed by slug (matches landing page newPackages)
 const PACKAGES: Record<string, PackageData> = {
@@ -278,6 +279,10 @@ export default function PackageDetailScreen({ slug }: { slug: string }) {
   const pkg = PACKAGES[slug];
 
   if (!pkg) {
+    const artifact = getArtifactBySlug(slug);
+    if (artifact) {
+      return <ArtifactFallbackDetail artifact={artifact} />;
+    }
     return (
       <div className="mx-auto max-w-5xl px-5 py-16 text-center">
         <h1 className="text-2xl font-light mb-2">Package not found</h1>
@@ -525,6 +530,136 @@ function StatRow({ label, value }: { label: string; value: number }) {
       <TableCell className="py-1 pl-0 text-sm text-muted-foreground">{label}:</TableCell>
       <TableCell className="py-1 pr-0 text-right text-sm font-mono">{value}</TableCell>
     </TableRow>
+  );
+}
+
+function ArtifactFallbackDetail({ artifact }: { artifact: Artifact }) {
+  const installCmd = `impp install impp/${artifact.slug}`;
+  return (
+    <TooltipProvider>
+      <div className="mx-auto max-w-5xl px-5 py-8">
+        <h1 className="text-3xl font-light mb-1">impp/{artifact.name}</h1>
+
+        <div className="flex items-center gap-2 mb-3">
+          <div className="flex items-center gap-2 rounded-md border bg-muted/50 px-3 py-1.5 font-mono text-sm flex-1 max-w-lg">
+            <Download className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="truncate">{installCmd}</span>
+            <CopyButton content={installCmd} size="xs" variant="ghost" className="ml-auto shrink-0" />
+          </div>
+          <ShareButton
+            size="sm"
+            icon="prefix"
+            onIconClick={(platform) => {
+              const url = encodeURIComponent(window.location.href);
+              const text = encodeURIComponent(`Check out impp/${artifact.name} on IMPP`);
+              if (platform === 'x') window.open(`https://x.com/intent/tweet?url=${url}&text=${text}`);
+              else if (platform === 'facebook') window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`);
+            }}
+          >
+            Share
+          </ShareButton>
+        </div>
+
+        <p className="text-sm text-muted-foreground mb-6 max-w-2xl">{artifact.description}</p>
+
+        <div className="grid gap-8 lg:grid-cols-[1fr_290px]">
+          <div className="min-w-0 space-y-8">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline">{artifact.version}</Badge>
+                <TrustBadge score={artifact.trust} />
+                <Badge variant="secondary">{artifact.domain}</Badge>
+              </div>
+              <span className="text-xs text-muted-foreground">{artifact.verified}</span>
+            </div>
+
+            <Card>
+              <CardContent className="pt-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <Shield className="h-5 w-5 text-primary" />
+                  <h2 className="text-lg font-medium">Trust Score</h2>
+                  <span className="ml-auto text-2xl font-light tabular-nums">
+                    <CountingNumber number={artifact.trust} decimalPlaces={0} inView />
+                    <span className="text-sm text-muted-foreground">/100</span>
+                  </span>
+                </div>
+                <Progress value={artifact.trust} className="h-2 mb-4" />
+
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Transfer Effectiveness</span>
+                  <span className="font-mono">+{artifact.te.toFixed(1)}%</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            <div className="flex flex-wrap items-center gap-4 text-sm">
+              <div className="flex items-center gap-1.5">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span>{artifact.license}</span>
+              </div>
+            </div>
+            <div className="text-sm text-muted-foreground">
+              Published by {artifact.publisher}
+            </div>
+
+            <Separator />
+
+            <div>
+              <h2 className="text-lg font-light mb-4">Usage</h2>
+              <CodeBlock language="python">{`import impp\n\nartifact = impp.load("impp/${artifact.slug}")\nresult = artifact.evaluate(data)\nprint(result.score)`}</CodeBlock>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <SidebarSection title="Publisher">
+              <div className="flex items-center gap-2 text-sm">
+                <User className="h-4 w-4" />
+                {artifact.publisher}
+              </div>
+            </SidebarSection>
+
+            <SidebarSection title="Statistics">
+              <Table>
+                <TableBody>
+                  <StatRow label="Installs" value={artifact.installCount} />
+                </TableBody>
+              </Table>
+            </SidebarSection>
+
+            <SidebarSection title="Security">
+              <div className="space-y-1.5 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Trust:</span>
+                  <span className="font-mono">{artifact.trust}/100</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Transfer eff.:</span>
+                  <span className="font-mono">+{artifact.te.toFixed(1)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Status:</span>
+                  <Badge>SAFE</Badge>
+                </div>
+              </div>
+            </SidebarSection>
+
+            {artifact.tags.length > 0 && (
+              <SidebarSection title="Tags">
+                <div className="flex flex-wrap gap-1">
+                  {artifact.tags.map((tag) => (
+                    <Badge key={tag} variant="secondary" className="text-xs">{tag}</Badge>
+                  ))}
+                </div>
+              </SidebarSection>
+            )}
+
+            <div className="text-xs text-muted-foreground">
+              <p>Last verified: {artifact.verified}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </TooltipProvider>
   );
 }
 
