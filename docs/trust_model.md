@@ -1,139 +1,176 @@
 # IMPP Trust Model
 
-IMPP separates trust into two independent layers. Both must pass for an artifact to be trusted.
+IMPP treats portable memory artifacts as untrusted behavioral supply-chain material. A memory artifact can change how an agent reasons, retrieves context, follows procedures, or uses tools. Trust therefore requires more than file integrity.
 
-## Layer 1: Container / Supply-Chain Trust
+The protocol separates trust into two layers:
 
-This layer answers: **is this artifact what it claims to be?**
+1. **Container / supply-chain trust** — verifies artifact identity, authorship, publication history, and tamper resistance.
+2. **Semantic / behavioral trust** — evaluates whether the artifact improves behavior safely within its declared scope.
 
-| Check | What It Verifies |
-|-------|-----------------|
-| Schema validation | Required fields present, format constraints met |
-| Hash integrity | SHA-256 hash matches content |
-| Signature verification | Ed25519 certificate signed by known registry key |
-| Certificate validity | Not expired, not revoked |
-| Provenance metadata | Agent ID, model, timestamp present |
+## Layer 1: Container and supply-chain trust
 
-Supply-chain trust is **binary**: the artifact either passes all checks or it doesn't. There is no partial pass.
+This layer answers:
 
-This layer is analogous to package signature verification in npm, PyPI, or Sigstore.
+- Is this artifact the artifact the registry claims it is?
+- Who published it?
+- Was it modified after publication?
+- Which verification steps were run?
+- Has it been revoked or superseded?
+- Can a consumer audit its publication history?
 
-## Layer 2: Semantic / Behavioral Trust
+### Minimum fields
 
-This layer answers: **does this artifact actually improve agent behavior safely?**
+```yaml
+provenance:
+  content_hash: sha256:...
+  manifest_hash: sha256:...
+  signature: ed25519:...
+  transparency_log: null
+  attestations: []
 
-| Check | What It Measures |
-|-------|-----------------|
-| Transfer efficiency | How much of the expert-novice gap the artifact closes |
-| Negative transfer | Whether the artifact degrades baseline performance |
-| Bias detection | Systematic directional errors in subcategories |
-| Consistency | Response stability under input perturbation |
-| Steganography | Hidden instructions or payload patterns |
-| Freshness | Age relative to domain update frequency |
-
-Behavioral trust is **continuous**: expressed as a trust score (0-100) with component breakdowns.
-
-This layer has no direct analogue in package registries. It is closer to model evaluation in ML, but applied to behavioral artifacts rather than model weights.
-
-## Trust Score
-
-The trust score is a weighted composite:
-
-```
-trust_score = (
-    0.50 * transfer_efficiency +
-    0.30 * adversarial_clean +
-    0.20 * freshness
-)
+revocation:
+  status: active
+  reason: null
+  superseded_by: null
 ```
 
-Where:
-- `transfer_efficiency` (0-100): percentage of expert-novice gap closed
-- `adversarial_clean` (0-100): `100 - adversarial_risk_score`
-- `freshness` (0-100): exponential decay with 180-day half-life
+### Recommended mechanisms
 
-### Adversarial Risk Score
+IMPP may use its own simple Ed25519 certificates in the reference implementation, but production registries should be designed to integrate with mature supply-chain patterns:
 
-The adversarial risk score is itself a weighted composite:
+- content-addressed storage;
+- short-lived signing keys or certificates;
+- transparency logs;
+- step-level attestations;
+- reproducible evaluation records;
+- threshold signing for high-trust artifacts;
+- revocation and downgrade metadata.
 
-```
-adversarial_risk = (
-    0.30 * bias +
-    0.25 * consistency +
-    0.25 * stego +
-    0.20 * overfit
-)
-```
+Signatures verify integrity and publisher identity. They do not prove semantic safety.
 
-### Thresholds
+## Layer 2: Semantic and behavioral trust
 
-| Risk Score | Outcome |
-|------------|---------|
-| 0-30 | PASS |
-| 31-50 | WARN (manual review) |
-| 51-100 | FAIL (rejected) |
+This layer answers:
 
-| Trust Score | Meaning |
-|-------------|---------|
-| 80-100 | High confidence transfer |
-| 50-79 | Usable with caveats |
-| Below 50 | Not certified |
+- Does the artifact improve downstream task performance?
+- Does it transfer across compatible model families?
+- Does it cause negative transfer outside its declared scope?
+- Does it contain hidden instructions or manipulation?
+- Is it stale?
+- Does it conflict with installed artifacts or host policy?
+- Is the claimed score supported by held-out evaluation?
 
-### Calibration Status
+### Verification dimensions
 
-**The current weights are hand-tuned and provisional.** They have not been calibrated against downstream agent outcomes at scale. The trust score should be treated as a directional signal, not an objective measure.
+Recommended dimensions:
 
-Future calibration will require:
-- Larger evaluation corpora (current: 8-32 items per domain)
-- More domains beyond DeFi and CyberSec
-- Real-world deployment feedback
-- Statistical validation of weight choices
+| Dimension | Question | Example metric |
+|---|---|---|
+| Transfer effectiveness | Does the artifact improve task performance? | paired uplift vs baseline |
+| Robustness | Does it hold across models/seeds/tasks? | cross-model variance |
+| Adversarial cleanliness | Is it free from hidden instructions or manipulation? | adversarial risk score |
+| Negative-transfer risk | Does it harm out-of-scope tasks? | out-of-domain performance drop |
+| Freshness | Is the artifact still current? | decay model, reverify age |
+| Composability | Does it work with other artifacts? | marginal uplift in bundle |
+| Efficiency | Is the gain worth token/eval cost? | uplift per token or dollar |
 
-## Staged Trust Ladder
+## Trust ladder
 
-Artifacts progress through trust stages:
+Artifacts move through staged trust states:
 
-```
-Imported → Parsed → Evaluated → Verified → Curated
-                                              ↓
-                                          Rejected
-```
+| State | Meaning | Allowed default behavior |
+|---|---|---|
+| `imported` | Source discovered; no structural guarantees | read-only review only |
+| `parsed` | Schema-valid; hash and source recorded | read-only or sandboxed retrieval |
+| `evaluated` | Behavioral tests completed | retrieval or examples if passed |
+| `verified` | Signed certificate and acceptable risk | declared allowed modes |
+| `curated` | Human/domain review plus strong evidence | declared allowed modes with higher confidence |
+| `rejected` | Failed parsing or evaluation | blocked by default |
+| `revoked` | Previously valid but no longer trusted | blocked by default |
+| `superseded` | Replaced by newer artifact | warn and prefer successor |
 
-| Stage | What Happens |
-|-------|-------------|
-| **Imported** | Raw artifact submitted, basic format check |
-| **Parsed** | Schema validated, PII check, content extracted |
-| **Evaluated** | Behavioral probes run, transfer efficiency measured |
-| **Verified** | Certificate issued, trust score assigned |
-| **Curated** | Manual review passed, featured in registry |
-| **Rejected** | Failed at any stage, with reason code |
+Trust state is not permanent. Freshness decay, new attacks, failed reevaluation, or changed domain facts can downgrade an artifact.
 
-Each stage adds trust. Consumers can choose their minimum stage:
-- `verified` (default): only install artifacts with valid certificates
-- `evaluated`: install artifacts that passed probes but may not have certificates yet
-- `curated`: only install manually reviewed artifacts
+## Trust score
 
-## Trust Decay
+The current reference implementation uses a provisional weighted score:
 
-Trust is not permanent:
-- Certificates expire after 90 days
-- Freshness score decays exponentially
-- Re-verification can raise or lower trust scores
-- Revocation immediately invalidates trust
-
-## Reason Codes (Future)
-
-Trust scores will be accompanied by reason codes explaining why a score is what it is:
-
-```json
-{
-  "trust_score": 78.5,
-  "reasons": [
-    {"code": "TE_GOOD", "detail": "Transfer efficiency 85% across 3 trials"},
-    {"code": "ADV_CLEAN", "detail": "All adversarial probes passed (risk: 12)"},
-    {"code": "FRESHNESS_WARN", "detail": "Artifact is 95 days old (freshness: 68%)"}
-  ]
-}
+```text
+trust = 0.50 * transfer_efficiency
+      + 0.30 * adversarial_clean
+      + 0.20 * freshness
 ```
 
-This is not yet implemented. Current trust scores are opaque numbers.
+where:
+
+```text
+adversarial_clean = 100 - adversarial_risk
+```
+
+The adversarial risk score is currently composed from:
+
+```text
+bias:        30%
+consistency: 25%
+stego:       25%
+overfit:     20%
+```
+
+This score should be presented as a reference heuristic, not a ground-truth measure of safety. A production registry should calibrate weights against downstream outcomes and publish reason codes alongside numeric scores.
+
+## Public methodology, private holdouts
+
+IMPP should publish:
+
+- artifact schema;
+- scoring formula;
+- probe categories;
+- sample fixtures;
+- public benchmark harness;
+- score version history;
+- known limitations.
+
+A production registry should keep rotating holdouts private:
+
+- live adversarial prompts;
+- canary artifacts;
+- buyer outcome labels;
+- abuse heuristics;
+- production calibration sets.
+
+This is not security through obscurity. It is evaluation hygiene. Public methodology supports trust; private rotating holdouts reduce benchmark gaming.
+
+## Reason codes
+
+Every trust score should include reason codes. Example:
+
+```yaml
+trust_score: 84.0
+reason_codes:
+  - high_transfer_efficiency
+  - no_hidden_instruction_detected
+  - fresh_within_30_days
+  - limited_cross_model_coverage
+  - not_validated_for_real_time_trading
+```
+
+Consumers should be able to see why a score was assigned and what evidence was missing.
+
+## Revocation and downgrade
+
+Artifacts should be downgraded or revoked when:
+
+- hidden instructions are discovered;
+- evaluation results are falsified;
+- source license is invalid;
+- PII/proprietary content is found;
+- domain assumptions become stale;
+- a signing key is compromised;
+- a newer artifact supersedes it;
+- production incidents show negative transfer.
+
+Revoked artifacts should remain visible in audit logs but blocked by default.
+
+## Paper framing
+
+The paper should frame trust as the central systems problem. Portable memory is valuable only if it can be made legible, bounded, evaluated, and revocable. IMPP's contribution is not simply a score; it is the protocol surface that makes memory artifacts inspectable before they influence agents.

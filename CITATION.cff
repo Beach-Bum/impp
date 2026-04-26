@@ -8,7 +8,7 @@ authors:
     orcid: ""
 date-released: "2026-04-01"
 url: "https://impp.sh"
-repository-code: "https://github.com/Beach-Bum/memory-market"
+repository-code: "https://github.com/Beach-Bum/impp"
 license: "Apache-2.0"
 keywords:
   - agent memory
