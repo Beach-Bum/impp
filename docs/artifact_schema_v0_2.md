@@ -1,97 +1,235 @@
 # IMPP Artifact Schema v0.2
 
-This document describes the changes from v0.1 to v0.2 of the IMPP artifact schema.
+This document defines the protocol-first artifact schema for IMPP.
 
-## Changes from v0.1
+The original implementation used the compact tuple:
 
-v0.1 defined `M = (D, K, P, A, H)` with minimal fields. v0.2 extends the schema with fields required for a credible protocol paper.
-
-### New Top-Level Fields
-
-| Field | Type | Purpose |
-|-------|------|---------|
-| `artifact_type` | enum | Classifies the memory type: `procedural`, `semantic`, `episodic_derived`, `hybrid` |
-| `attach` | object | Runtime attach mode configuration |
-| `card` | object | Artifact card (intended use, contraindications, known failures) |
-| `privacy` | object | PII and jurisdiction metadata |
-| `conflicts` | array | Declared conflicts with other artifacts |
-| `revocation` | object | Revocation status and reason |
-
-### Extended Provenance
-
-| Field | Type | Purpose |
-|-------|------|---------|
-| `provenance.license` | enum | `MIT`, `Apache-2.0`, `CC-BY-4.0`, `CC-BY-SA-4.0`, `CC-BY-NC-4.0`, `proprietary` |
-| `provenance.license_url` | uri | URL to full license text |
-| `provenance.source_material` | array | Structured source references with per-source licensing |
-
-### Extended Attestation
-
-| Field | Type | Purpose |
-|-------|------|---------|
-| `attestation.evaluation_suite` | object | Metadata about the evaluation benchmark used |
-
-### Attach Mode Configuration
-
-```json
-{
-  "attach": {
-    "supported_modes": ["prepend_policy", "retrieval_only"],
-    "default_mode": "prepend_policy",
-    "prohibited_modes": ["tool_policy"]
-  }
-}
+```text
+M = (D, K, P, A, H)
 ```
 
-### Artifact Card
+where:
 
-```json
-{
-  "card": {
-    "intended_use": "DeFi protocol risk scoring for lending and bridge categories",
-    "contraindications": ["Not suitable for NFT valuation", "Not tested on L2-specific protocols"],
-    "known_failures": ["Underestimates risk for protocols with less than 30 days of history"],
-    "limitations": "Trained on synthetic protocol profiles, not real-world DeFi data"
-  }
-}
+- `D` = domain;
+- `K` = knowledge payload;
+- `P` = provenance;
+- `A` = attestation;
+- `H` = content hash.
+
+Version 0.2 keeps this conceptual core but expands it into a deployable artifact manifest suitable for open registries, evaluation, revocation, and safe runtime attachment.
+
+## Design goals
+
+An IMPP artifact should be:
+
+1. **Portable** — usable across compatible agent runtimes and model families.
+2. **Scoped** — explicit about domain, task, and contraindications.
+3. **Attachable** — clear about how it may influence runtime behavior.
+4. **Verifiable** — hashable, signable, and evaluable.
+5. **Auditable** — source, license, privacy, and evaluation metadata are recorded.
+6. **Revocable** — stale or unsafe artifacts can be downgraded or blocked.
+7. **Composable** — dependencies and conflicts are declared instead of discovered through prompt collisions.
+
+## Top-level manifest
+
+```yaml
+schema: impp.artifact.v0.2
+name: impp/defi-risk-calibration
+version: 1.0.0
+type: procedural
+license: Apache-2.0
+summary: Calibration framework for DeFi protocol risk assessment.
+
+artifact_card: CARD.md
+payload:
+  format: markdown
+  path: memory.md
+
+scope:
+  domain: defi-risk-assessment
+  subdomains:
+    - lending
+    - governance
+    - oracle-risk
+    - bridge-risk
+  intended_use:
+    - protocol risk scoring
+    - analyst support
+    - benchmark evaluation
+  prohibited_use:
+    - autonomous trading
+    - investment advice
+    - production liquidation decisions without human review
+  contraindications:
+    - real-time market execution
+    - protocols launched after observation window
+
+attach:
+  allowed_modes:
+    - retrieval_only
+    - few_shot_examples
+    - read_only_reference
+  prohibited_modes:
+    - prepend_policy
+    - tool_policy
+  default_mode: retrieval_only
+
+source:
+  author: Ned Karlovich
+  author_agent: claude-sonnet-4-20250514
+  observation_window: 2024-01-01/2026-04-01
+  source_material:
+    - synthetic benchmark protocols
+    - public audit-report-inspired rubric
+  generation_method: expert_iteration
+
+privacy:
+  pii: none_detected
+  proprietary_data: false
+  redaction_method: not_applicable
+  consent_required: false
+
+provenance:
+  content_hash: sha256:...
+  manifest_hash: sha256:...
+  signature: ed25519:...
+  transparency_log: null
+  attestations: []
+
+evaluation:
+  evaluated: true
+  evaluator_version: impp-verifier-0.5.0
+  evaluated_at: 2026-04-25T00:00:00Z
+  suites:
+    - defi-risk-public-v1
+    - negative-transfer-v1
+    - adversarial-memory-v1
+  metrics:
+    transfer_efficiency: 0.558
+    relative_transfer_efficiency: 1.099
+    adversarial_risk: 0.12
+    trust_score: 84.0
+  known_failures:
+    - may over-penalize newly launched unaudited protocols
+    - not validated for real-time trading
+
+conflicts:
+  declares:
+    - risk_scoring.defi.oracle_assumptions
+    - risk_scoring.defi.bridge_assumptions
+  incompatible_with: []
+  dependencies: []
+
+freshness:
+  created_at: 2026-04-25T00:00:00Z
+  expires_at: 2026-07-25T00:00:00Z
+  recommended_reverify_after_days: 30
+  decay_model: domain_default
+
+revocation:
+  status: active
+  reason: null
+  superseded_by: null
 ```
 
-### Privacy Metadata
+## Required fields
 
-```json
-{
-  "privacy": {
-    "contains_pii": false,
-    "pii_redacted": false,
-    "data_jurisdiction": "EU"
-  }
-}
+The following fields are required for all artifacts:
+
+```text
+schema
+name
+version
+type
+license
+summary
+payload
+scope
+attach
+source
+privacy
+provenance.content_hash
+freshness.created_at
+revocation.status
 ```
 
-### Conflict Declarations
+Evaluation fields may be empty for `imported` or `parsed` artifacts, but must be populated before an artifact can become `evaluated`, `verified`, or `curated`.
 
-```json
-{
-  "conflicts": [
-    {
-      "artifact": "defi-risk-v1",
-      "reason": "Superseded — v2 uses updated risk weights that contradict v1 calibration"
-    }
-  ]
-}
+## Artifact types
+
+| Type | Description | Example |
+|---|---|---|
+| `procedural` | Instructions, heuristics, decision rules, workflows, tool policies | Security triage rubric |
+| `semantic` | Structured domain concepts, taxonomies, assumptions, relationships | DeFi risk ontology |
+| `episodic_derived` | Redacted lessons distilled from traces or conversations | Incident postmortem lessons |
+| `hybrid` | Combination of procedural and semantic payloads | Risk assessment framework with taxonomy |
+
+Raw episodic traces should not be published as portable artifacts unless transformed, redacted, licensed, and explicitly approved.
+
+## Attach contract
+
+Artifacts must declare allowed, prohibited, and default attach modes. The protocol currently recognizes:
+
+```text
+prepend_policy
+few_shot_examples
+retrieval_only
+tool_policy
+read_only_reference
 ```
 
-## JSON Schema
+See `docs/attach_modes.md` for full semantics.
 
-The formal JSON Schema is at [`schemas/impp.artifact.v0.2.schema.json`](../schemas/impp.artifact.v0.2.schema.json).
+## Artifact card
 
-## Migration
+Each artifact should include a human-readable artifact card. The card should explain:
 
-v0.1 artifacts are forward-compatible: all new fields are optional. The only breaking change is `impp_version` moving from `"0.5"` to `"0.2"` (note: the original v0.1 used `"0.5"` as the version string — this was a misnomer that is corrected in v0.2).
+- intended use;
+- non-use cases;
+- source material;
+- authoring process;
+- evaluation coverage;
+- known failures;
+- privacy and license notes;
+- update and revocation policy.
 
-To upgrade a v0.1 artifact:
-1. Set `impp_version` to `"0.2"`
-2. Add `artifact_type` (recommended)
-3. Add `provenance.license` (recommended)
-4. Add `attach.supported_modes` (recommended)
-5. All other new fields are optional
+## Trust states
+
+Artifacts move through staged trust states:
+
+```text
+imported → parsed → evaluated → verified → curated
+```
+
+Artifacts can also become:
+
+```text
+rejected
+revoked
+superseded
+```
+
+Trust state is not permanent. A verified artifact can be downgraded if it becomes stale, fails reevaluation, or is found to contain unsafe content.
+
+## Versioning
+
+Artifact versions use semantic versioning:
+
+- Patch: metadata, card, typo, or non-semantic correction.
+- Minor: new examples, expanded scope, additional evaluation.
+- Major: changed payload semantics, changed attach modes, or changed domain assumptions.
+
+Any payload change requires a new content hash. Any major version requires reevaluation.
+
+## Public vs private evaluation material
+
+The manifest may reference public evaluation suites. Production registries should also use private rotating holdouts and canaries. Public methodology improves trust; publishing the entire live exam key weakens verification.
+
+## Open questions
+
+- Standard format for transparency-log entries.
+- Standard signature envelope.
+- Cross-registry namespace governance.
+- Conflict-resolution algorithm for multi-artifact bundles.
+- Machine-readable artifact-card schema.
+- Calibration procedure for trust-score weights.
