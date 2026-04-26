@@ -1,87 +1,57 @@
 # IMPP paper v1 reproducibility package
 
-This directory is the planned public reproducibility package for the protocol-first IMPP paper:
+Public reproducibility package for:
 
 > IMPP: A Protocol for Portable Procedural Memory in AI Agent Systems
 
-The goal is to make the paper's main empirical tables reproducible without publishing live production holdouts, private adversarial probes, customer data, or proprietary artifacts.
+## Contents
 
-## Planned contents
+| File | Description |
+|------|-------------|
+| `artifacts_sanitized.jsonl` | 3 sanitized example artifacts (DeFi, CyberSec, poisoned) with IMPP schema metadata |
+| `tasks.jsonl` | 41 synthetic evaluation tasks across DeFi (32) and CyberSec (9) domains |
+| `labels.csv` | Ground-truth risk/severity scores for all 41 items (original format) |
+| `labels_public_sample.csv` | Same labels with split and is_sample annotations |
+| `results.csv` | Canonical experiment results used to generate paper tables |
+| `splits.json` | Core (8-item) and extended (24-item) split definitions per domain |
+| `adversarial_results.json` | Poisoned artifact detection: probe scores, flags, and verdict |
 
-```text
-data/paper_v1/
-  README.md
-  artifacts_sanitized.jsonl
-  tasks.jsonl
-  labels_public_sample.csv
-  results.csv
-  splits.json
+All data is synthetic. All items are marked `is_sample=true`. No PII, real protocols, or production holdouts.
+
+## Reproducing paper tables
+
+```bash
+# Generate markdown tables to paper/tables/
+python experiments/generate_paper_tables.py
+
+# Print legacy plain-text tables to stdout
+python experiments/generate_tables.py
 ```
 
-## File descriptions
+## Experiment conditions
 
-### `artifacts_sanitized.jsonl`
+The paper evaluates 8 conditions (see `experiments/README.md`):
 
-Public sanitized memory artifacts used for paper experiments. These should remove benchmark answer keys, private traces, credentials, PII, proprietary source material, and live holdout clues.
+1. `no_memory` — baseline, no artifact
+2. `raw_context` — full artifact dumped into context
+3. `prompt_skill_file` — structured prompt-only (no IMPP metadata)
+4. `impp_artifact` — full IMPP artifact with attach mode
+5. `retrieval_only` — RAG retrieval from artifact chunks
+6. `few_shot` — few-shot examples from artifact
+7. `negative_transfer` — wrong-domain artifact
+8. `poisoned_artifact` — deliberately manipulated artifact
 
-Each record should include enough metadata to validate the IMPP artifact schema and reproduce the declared attach-mode behavior.
+## Public vs private data
 
-### `tasks.jsonl`
+**Public** (in this directory): sanitized artifacts, synthetic tasks, sample labels, aggregate results, probe categories, trust-score formula.
 
-Public evaluation tasks used to regenerate paper tables. Tasks should be synthetic or clearly licensed for public redistribution.
+**Private** (not included): live holdout tasks, canary artifacts, production adversarial prompts, abuse heuristics, raw traces, proprietary artifacts, credentials.
 
-### `labels_public_sample.csv`
+## Limitations
 
-Ground-truth labels for the public sample. This file should support reproducibility of published tables, but it should not include private rotating holdouts used by a production registry.
-
-### `results.csv`
-
-Canonical result rows used by the paper. At minimum:
-
-```text
-run_id,domain,model,condition,attach_mode,task_id,score,error,cost_usd,latency_ms
-```
-
-### `splits.json`
-
-Train, public-test, and holdout split metadata. Public test splits can be included. Private production holdout identifiers should not be included.
-
-## Public vs private evaluation material
-
-Public:
-
-- schema-valid sanitized artifacts;
-- public benchmark tasks;
-- sample labels;
-- reproducibility scripts;
-- aggregate results;
-- probe categories;
-- trust-score formula version.
-
-Private or rotating:
-
-- live holdout tasks;
-- canary artifacts;
-- production adversarial prompts;
-- abuse heuristics;
-- raw user or customer traces;
-- proprietary expert artifacts;
-- credentials, deployment IDs, and infrastructure details.
-
-## Minimum experiments for the first arXiv version
-
-The first credible paper package should support:
-
-1. no-memory baseline;
-2. raw-context baseline;
-3. RAG baseline if available;
-4. prompt-only skill-file baseline;
-5. IMPP artifact with declared attach mode;
-6. attach-mode ablation;
-7. negative-transfer test;
-8. red-team artifact test;
-9. trust-score calibration table if enough artifacts exist.
-
-## Rule of thumb
-
-Publish the protocol and enough data to reproduce the paper's public tables. Do not publish the live exam key used to operate a production registry.
+- Pilot-scale synthetic domains (DeFi risk, cybersec vulnerability)
+- Small item counts (8 core, 32 extended)
+- Benchmark leakage risk from public labels
+- Prompt and model variance across runs
+- Incomplete negative-transfer testing
+- Uncalibrated trust-score weights
