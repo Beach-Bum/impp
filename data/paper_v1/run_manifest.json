@@ -1,6 +1,16 @@
 {
   "schema_version": "1.0",
   "description": "Manifest for IMPP paper v1 experiment runs",
+  "warning": "Sample tables in results.csv are generated from synthetic/sample fixtures. Do not cite as final empirical evidence.",
+  "required_env_vars": {
+    "ANTHROPIC_API_KEY": "Required for all Claude-based live conditions"
+  },
+  "command_examples": {
+    "dry_run_defi": "python experiments/run_paper_v1.py --dry-run --domain defi_risk",
+    "dry_run_cybersec": "python experiments/run_paper_v1.py --dry-run --domain cybersec_vuln",
+    "live_defi": "python experiments/run_paper_v1.py --live --domain defi_risk --conditions no_memory impp_artifact --trials 1",
+    "live_cybersec": "python experiments/run_paper_v1.py --live --domain cybersec_vuln --conditions no_memory impp_artifact --trials 1"
+  },
   "conditions": [
     {
       "id": "no_memory",
@@ -51,6 +61,8 @@
       "live_supported": false
     }
   ],
+  "supported_live_conditions": ["no_memory", "impp_artifact"],
+  "unsupported_live_conditions": ["raw_context", "prompt_skill_file", "retrieval_only", "few_shot", "negative_transfer", "poisoned_artifact"],
   "domains": ["defi_risk", "cybersec_vuln"],
   "default_model": "claude-sonnet-4-20250514",
   "default_trials": 3,

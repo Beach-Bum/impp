@@ -38,7 +38,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "paper_v1"
-SAMPLE_RESULTS_FILE = DATA_DIR / "results.csv"
 REAL_RESULTS_FILE = DATA_DIR / "results_real.csv"
 
 CONDITIONS = [
@@ -146,31 +145,6 @@ def _attach_mode_for_condition(condition: str) -> str:
     return mapping.get(condition, "unknown")
 
 
-def run_condition_dry(domain: str, condition: str, model: str,
-                      tasks: list[dict], labels: dict, trial: int) -> list[dict]:
-    """Dry-run: return stub results using ground-truth labels. No API calls."""
-    run_id = f"dry_{domain}_{condition}_t{trial}_{int(time.time())}"
-    results = []
-    for task in tasks:
-        results.append({
-            "run_id": run_id,
-            "created_at": datetime.now(timezone.utc).isoformat(),
-            "domain": domain,
-            "model": model,
-            "condition": condition,
-            "attach_mode": _attach_mode_for_condition(condition),
-            "task_id": task["item_id"],
-            "predicted_score": labels.get(task["item_id"], 50.0),
-            "label": labels.get(task["item_id"], 50.0),
-            "error": 0.0,
-            "cost_usd": 0.0,
-            "latency_ms": 0.0,
-            "is_sample": True,
-            "notes": "dry-run stub",
-        })
-    return results
-
-
 def run_condition_live(domain: str, condition: str, model: str,
                        tasks: list[dict], labels: dict, trial: int) -> list[dict]:
     """Live run: make real API calls via amm.benchmark.sandbox."""
@@ -189,16 +163,30 @@ def run_condition_live(domain: str, condition: str, model: str,
     domain_name_map = {"defi": "defi", "cybersec": "cybersec"}
     amm_domain = get_domain(domain_name_map.get(domain, domain))
     client = create_client()
+
+    # Filter to paper fixture task IDs for reproducibility
+    paper_task_ids = {t["item_id"] for t in tasks}
     all_items = amm_domain.get_all_items()
+    items = [item for item in all_items if item.protocol in paper_task_ids]
+    matched_ids = {item.protocol for item in items}
+    missing_ids = paper_task_ids - matched_ids
+    if missing_ids:
+        preview = sorted(missing_ids)[:5]
+        raise RuntimeError(
+            f"{len(missing_ids)} paper fixture task IDs not found in "
+            f"amm_domain.get_all_items(): {preview}"
+        )
+    print(f"    Matched {len(items)}/{len(paper_task_ids)} paper fixture items "
+          f"(domain has {len(all_items)} total)")
 
     run_id = f"live_{domain}_{condition}_t{trial}_{int(time.time())}"
     now = datetime.now(timezone.utc).isoformat()
 
     if condition == "no_memory":
-        print(f"    Evaluating novice baseline ({len(all_items)} items)...")
+        print(f"    Evaluating novice baseline ({len(items)} items)...")
         t0 = time.time()
         agent_results = evaluate_agent(
-            client, amm_domain, items=all_items, memory="", model=model,
+            client, amm_domain, items=items, memory="", model=model,
         )
         elapsed_ms = (time.time() - t0) * 1000
 
@@ -207,13 +195,12 @@ def run_condition_live(domain: str, condition: str, model: str,
         if not artifact:
             raise RuntimeError(f"No artifact found for domain '{domain}'")
         artifact_text = artifact.get("summary", "")
-        payload = artifact.get("payload", {})
-        print(f"    Evaluating with IMPP artifact ({len(all_items)} items)...")
+        print(f"    Evaluating with IMPP artifact ({len(items)} items)...")
         print(f"    Artifact: {artifact.get('name')} v{artifact.get('version')}")
         system_prompt = amm_domain.get_buyer_system_prompt(artifact_text)
         t0 = time.time()
         agent_results = evaluate_agent(
-            client, amm_domain, items=all_items, model=model,
+            client, amm_domain, items=items, model=model,
             system_prompt_override=system_prompt,
         )
         elapsed_ms = (time.time() - t0) * 1000
@@ -248,12 +235,6 @@ def run_condition_live(domain: str, condition: str, model: str,
 def write_real_results(results: list[dict]) -> None:
     """Append results to results_real.csv. Creates header if file is empty/new."""
     file_exists = REAL_RESULTS_FILE.exists()
-    is_header_only = False
-    if file_exists:
-        with open(REAL_RESULTS_FILE) as f:
-            content = f.read().strip()
-            is_header_only = "\n" not in content
-
     with open(REAL_RESULTS_FILE, "a", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=REAL_RESULT_COLUMNS)
         if not file_exists:
@@ -290,10 +271,11 @@ def main():
                         help="Model to use")
     parser.add_argument("--conditions", nargs="+", default=CONDITIONS,
                         help="Conditions to run")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Validate setup without running experiments (default-safe)")
-    parser.add_argument("--live", action="store_true",
-                        help="Execute real API calls. Requires ANTHROPIC_API_KEY.")
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument("--dry-run", action="store_true",
+                      help="Validate setup without running experiments (default-safe)")
+    mode.add_argument("--live", action="store_true",
+                      help="Execute real API calls. Requires ANTHROPIC_API_KEY.")
     args = parser.parse_args()
 
     # Safety: if neither --dry-run nor --live, default to dry-run
