@@ -1,39 +1,131 @@
-# IMPP — The Agent Memory Registry
+# IMPP — Inter-Model Memory Protocol
 
-**Paper:** [PDF](paper/agent-memory-markets.pdf) | **Docs:** [impp.sh/docs](https://impp.sh/docs) | **Registry:** [impp.sh](https://impp.sh)
+**Active paper draft:** [IMPP: A Protocol for Portable Procedural Memory in AI Agent Systems](paper/impp-portable-procedural-memory.md)  
+**Docs:** [impp.sh/docs](https://impp.sh/docs) | **Reference registry:** [impp.sh](https://impp.sh)
 
-> A verification protocol for cross-model AI agent knowledge transfer. Install verified memory packages with `impp install`.
+> IMPP is a protocol and reference registry for portable procedural and semantic memory artifacts in AI agent systems.
 
-## What This Is
+## What this is
 
-AI agents learn through experience. An agent that spends 20 rounds learning DeFi risk assessment develops calibrated heuristics, error patterns, and domain intuition. IMPP asks: **can that learned behavior be extracted, verified, and transferred to another agent?**
+AI agents increasingly accumulate useful memory: task traces, skill files, prompt refinements, domain heuristics, user preferences, tool-use rules, and structured notes. Today that memory is usually bound to a single app, framework, model provider, or deployment.
 
-Yes. With 95-110% transfer efficiency across models.
+IMPP asks a narrower and more useful question:
 
-The hard problem is trust. Memory artifacts have information asymmetry worse than traditional lemons markets: revealing the artifact to prove quality destroys its value. IMPP solves this with a **referee protocol** that verifies artifact quality without exposing contents, plus adversarial probes that catch poisoned or fraudulent artifacts before any buyer is exposed.
+> Can bounded procedural and semantic memory be packaged as signed, versioned, evaluable artifacts and safely attached to other agent systems?
 
-## Key Results
+The current answer is: early evidence suggests yes, but only with explicit protocol machinery. Portable memory artifacts need scope, attach semantics, provenance, privacy and license metadata, verification, revocation, and tests for negative transfer.
 
-| Domain | Expert Error | Novice Error | Buyer Error | Transfer Efficiency |
-|--------|-------------|-------------|-------------|-------------------|
-| DeFi Risk Assessment | 3.3 | 7.4 | 3.2 | **109.9%** |
-| Cybersecurity Vuln Assessment | 3.9 | 18.0 | 4.5 | **95.5%** |
+This repository is currently being reframed around the protocol-first version of the work. Marketplace mechanisms are future work; the first serious research claim is about making portable memory artifacts concrete, attachable, evaluable, and governable.
 
-Cross-model transfer (GPT-4o to Claude Sonnet) verified across 56 artifacts. Three trials each, statistically significant.
+## Core concepts
 
-### Poisoned Artifact Detection
+### Memory artifacts
 
-| Metric | Result |
-|--------|--------|
-| Seller claimed TE | 95% |
-| Measured TE | **-39%** |
-| Verdict | **WARN** |
-| Trust Score | 35.8/100 |
-| Stego Score | 100 (hidden instructions detected) |
+An IMPP artifact packages bounded agent memory with enough metadata to evaluate and attach it safely.
 
-The verification protocol catches fraudulent artifacts before any buyer is exposed.
+The original compact model is:
 
-## Quick Start
+```text
+M = (D, K, P, A, H)
+```
+
+where:
+
+| Component | Description |
+|---|---|
+| `D` Domain | Task/domain scope |
+| `K` Knowledge | Procedural or semantic memory payload |
+| `P` Provenance | Source, author, model, observation window |
+| `A` Attestation | Claimed performance or verification evidence |
+| `H` Hash | Content-addressed identifier |
+
+The v0.2 schema expands this into a richer artifact manifest with license, privacy, attach modes, evaluation suites, conflicts, freshness, and revocation metadata.
+
+See:
+
+- [Artifact schema v0.2](docs/artifact_schema_v0_2.md)
+- [JSON Schema](schemas/impp.artifact.v0.2.schema.json)
+
+### Attach modes
+
+Installing memory is ambiguous unless the runtime contract is explicit. IMPP defines attach modes for how an artifact influences an agent:
+
+| Attach mode | Runtime behavior | Main risk |
+|---|---|---|
+| `prepend_policy` | Adds guidance near the top of context | Hidden instructions or policy conflict |
+| `few_shot_examples` | Provides examples for imitation or calibration | Benchmark leakage or anchoring |
+| `retrieval_only` | Retrieves relevant chunks on demand | Retrieval poisoning or irrelevant context |
+| `tool_policy` | Constrains or guides tool use | Unsafe authorization or blocking |
+| `read_only_reference` | Exposes artifact without automatic injection | Underuse |
+
+See [attach modes](docs/attach_modes.md).
+
+### Two-layer trust
+
+IMPP separates trust into two layers.
+
+1. **Container / supply-chain trust** verifies artifact identity, authorship, signatures, hashes, publication history, and revocation state.
+2. **Semantic / behavioral trust** evaluates whether the artifact improves downstream behavior safely within its declared scope.
+
+Signatures prove integrity. They do not prove that an artifact is safe or useful.
+
+See [trust model](docs/trust_model.md).
+
+### Staged trust ladder
+
+Artifacts should move through staged trust states:
+
+```text
+imported -> parsed -> evaluated -> verified -> curated
+```
+
+Artifacts can also be rejected, revoked, or superseded. A new artifact version starts over. A stale artifact can be downgraded.
+
+## Verification
+
+The reference verifier follows a referee-style protocol:
+
+```text
+Artifact submitted
+        |
+        v
+Schema, hash, provenance, and attach-mode checks
+        |
+        v
+No-memory baseline + artifact-attached evaluation
+        |
+        v
+Adversarial probes and negative-transfer tests
+        |
+        v
+Signed verification certificate with reason codes
+        |
+        v
+Registry trust state update
+```
+
+The current trust score is a provisional heuristic:
+
+| Component | Weight | Description |
+|---|---:|---|
+| Transfer efficiency | 50% | Does the artifact improve behavior? |
+| Adversarial cleanliness | 30% | Does it avoid known manipulation patterns? |
+| Freshness | 20% | Is the artifact still current? |
+
+The current adversarial risk score includes bias, consistency, steganography, and overfitting probes. These weights are reference defaults, not universal truth.
+
+## Pilot evidence
+
+The prototype includes pilot experiments in:
+
+1. **DeFi risk assessment** — synthetic protocols with ground-truth risk scores.
+2. **Cybersecurity vulnerability assessment** — synthetic vulnerabilities with ground-truth severity scores.
+
+The early results suggest that structured memory artifacts can transfer useful calibration behavior. The evidence is still pilot-scale and should be treated conservatively. Known limitations include small synthetic domains, benchmark leakage risk, prompt/model variance, incomplete negative-transfer testing, and uncalibrated trust-score weights.
+
+The protocol-first paper should not claim universal cross-model transfer, objective trust scoring, automatic safety, or proof that a full marketplace will exist.
+
+## Quick start
 
 ### Install the CLI
 
@@ -69,110 +161,52 @@ artifacts = impp.autoload()
 impp verify artifact.json
 ```
 
-### Run a full benchmark (train + export + verify)
+### Run a benchmark
 
 ```bash
 export ANTHROPIC_API_KEY=your-key
 python run_experiment.py --trials 3 --domain defi_risk
 ```
 
-**Estimated costs:** Single verification ~$0.35 (25 API calls). Full train + verify (3 trials) ~$2.00.
+## Reproducibility package
 
-## The Referee Protocol
+The planned public paper package lives under [`data/paper_v1/`](data/paper_v1/README.md). It is intended to contain sanitized artifacts, public tasks, sample labels, result tables, and split metadata sufficient to reproduce the paper's public tables.
 
-```
-Seller submits artifact (sealed)
-         |
-         v
-   Referee Agent (independent, disposable)
-   |-- Runs artifact on HELD-OUT benchmark
-   |-- Benchmark is NOT known to seller
-   +-- Adversarial probes run in parallel
-         |
-         v
-   Verification Certificate (Ed25519 signed)
-   |-- Transfer efficiency (verified)
-   |-- Adversarial probe results
-   +-- Trust score (composite)
-         |
-         v
-   Published to registry (artifact contents still sealed)
-```
+Production holdouts, live adversarial prompts, canary artifacts, abuse heuristics, raw private traces, and proprietary artifacts should remain private or rotating.
 
-## Trust Score
+## Project structure
 
-The trust score is a composite metric. Higher is better.
-
-| Component | Weight | Description |
-|-----------|--------|-------------|
-| Transfer Efficiency | 50% | How well the artifact transfers knowledge |
-| Adversarial Clean | 30% | `100 - adversarial_risk` — lower risk = higher trust |
-| Freshness | 20% | How recently the artifact was verified |
-
-### Adversarial Risk Score
-
-Four probes compute an adversarial risk score (lower = cleaner):
-
-| Probe | Weight | What it catches |
-|-------|--------|----------------|
-| Bias | 30% | Systematic skew via trap protocols |
-| Consistency | 25% | Fragile artifacts via perturbation testing |
-| Steganography | 25% | Hidden instructions embedded in artifact text |
-| Overfitting | 20% | Performance gap between seen and unseen data |
-
-**Risk thresholds:** 0-30 = PASS (clean), 31-50 = WARNING (review recommended), 51-100 = FAIL (reject).
-
-## Memory Artifact Schema
-
-**M = (D, K, P, A, H)**
-
-| Component | Description |
-|-----------|-------------|
-| **D** (Domain) | Category, subcategory, scope |
-| **K** (Knowledge) | The learned content (markdown) |
-| **P** (Provenance) | Agent ID, model, training history |
-| **A** (Attestation) | Self-reported performance metrics |
-| **H** (Hash) | SHA-256 content-addressed identifier |
-
-## Domains
-
-Domain-agnostic framework. Currently implemented:
-
-1. **DeFi Risk Assessment** — 32 synthetic protocols with ground truth risk scores (0-100)
-2. **Cybersecurity Vulnerability Assessment** — 8 synthetic vulnerabilities with ground truth severity scores (0-100)
-
-Adding a new domain requires only a domain config file. No changes to benchmark, verification, or adversarial code.
-
-## Project Structure
-
-```
+```text
 impp/
-|-- paper/                          # Research paper (CC-BY-4.0)
-|   |-- agent-memory-markets.tex    # LaTeX source
-|   +-- agent-memory-markets.pdf    # Compiled PDF
+|-- paper/                          # Research paper drafts (CC-BY-4.0)
+|   |-- impp-portable-procedural-memory.md
+|   |-- agent-memory-markets.tex    # Legacy marketplace-first draft
+|   +-- agent-memory-markets.pdf
+|-- docs/                           # Protocol docs
 |-- amm/                            # Core protocol package (Apache-2.0)
-|   |-- config.py                   # Weights, thresholds, constants
-|   |-- artifact/                   # M = (D, K, P, A, H) spec
-|   |-- domains/                    # Domain configs (DeFi, CyberSec)
-|   |-- benchmark/                  # Training + evaluation engine
-|   |-- verification/               # Referee protocol + Ed25519 certificates
-|   |-- adversarial/                # 4 probe types + runner
-|   |-- registry/                   # Trust registry
-|   +-- marketplace/                # Identity, listings, previews
-|-- ui/                             # Web UI (Next.js + shadcn/ui)
-|-- api_server.py                   # Reference registry API (FastAPI)
+|   |-- config.py
+|   |-- artifact/
+|   |-- domains/
+|   |-- benchmark/
+|   |-- verification/
+|   |-- adversarial/
+|   |-- registry/
+|   +-- marketplace/
+|-- data/paper_v1/                  # Planned reproducibility package
+|-- ui/                             # Web UI
+|-- api_server.py                   # Reference registry API
 |-- schemas/                        # JSON Schema definitions
 |-- spec/                           # Protocol specifications
-|-- tests/                          # Test suite
-|-- run_experiment.py               # CLI: full end-to-end pipeline
-|-- run_verify.py                   # CLI: verify a single artifact
-+-- cross_model_test.py             # Cross-model transfer experiments
+|-- tests/
+|-- run_experiment.py
+|-- run_verify.py
++-- cross_model_test.py
 ```
 
 ## Development
 
 ```bash
-# Python (protocol + CLI)
+# Python protocol and CLI
 python -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
 AMM_TESTING=1 pytest
@@ -181,17 +215,19 @@ AMM_TESTING=1 pytest
 cd ui && npm install && npm run dev
 ```
 
-## Threat Model
+## Threat model
 
-IMPP's trust scores are heuristic, versioned, and not a guarantee. They are useful signals, not oracles. The public scoring formula is the reference implementation. Production verification uses independent, rotating, non-public holdout probes that are not included in this repository.
+Portable memory is behavioral supply-chain material. It should be assumed untrusted until parsed, evaluated, and attached under an explicit mode.
 
-For the full threat model, see [the paper](paper/agent-memory-markets.pdf).
+See [threat model](docs/threat_model.md).
 
 ## Citation
 
+The active citation target is being rewritten around the protocol-first paper:
+
 ```bibtex
-@article{karlovich2026agent,
-  title={Agent Memory Markets: A Verification Protocol for Cross-Model Knowledge Transfer},
+@article{karlovich2026impp,
+  title={IMPP: A Protocol for Portable Procedural Memory in AI Agent Systems},
   author={Karlovich, Ned},
   journal={arXiv preprint},
   year={2026}
