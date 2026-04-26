@@ -22,20 +22,26 @@ python experiments/generate_paper_tables.py
 
 ### `run_paper_v1.py`
 
-Experiment orchestrator for all paper v1 conditions. Validates data fixtures, runs trials across conditions, writes results.
+Experiment orchestrator for all paper v1 conditions. Two modes:
 
+**Dry-run (default-safe, no API calls):**
 ```bash
-# Validate setup (no LLM calls)
 python experiments/run_paper_v1.py --dry-run
-
-# Run a specific domain
-python experiments/run_paper_v1.py --domain defi_risk --trials 3
-
-# Run specific conditions
-python experiments/run_paper_v1.py --conditions no_memory impp_artifact --trials 3
+python experiments/run_paper_v1.py --dry-run --domain defi_risk
+python experiments/run_paper_v1.py --dry-run --domain cybersec_vuln
 ```
 
-Requires `ANTHROPIC_API_KEY` for Claude conditions. `OPENAI_API_KEY` for cross-model conditions (optional).
+Validates data fixtures, loads tasks and labels, prints a run manifest. No LLM calls, no output file.
+
+**Live (real API calls):**
+```bash
+python experiments/run_paper_v1.py --live --domain defi_risk \
+    --conditions no_memory impp_artifact --trials 1
+```
+
+Requires `ANTHROPIC_API_KEY`. Currently supports `no_memory` and `impp_artifact` conditions. Results are appended to `data/paper_v1/results_real.csv` (sample fixtures in `results.csv` are never modified).
+
+If neither `--dry-run` nor `--live` is specified, defaults to `--dry-run`.
 
 ## Conditions
 
