@@ -11,9 +11,9 @@ AI agents increasingly rely on persistent memory: task traces, skill files, prom
 
 AI agents are beginning to accumulate operational memory. They store user preferences, summarize prior interactions, write tool-use notes, maintain vector stores, build skill libraries, and refine prompts from experience. These memories can materially change downstream behavior. A risk-assessment agent may become better calibrated after repeated feedback. A security triage agent may learn which vulnerabilities are usually exploitable. A customer-support agent may learn escalation patterns that reduce resolution time.
 
-Most of this memory remains deployment-local. It is stored inside one application, one vector index, one prompt stack, one file tree, or one model-provider-specific workflow. When another agent faces a similar task, it usually starts over. This is inefficient, but the deeper problem is that there is no common infrastructure for packaging, verifying, and safely attaching learned behavior across agent systems.
+Most of this memory remains deployment-local, bound to one application, vector index, prompt stack, or model-provider workflow. When another agent faces a similar task, it starts from scratch. The deeper problem is not inefficiency but the absence of common infrastructure for packaging, verifying, and safely attaching learned behavior across agent systems.
 
-Software ecosystems solved a related problem through package registries. Reusable behavior is packaged, versioned, signed, documented, distributed, and governed. Agent memory needs an analogous layer, but memory artifacts differ from ordinary software packages. They may not execute directly; instead, they bias future model behavior through context, retrieval, examples, policies, or tool constraints. Their failures can be delayed, probabilistic, and context-sensitive.
+Software ecosystems solved a related problem through package registries, where reusable behavior is packaged, versioned, signed, and governed [slsa]. Agent memory needs an analogous layer, but memory artifacts differ from software packages in important ways: they may not execute directly, instead biasing model behavior through context, retrieval, examples, or policy injection. Their failures can be delayed, probabilistic, and context-sensitive.
 
 IMPP addresses this gap. It treats portable agent memory as a behavioral artifact that must be described, scoped, signed, evaluated, attached explicitly, and revocable.
 
@@ -170,6 +170,8 @@ Each trial evaluates the same fixed task set. Transfer efficiency (TE) is comput
 
 ### 8.2 Results
 
+**Table 1.** Per-model condition-level MAE (mean absolute error ± standard deviation across trials).
+
 | Domain | Model | Condition | MAE | Trials |
 |--------|-------|-----------|-----|--------|
 | DeFi | Claude Sonnet | impp_artifact | 7.38 ± 0.65 | 3 |
@@ -181,7 +183,7 @@ Each trial evaluates the same fixed task set. Transfer efficiency (TE) is comput
 | CyberSec | GPT-4o | impp_artifact | 16.42 ± 0.75 | 3 |
 | CyberSec | GPT-4o | no_memory | 15.33 ± 1.83 | 3 |
 
-Per-model transfer efficiency:
+**Table 2.** Per-model transfer efficiency. Positive TE indicates the artifact reduced error relative to the no-memory baseline.
 
 | Domain | Claude Sonnet TE | GPT-4o TE |
 |--------|-----------------|-----------|
@@ -190,7 +192,7 @@ Per-model transfer efficiency:
 
 ### 8.3 Interpretation
 
-Pilot results show mixed transfer. DeFi same-model Claude evaluation shows a modest positive signal (+5.6% TE), suggesting the artifact provides some useful calibration when consumed by the same model family that produced it. Cross-model GPT-4o transfer on DeFi is slightly negative (-2.7%), consistent with the hypothesis that artifacts shaped by one model's reasoning style do not automatically help a different model. Both models show negative transfer on cybersecurity tasks, where the artifact appears to degrade performance below the no-memory baseline.
+Table 1 reports per-model condition-level MAE; Table 2 reports per-model transfer efficiency. Pilot results show mixed transfer. DeFi same-model Claude evaluation shows a modest positive signal (+5.6% TE), suggesting the artifact provides some useful calibration when consumed by the same model family that produced it. Cross-model GPT-4o transfer on DeFi is slightly negative (-2.7%), consistent with the hypothesis that artifacts shaped by one model's reasoning style do not automatically help a different model. Both models show negative transfer on cybersecurity tasks, where the artifact appears to degrade performance below the no-memory baseline.
 
 These results do not support a claim of broad positive transfer. They do support three protocol-level conclusions:
 
@@ -210,7 +212,51 @@ A complete evaluation should include conditions beyond the two tested here:
 - adversarial artifact tests (poisoned artifact);
 - trust-score calibration against downstream outcomes.
 
-## 9. Security and governance considerations
+### 8.5 Reproducibility
+
+All experiment infrastructure, data fixtures, and committed results are available in the project repository.
+
+- **Task fixtures and labels:** `data/paper_v1/` contains domain task sets and ground-truth labels. Sample fixtures in `data/paper_v1/results.csv` are synthetic and marked `is_sample=true`; they should not be cited as empirical evidence.
+- **Real pilot results:** `data/paper_v1/results_real.csv` contains all real experiment rows. Every row has `is_sample=false`. Generated tables are in `paper/tables/real/conditions.md` (Table 1) and `paper/tables/real/summary.md` (Table 2).
+- **Experiment runner:** `experiments/run_paper_v1.py` orchestrates live and dry-run experiments.
+- **Table generator:** `experiments/generate_paper_tables.py` regenerates markdown tables from committed CSV data.
+
+To validate fixtures without API calls:
+
+```
+python experiments/run_paper_v1.py --dry-run --domain defi_risk
+python experiments/run_paper_v1.py --dry-run --domain cybersec_vuln
+```
+
+To regenerate tables from committed real results:
+
+```
+python experiments/generate_paper_tables.py --source real
+```
+
+Live experiment runs require provider API keys (Anthropic, OpenAI, or OpenRouter) and are not required to inspect or verify the committed results. Private API keys and raw provider logs are not included in the repository.
+
+### 8.6 Artifact availability
+
+Source code and public fixtures are available in the project repository. Sample fixtures are clearly marked and should not be cited as empirical evidence. Real pilot tables (Tables 1 and 2) are generated from `results_real.csv` and can be regenerated using the commands above. The IMPP protocol schema, reference implementation, and registry prototype are open-source.
+
+## 9. Related work
+
+IMPP draws on several research threads. We summarize connections and distinctions here. Citation keys are placeholders pending final bibliography normalization.
+
+**Agent memory and persistent context.** Recent agent frameworks increasingly support persistent memory across sessions, including tool-use traces, user preference stores, and vector-indexed conversation history [agent-memory]. IMPP differs by treating memory as a portable, signed artifact with explicit attach semantics rather than an internal implementation detail.
+
+**Prompt and skill reuse.** Prompt engineering research has explored systematic prompt construction, reuse, and composition [prompt-engineering]. Skill libraries and prompt registries share IMPP's goal of reusable behavioral components but typically lack provenance metadata, verification, or revocation mechanisms.
+
+**Retrieval-augmented generation.** RAG systems retrieve relevant context from external stores to ground model responses [rag]. IMPP's `retrieval_only` attach mode is analogous, but IMPP adds supply-chain trust, behavioral evaluation, and explicit scoping that RAG pipelines typically omit.
+
+**Model cards, data cards, and artifact cards.** Model cards [model-cards] and data cards [data-cards] establish the practice of structured documentation for ML artifacts. IMPP's artifact card extends this pattern to behavioral memory, adding attach-mode declarations, evaluation certificates, and revocation state.
+
+**Software supply-chain security.** Signed packages, provenance attestations, and transparency logs are established in software supply chains [slsa] [sigstore]. IMPP adapts these patterns to behavioral artifacts, where the threat model includes not only tampering and impersonation but also prompt injection, hidden instructions, and negative transfer.
+
+**Evaluation and benchmark leakage.** Held-out evaluation is standard practice, but benchmark leakage is an active concern for LLM evaluation [benchmark-leakage]. IMPP's verification pipeline requires holdout evaluation and adversarial probes, and the pilot results in Section 8 illustrate the risk that public labels may inflate apparent transfer efficiency.
+
+## 10. Security and governance considerations
 
 A memory artifact can act like an instruction-bearing dependency. Threats include:
 
@@ -228,7 +274,7 @@ A memory artifact can act like an instruction-bearing dependency. Threats includ
 
 Public methodology should be transparent, but production holdouts and abuse probes should rotate. Publishing the scoring formula is acceptable; publishing the entire live exam key is not.
 
-## 10. Limitations
+## 11. Limitations
 
 This work is preliminary. Known limitations include:
 
@@ -240,7 +286,7 @@ This work is preliminary. Known limitations include:
 - **Hand-weighted trust scores.** The verification pipeline weights (transfer efficiency 50%, adversarial cleanliness 30%, freshness 20%) are provisional and uncalibrated against downstream outcomes.
 - **Untested dynamics.** Freshness, composability, revocation, and marketplace incentive dynamics remain under-tested.
 
-## 11. Discussion: registry before marketplace
+## 12. Discussion: registry before marketplace
 
 A marketplace may eventually be useful, but the protocol must come first. A marketplace turns verification scores into economic targets. That raises the stakes for adversarial optimization, dispute handling, review governance, and abuse monitoring.
 
@@ -253,10 +299,14 @@ The safer development sequence is:
 5. curated registry;
 6. commercial marketplace extensions.
 
-## 12. Conclusion
+## 13. Conclusion
 
 Agent memory will become valuable infrastructure only if it can be transferred without collapsing trust. IMPP proposes a protocol for making learned agent behavior legible, attachable, verifiable, and revocable.
 
 Our pilot results reinforce a conservative framing: portable memory artifacts are feasible and evaluable, but naive attachment can produce zero or negative transfer. The protocol must therefore include explicit attach semantics, model-compatibility metadata, verification pipelines, and negative-transfer testing as first-class concerns, not optional extensions.
 
 The strongest near-term claim is not that memory transfer reliably improves performance. It is that portable procedural and semantic memory artifacts are plausible, measurable, and risky enough to require protocol-level treatment. The path forward requires larger benchmarks, attach-mode ablation, model-adaptive delivery, and calibrated trust scoring.
+
+---
+
+**TODO: Citation keys** `[model-cards]`, `[data-cards]`, `[rag]`, `[slsa]`, `[sigstore]`, `[prompt-engineering]`, `[agent-memory]`, `[benchmark-leakage]` are placeholders pending final bibliography normalization.
