@@ -1,41 +1,87 @@
-# IMPP Paper v1 — Reproducibility Package
+# IMPP paper v1 reproducibility package
 
-Data and scripts for reproducing the results in:
+This directory is the planned public reproducibility package for the protocol-first IMPP paper:
 
-> **IMPP: A Protocol for Portable Procedural Memory in AI Agent Systems**
-> Karlovich, Ned (2026). Preprint.
+> IMPP: A Protocol for Portable Procedural Memory in AI Agent Systems
 
-## Contents
+The goal is to make the paper's main empirical tables reproducible without publishing live production holdouts, private adversarial probes, customer data, or proprietary artifacts.
 
-| File | Description |
-|------|-------------|
-| `tasks.jsonl` | Evaluation tasks: DeFi risk scoring (8+24 protocols) and CyberSec vulnerability scoring (8 vulnerabilities) |
-| `labels.csv` | Ground-truth scores for all evaluation items |
-| `results.csv` | Per-trial results across all experiments (DeFi 3-trial, CyberSec 3-trial, cross-model) |
-| `splits.json` | Train/held-out splits for each domain |
-| `adversarial_results.json` | Poisoned artifact detection results |
+## Planned contents
 
-## Experiment Setup
-
-- **DeFi domain**: 8 protocols (core set) + 24 protocols (extended cross-model set)
-- **CyberSec domain**: 8 vulnerabilities
-- **Seller model** (artifact creator): Claude Sonnet 4 (`claude-sonnet-4-20250514`)
-- **Buyer model** (same-model transfer): Claude Sonnet 4
-- **Cross-model buyer**: GPT-4o (manual ChatGPT evaluation)
-- **Trials**: 3 independent runs per configuration
-- **Metric**: Transfer Efficiency = `(novice_error - buyer_error) / (novice_error - expert_error) * 100`
-
-## Reproducing Results
-
-```bash
-cd experiments/
-python generate_tables.py
+```text
+data/paper_v1/
+  README.md
+  artifacts_sanitized.jsonl
+  tasks.jsonl
+  labels_public_sample.csv
+  results.csv
+  splits.json
 ```
 
-## Limitations
+## File descriptions
 
-- Synthetic evaluation domains (generated protocol/vulnerability profiles, not real-world data)
-- Small item counts (8-32 per domain)
-- Cross-model experiment was manual (ChatGPT web interface), not automated API
-- 3 trials per configuration — limited statistical power
-- Trust score weights are hand-tuned, not calibrated against downstream outcomes
+### `artifacts_sanitized.jsonl`
+
+Public sanitized memory artifacts used for paper experiments. These should remove benchmark answer keys, private traces, credentials, PII, proprietary source material, and live holdout clues.
+
+Each record should include enough metadata to validate the IMPP artifact schema and reproduce the declared attach-mode behavior.
+
+### `tasks.jsonl`
+
+Public evaluation tasks used to regenerate paper tables. Tasks should be synthetic or clearly licensed for public redistribution.
+
+### `labels_public_sample.csv`
+
+Ground-truth labels for the public sample. This file should support reproducibility of published tables, but it should not include private rotating holdouts used by a production registry.
+
+### `results.csv`
+
+Canonical result rows used by the paper. At minimum:
+
+```text
+run_id,domain,model,condition,attach_mode,task_id,score,error,cost_usd,latency_ms
+```
+
+### `splits.json`
+
+Train, public-test, and holdout split metadata. Public test splits can be included. Private production holdout identifiers should not be included.
+
+## Public vs private evaluation material
+
+Public:
+
+- schema-valid sanitized artifacts;
+- public benchmark tasks;
+- sample labels;
+- reproducibility scripts;
+- aggregate results;
+- probe categories;
+- trust-score formula version.
+
+Private or rotating:
+
+- live holdout tasks;
+- canary artifacts;
+- production adversarial prompts;
+- abuse heuristics;
+- raw user or customer traces;
+- proprietary expert artifacts;
+- credentials, deployment IDs, and infrastructure details.
+
+## Minimum experiments for the first arXiv version
+
+The first credible paper package should support:
+
+1. no-memory baseline;
+2. raw-context baseline;
+3. RAG baseline if available;
+4. prompt-only skill-file baseline;
+5. IMPP artifact with declared attach mode;
+6. attach-mode ablation;
+7. negative-transfer test;
+8. red-team artifact test;
+9. trust-score calibration table if enough artifacts exist.
+
+## Rule of thumb
+
+Publish the protocol and enough data to reproduce the paper's public tables. Do not publish the live exam key used to operate a production registry.
