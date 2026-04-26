@@ -1,3 +1,5 @@
+> **SAMPLE TABLE** — generated from synthetic/sample fixtures. Do not cite as final empirical evidence.
+
 ## Table 2: Cross-Model Transfer (Claude Sonnet -> GPT-4o)
 
 | Condition | Items | Avg Error |

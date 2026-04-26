@@ -1,3 +1,5 @@
+> **SAMPLE TABLE** — generated from synthetic/sample fixtures. Do not cite as final empirical evidence.
+
 ## Table 3: Adversarial Probe Results (Poisoned Artifact)
 
 | Probe | Score |
