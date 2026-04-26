@@ -13,7 +13,7 @@
 
 If you discover a security vulnerability in IMPP, please report it privately:
 
-1. Use GitHub's [private vulnerability reporting](https://github.com/Beach-Bum/memory-market/security/advisories/new)
+1. Use GitHub's [private vulnerability reporting](https://github.com/Beach-Bum/impp/security/advisories/new)
 2. Or email: security@impp.sh
 
 Include:
@@ -38,7 +38,7 @@ The following are in scope:
 The following are out of scope:
 
 - Third-party dependencies (report to the upstream project)
-- The hosted registry at memorymarket.ai (contact us directly)
+- The hosted registry at impp.sh (contact us directly)
 - Social engineering attacks
 
 ## Disclosure Policy
