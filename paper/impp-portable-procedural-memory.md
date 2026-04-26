@@ -13,7 +13,7 @@ AI agents are beginning to accumulate operational memory. They store user prefer
 
 Most of this memory remains deployment-local, bound to one application, vector index, prompt stack, or model-provider workflow. When another agent faces a similar task, it starts from scratch. The deeper problem is not inefficiency but the absence of common infrastructure for packaging, verifying, and safely attaching learned behavior across agent systems.
 
-Software ecosystems solved a related problem through package registries, where reusable behavior is packaged, versioned, signed, and governed [slsa]. Agent memory needs an analogous layer, but memory artifacts differ from software packages in important ways: they may not execute directly, instead biasing model behavior through context, retrieval, examples, or policy injection. Their failures can be delayed, probabilistic, and context-sensitive.
+Software ecosystems solved a related problem through package registries, where reusable behavior is packaged, versioned, signed, and governed [10]. Agent memory needs an analogous layer, but memory artifacts differ from software packages in important ways: they may not execute directly, instead biasing model behavior through context, retrieval, examples, or policy injection. Their failures can be delayed, probabilistic, and context-sensitive.
 
 IMPP addresses this gap. It treats portable agent memory as a behavioral artifact that must be described, scoped, signed, evaluated, attached explicitly, and revocable.
 
@@ -242,19 +242,19 @@ Source code and public fixtures are available in the project repository. Sample 
 
 ## 9. Related work
 
-IMPP draws on several research threads. We summarize connections and distinctions here. Citation keys are placeholders pending final bibliography normalization.
+IMPP draws on several research threads. We summarize connections and distinctions here.
 
-**Agent memory and persistent context.** Recent agent frameworks increasingly support persistent memory across sessions, including tool-use traces, user preference stores, and vector-indexed conversation history [agent-memory]. IMPP differs by treating memory as a portable, signed artifact with explicit attach semantics rather than an internal implementation detail.
+**Agent memory and persistent context.** Recent agent frameworks increasingly support persistent memory across sessions, including tool-use traces, user preference stores, and vector-indexed conversation history [1, 2, 3, 4]. IMPP differs by treating memory as a portable, signed artifact with explicit attach semantics rather than an internal implementation detail.
 
-**Prompt and skill reuse.** Prompt engineering research has explored systematic prompt construction, reuse, and composition [prompt-engineering]. Skill libraries and prompt registries share IMPP's goal of reusable behavioral components but typically lack provenance metadata, verification, or revocation mechanisms.
+**Prompt and skill reuse.** Prompt engineering research has explored systematic prompt construction, reuse, and composition [5, 6]. Skill libraries and prompt registries share IMPP's goal of reusable behavioral components but typically lack provenance metadata, verification, or revocation mechanisms.
 
-**Retrieval-augmented generation.** RAG systems retrieve relevant context from external stores to ground model responses [rag]. IMPP's `retrieval_only` attach mode is analogous, but IMPP adds supply-chain trust, behavioral evaluation, and explicit scoping that RAG pipelines typically omit.
+**Retrieval-augmented generation.** RAG systems retrieve relevant context from external stores to ground model responses [7]. IMPP's `retrieval_only` attach mode is analogous, but IMPP adds supply-chain trust, behavioral evaluation, and explicit scoping that RAG pipelines typically omit.
 
-**Model cards, data cards, and artifact cards.** Model cards [model-cards] and data cards [data-cards] establish the practice of structured documentation for ML artifacts. IMPP's artifact card extends this pattern to behavioral memory, adding attach-mode declarations, evaluation certificates, and revocation state.
+**Model cards, data cards, and artifact cards.** Model cards [8] and data cards [9] establish the practice of structured documentation for ML artifacts. IMPP's artifact card extends this pattern to behavioral memory, adding attach-mode declarations, evaluation certificates, and revocation state.
 
-**Software supply-chain security.** Signed packages, provenance attestations, and transparency logs are established in software supply chains [slsa] [sigstore]. IMPP adapts these patterns to behavioral artifacts, where the threat model includes not only tampering and impersonation but also prompt injection, hidden instructions, and negative transfer.
+**Software supply-chain security.** Signed packages, provenance attestations, and transparency logs are established in software supply chains [10, 11]. IMPP adapts these patterns to behavioral artifacts, where the threat model includes not only tampering and impersonation but also prompt injection, hidden instructions, and negative transfer.
 
-**Evaluation and benchmark leakage.** Held-out evaluation is standard practice, but benchmark leakage is an active concern for LLM evaluation [benchmark-leakage]. IMPP's verification pipeline requires holdout evaluation and adversarial probes, and the pilot results in Section 8 illustrate the risk that public labels may inflate apparent transfer efficiency.
+**Evaluation and benchmark leakage.** Held-out evaluation is standard practice, but benchmark leakage is an active concern for LLM evaluation. IMPP's verification pipeline requires holdout evaluation and adversarial probes, and the pilot results in Section 8 illustrate the risk that public labels may inflate apparent transfer efficiency.
 
 ## 10. Security and governance considerations
 
@@ -307,6 +307,28 @@ Our pilot results reinforce a conservative framing: portable memory artifacts ar
 
 The strongest near-term claim is not that memory transfer reliably improves performance. It is that portable procedural and semantic memory artifacts are plausible, measurable, and risky enough to require protocol-level treatment. The path forward requires larger benchmarks, attach-mode ablation, model-adaptive delivery, and calibrated trust scoring.
 
----
+## References
 
-**TODO: Citation keys** `[model-cards]`, `[data-cards]`, `[rag]`, `[slsa]`, `[sigstore]`, `[prompt-engineering]`, `[agent-memory]`, `[benchmark-leakage]` are placeholders pending final bibliography normalization.
+[1] J. S. Park, J. C. O'Brien, C. J. Cai, M. R. Morris, P. Liang, and M. S. Bernstein. "Generative Agents: Interactive Simulacra of Human Behavior." UIST 2023. arXiv:2304.03442.
+
+[2] C. Packer, S. Wooders, K. Lin, V. Fang, S. G. Patil, I. Stoica, and J. E. Gonzalez. "MemGPT: Towards LLMs as Operating Systems." arXiv:2310.08560, 2023.
+
+[3] N. Shinn, F. Cassano, A. Gopinath, K. Narasimhan, and S. Yao. "Reflexion: Language Agents with Verbal Reinforcement Learning." NeurIPS 2023. arXiv:2303.11366.
+
+[4] G. Wang, Y. Xie, Y. Jiang, A. Mandlekar, C. Xiao, Y. Zhu, L. Fan, and A. Anandkumar. "Voyager: An Open-Ended Embodied Agent with Large Language Models." arXiv:2305.16291, 2023.
+
+[5] J. Wei, X. Wang, D. Schuurmans, M. Bosma, B. Ichter, F. Xia, E. Chi, Q. Le, and D. Zhou. "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models." NeurIPS 2022. arXiv:2201.11903.
+
+[6] S. Yao, J. Zhao, D. Yu, N. Du, I. Shafran, K. Narasimhan, and Y. Cao. "ReAct: Synergizing Reasoning and Acting in Language Models." ICLR 2023. arXiv:2210.03629.
+
+[7] P. Lewis, E. Perez, A. Piktus, F. Petroni, V. Karpukhin, N. Goyal, H. Küttler, M. Lewis, W. Yih, T. Rocktäschel, S. Riedel, and D. Kiela. "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks." NeurIPS 2020. arXiv:2005.11401.
+
+[8] M. Mitchell, S. Wu, A. Zaldivar, P. Barnes, L. Vasserman, B. Hutchinson, E. Spitzer, I. D. Raji, and T. Gebru. "Model Cards for Model Reporting." FAT* 2019. arXiv:1810.03993.
+
+[9] T. Gebru, J. Morgenstern, B. Vecchione, J. W. Vaughan, H. Wallach, H. Daumé III, and K. Crawford. "Datasheets for Datasets." Communications of the ACM, 2021. arXiv:1803.09010.
+
+[10] OpenSSF. "Supply-chain Levels for Software Artifacts (SLSA)." https://slsa.dev, 2023.
+
+[11] Sigstore Project. "Sigstore: Software Signing for Everyone." https://sigstore.dev, 2022.
+
+**TODO:** The benchmark leakage paragraph in Section 9 does not yet have a specific citation. A verified reference on LLM data contamination or evaluation benchmark leakage should be added before final arXiv submission.
