@@ -2,15 +2,19 @@
 """Generate markdown tables for the IMPP paper from experiment data.
 
 Usage:
-    python experiments/generate_paper_tables.py
+    python experiments/generate_paper_tables.py                  # sample tables (default)
+    python experiments/generate_paper_tables.py --source sample  # same as above
+    python experiments/generate_paper_tables.py --source real    # from results_real.csv
 
-Reads from data/paper_v1/ and writes markdown files to paper/tables/.
-Also prints tables to stdout for quick inspection.
+Reads from data/paper_v1/ and writes markdown files to paper/tables/ (sample)
+or paper/tables/real/ (real).
 """
 
+import argparse
 import csv
 import json
 import statistics
+import sys
 from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / "data" / "paper_v1"
@@ -29,6 +33,27 @@ def load_results() -> list[dict]:
         reader = csv.DictReader(f)
         for row in reader:
             rows.append(row)
+    return rows
+
+
+def load_real_results() -> list[dict]:
+    path = DATA_DIR / "results_real.csv"
+    if not path.exists():
+        print(f"ERROR: {path} does not exist.")
+        sys.exit(1)
+    rows = []
+    with open(path) as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            rows.append(row)
+    if not rows:
+        print(f"ERROR: {path} is header-only. Run experiments with --live first.")
+        sys.exit(1)
+    sample_rows = [r for r in rows if r.get("is_sample", "").lower() == "true"]
+    if sample_rows:
+        print(f"ERROR: {path} contains {len(sample_rows)} rows with is_sample=true. "
+              "Real tables must not include sample data.")
+        sys.exit(1)
     return rows
 
 
@@ -167,24 +192,125 @@ def generate_summary_table(results: list[dict]) -> str:
     return "\n".join(lines)
 
 
+def generate_real_condition_table(results: list[dict]) -> str:
+    """Table: Per-condition MAE from real experiment runs."""
+    lines = [
+        "## Table: Condition Comparison (Real Runs)",
+        "",
+        "| Domain | Condition | Items | MAE | Trials |",
+        "|--------|-----------|-------|-----|--------|",
+    ]
+
+    for domain in ["defi", "cybersec"]:
+        domain_rows = [r for r in results if r["domain"] == domain]
+        conditions = sorted(set(r["condition"] for r in domain_rows))
+        for condition in conditions:
+            cond_rows = [r for r in domain_rows if r["condition"] == condition]
+            run_ids = sorted(set(r["run_id"] for r in cond_rows))
+            trial_maes = []
+            for run_id in run_ids:
+                run_rows = [r for r in cond_rows if r["run_id"] == run_id]
+                mae = statistics.mean(float(r["error"]) for r in run_rows)
+                trial_maes.append(mae)
+            overall_mae = statistics.mean(trial_maes)
+            items = len([r for r in cond_rows if r["run_id"] == run_ids[0]])
+            lines.append(
+                f"| {domain} | {condition} | {items} | {overall_mae:.2f} | {len(run_ids)} |"
+            )
+
+    lines.append("")
+    lines.append("*MAE = mean absolute error averaged across trials. "
+                 "Each trial evaluates the paper fixture task set.*")
+    return "\n".join(lines)
+
+
+def generate_real_summary_table(results: list[dict]) -> str:
+    """Summary statistics from real experiment runs."""
+    lines = [
+        "## Summary Statistics (Real Runs)",
+        "",
+        "| Metric | Value |",
+        "|--------|-------|",
+    ]
+
+    for domain in ["defi", "cybersec"]:
+        domain_rows = [r for r in results if r["domain"] == domain]
+        conditions = sorted(set(r["condition"] for r in domain_rows))
+        for condition in conditions:
+            cond_rows = [r for r in domain_rows if r["condition"] == condition]
+            run_ids = sorted(set(r["run_id"] for r in cond_rows))
+            trial_maes = []
+            for run_id in run_ids:
+                run_rows = [r for r in cond_rows if r["run_id"] == run_id]
+                mae = statistics.mean(float(r["error"]) for r in run_rows)
+                trial_maes.append(mae)
+            mean_mae = statistics.mean(trial_maes)
+            std_mae = statistics.stdev(trial_maes) if len(trial_maes) > 1 else 0
+            items = len([r for r in cond_rows if r["run_id"] == run_ids[0]])
+            lines.append(
+                f"| {domain} / {condition} MAE | {mean_mae:.2f} +/- {std_mae:.2f} "
+                f"(n={len(run_ids)}, {items} items) |"
+            )
+
+    # TE if both no_memory and impp_artifact exist for a domain
+    for domain in ["defi", "cybersec"]:
+        domain_rows = [r for r in results if r["domain"] == domain]
+        conditions = set(r["condition"] for r in domain_rows)
+        if "no_memory" in conditions and "impp_artifact" in conditions:
+            novice_rows = [r for r in domain_rows if r["condition"] == "no_memory"]
+            artifact_rows = [r for r in domain_rows if r["condition"] == "impp_artifact"]
+            novice_mae = statistics.mean(float(r["error"]) for r in novice_rows)
+            artifact_mae = statistics.mean(float(r["error"]) for r in artifact_rows)
+            if novice_mae > 0:
+                te = ((novice_mae - artifact_mae) / novice_mae) * 100
+                lines.append(f"| {domain} TE (novice→artifact) | {te:.1f}% |")
+
+    lines.append("")
+    lines.append("*TE = transfer efficiency = (novice_MAE - artifact_MAE) / novice_MAE x 100. "
+                 "Positive TE means the artifact improved performance over novice baseline.*")
+    return "\n".join(lines)
+
+
 def main():
-    TABLES_DIR.mkdir(parents=True, exist_ok=True)
+    parser = argparse.ArgumentParser(description="Generate IMPP paper tables")
+    parser.add_argument("--source", default="sample", choices=["sample", "real"],
+                        help="Data source: sample fixtures or real experiment results")
+    args = parser.parse_args()
 
-    results = load_results()
+    if args.source == "sample":
+        TABLES_DIR.mkdir(parents=True, exist_ok=True)
+        results = load_results()
 
-    tables = {
-        "table1_same_model.md": generate_same_model_table(results),
-        "table2_cross_model.md": generate_cross_model_table(results),
-        "table3_adversarial.md": generate_adversarial_table(),
-        "summary.md": generate_summary_table(results),
-    }
+        tables = {
+            "table1_same_model.md": generate_same_model_table(results),
+            "table2_cross_model.md": generate_cross_model_table(results),
+            "table3_adversarial.md": generate_adversarial_table(),
+            "summary.md": generate_summary_table(results),
+        }
 
-    for filename, content in tables.items():
-        path = TABLES_DIR / filename
-        path.write_text(content + "\n")
-        print(f"Wrote {path}")
-        print(content)
-        print()
+        for filename, content in tables.items():
+            path = TABLES_DIR / filename
+            path.write_text(content + "\n")
+            print(f"Wrote {path}")
+            print(content)
+            print()
+
+    elif args.source == "real":
+        real_dir = TABLES_DIR / "real"
+        real_dir.mkdir(parents=True, exist_ok=True)
+        results = load_real_results()
+
+        tables = {
+            "conditions.md": generate_real_condition_table(results),
+            "summary.md": generate_real_summary_table(results),
+        }
+
+        for filename, content in tables.items():
+            path = real_dir / filename
+            path.write_text(content + "\n")
+            print(f"Wrote {path}")
+            print(content)
+            print()
 
 
 if __name__ == "__main__":
