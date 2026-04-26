@@ -12,6 +12,7 @@ import { CodeBlock } from '@/components/ui/code-block';
 import { CountingNumber } from '@/components/animate-ui/primitives/texts/counting-number';
 import { CopyButton } from '@/components/animate-ui/components/buttons/copy';
 import { Shield, GitBranch, Clock, User, ExternalLink, FileText, Download } from 'lucide-react';
+import { ShareButton } from '@/components/animate-ui/components/community/share-button';
 
 // Package data keyed by slug (matches landing page newPackages)
 const PACKAGES: Record<string, PackageData> = {
@@ -43,7 +44,7 @@ const PACKAGES: Record<string, PackageData> = {
     requires: { 'impp/core': '^1.0', 'impp/verification': '^0.5' },
     requiresDev: { 'impp/test-harness': '^1.0' },
     probes: [
-      { name: 'Embedding steganography', status: 'pass', score: 98 },
+      { name: 'Steganography detection', status: 'pass', score: 98 },
       { name: 'Overfit detection', status: 'pass', score: 95 },
       { name: 'Negative transfer risk', status: 'pass', score: 88 },
       { name: 'Cross-model compatibility', status: 'pass', score: 94 },
@@ -77,7 +78,7 @@ print(result.flags)       # List of risk factors
 ### Verification
 
 All versions pass the full IMPP adversarial probe battery:
-- Embedding steganography detection
+- Steganography detection detection
 - Overfit probe (train/test distribution shift)
 - Negative transfer risk assessment
 - Cross-model compatibility check
@@ -111,7 +112,7 @@ All versions pass the full IMPP adversarial probe battery:
     requires: { 'impp/core': '^1.0', 'impp/verification': '^0.5' },
     requiresDev: { 'impp/test-harness': '^1.0' },
     probes: [
-      { name: 'Embedding steganography', status: 'pass', score: 99 },
+      { name: 'Steganography detection', status: 'pass', score: 99 },
       { name: 'Overfit detection', status: 'pass', score: 96 },
       { name: 'Negative transfer risk', status: 'pass', score: 92 },
       { name: 'Cross-model compatibility', status: 'pass', score: 97 },
@@ -164,7 +165,7 @@ print(result.cvss_adjusted) # Context-adjusted CVSS score
     requires: { 'impp/core': '^1.0' },
     requiresDev: {},
     probes: [
-      { name: 'Embedding steganography', status: 'pass', score: 94 },
+      { name: 'Steganography detection', status: 'pass', score: 94 },
       { name: 'Overfit detection', status: 'pass', score: 88 },
       { name: 'Negative transfer risk', status: 'warn', score: 76 },
       { name: 'Cross-model compatibility', status: 'pass', score: 90 },
@@ -213,7 +214,7 @@ for finding in result.findings:
     requires: { 'impp/core': '^1.0', 'impp/verification': '^0.5' },
     requiresDev: {},
     probes: [
-      { name: 'Embedding steganography', status: 'pass', score: 92 },
+      { name: 'Steganography detection', status: 'pass', score: 92 },
       { name: 'Overfit detection', status: 'pass', score: 84 },
       { name: 'Negative transfer risk', status: 'warn', score: 72 },
       { name: 'Cross-model compatibility', status: 'pass', score: 88 },
@@ -299,6 +300,19 @@ export default function PackageDetailScreen({ slug }: { slug: string }) {
             <span className="truncate">{pkg.installCmd}</span>
             <CopyButton content={pkg.installCmd} size="xs" variant="ghost" className="ml-auto shrink-0" />
           </div>
+          <ShareButton
+            size="sm"
+            icon="prefix"
+            onIconClick={(platform) => {
+              const url = encodeURIComponent(window.location.href);
+              const text = encodeURIComponent(`Check out ${pkg.name} on IMPP`);
+              if (platform === 'x') window.open(`https://x.com/intent/tweet?url=${url}&text=${text}`);
+              else if (platform === 'github') window.open(pkg.repoUrl.startsWith('http') ? pkg.repoUrl : `https://${pkg.repoUrl}`);
+              else if (platform === 'facebook') window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`);
+            }}
+          >
+            Share
+          </ShareButton>
         </div>
 
         {/* Description */}
