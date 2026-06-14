@@ -17,7 +17,7 @@
     "date-fns": "^4.1.0",
     "embla-carousel-react": "^8.6.0",
     "fumadocs-core": "^15.8.5",
-    "fumadocs-mdx": "^11.10.1",
+    "fumadocs-mdx": "^15.0.12",
     "fumadocs-ui": "^15.8.5",
     "input-otp": "^1.4.2",
     "lucide-react": "^1.11.0",
