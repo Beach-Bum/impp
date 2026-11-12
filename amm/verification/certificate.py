@@ -46,6 +46,15 @@ class VerificationCertificate:
             d.pop("artifact_integrity", None)
         return d
 
+    @property
+    def signed(self) -> bool:
+        """Whether the certificate carries a signature at all.
+
+        This says nothing about whether the signature is genuine; use
+        verify_signature() or verify_certificate() for that.
+        """
+        return bool(self.signature)
+
     def matches_artifact(self, artifact) -> bool:
         """Check that ``artifact`` is the one this certificate was issued for.
 
@@ -257,3 +266,74 @@ def check_revocation(cert_id: str, crl_path: Path | None = None) -> bool:
     """Check if a certificate has been revoked. Returns True if revoked."""
     crl = load_crl(crl_path)
     return any(entry["cert_id"] == cert_id for entry in crl)
+
+
+# ── Certificate verification ──────────────────────────────────────────
+
+
+@dataclass
+class CertificateCheck:
+    """Outcome of verify_certificate.
+
+    status is one of: "valid", "revoked", "expired", "unsigned",
+    "no_public_key", "signature_invalid", "artifact_mismatch".
+    """
+
+    valid: bool
+    status: str
+    reason: str = ""
+
+
+def verify_certificate(
+    cert: VerificationCertificate,
+    public_key: Ed25519PublicKey | None = None,
+    crl_path: Path | None = None,
+    artifact=None,
+    require_signature: bool = True,
+) -> CertificateCheck:
+    """Decide whether a certificate should be accepted.
+
+    Checks, in order: revocation list, expiry, signature, and (if an
+    artifact is given) that the certificate was issued for that artifact.
+    A missing revocation list means nothing has been revoked.
+
+    Args:
+        cert: The certificate to check
+        public_key: Key to verify the signature with (loads the default
+            public key from CERTS_DIR if None)
+        crl_path: Revocation list to consult (defaults to CRL_PATH)
+        artifact: Optional MemoryArtifact the certificate must match
+        require_signature: If False, an unsigned certificate is not refused
+            for being unsigned (a signature that is present is still checked)
+    """
+    if check_revocation(cert.id, crl_path):
+        entry = next(e for e in load_crl(crl_path) if e["cert_id"] == cert.id)
+        return CertificateCheck(
+            False,
+            "revoked",
+            f"revoked at {entry.get('revoked_at', 'unknown time')}: "
+            f"{entry.get('reason', 'no reason given')}",
+        )
+
+    if cert.is_expired():
+        return CertificateCheck(False, "expired", f"expired at {cert.expires_at}")
+
+    if cert.signed:
+        if public_key is None:
+            try:
+                public_key = load_public_key()
+            except FileNotFoundError:
+                return CertificateCheck(
+                    False, "no_public_key", "signature present but no public key to check it with"
+                )
+        if not cert.verify_signature(public_key):
+            return CertificateCheck(False, "signature_invalid", "signature does not match the certificate")
+    elif require_signature:
+        return CertificateCheck(False, "unsigned", "certificate carries no signature")
+
+    if artifact is not None and not cert.matches_artifact(artifact):
+        return CertificateCheck(
+            False, "artifact_mismatch", "certificate was not issued for this artifact as it now stands"
+        )
+
+    return CertificateCheck(True, "valid")
