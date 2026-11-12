@@ -23,6 +23,7 @@ from ..domains.base import Domain
 from ..benchmark.engine import run_verification_benchmark
 from ..benchmark.sandbox import AssessmentResult
 from ..adversarial.runner import run_all_probes
+from ..registry.trust import compute_freshness_pct
 from .certificate import generate_certificate, VerificationCertificate
 
 
@@ -77,6 +78,11 @@ def verify_artifact(
     if issues:
         raise ValueError(f"Artifact validation failed: {issues}")
 
+    # Freshness decays with the artifact's age. created_at is part of the
+    # content hash, so it cannot be moved forward without changing the hash.
+    # Computed before the benchmark so a bad timestamp fails early.
+    freshness = compute_freshness_pct(artifact.provenance.created_at)
+
     # Step 2: Benchmark info
     benchmark_id = str(uuid.uuid4())
     all_items = domain.get_all_items()
@@ -125,6 +131,7 @@ def verify_artifact(
     trust = compute_trust_score(
         transfer_efficiency=te,
         adversarial_score=adversarial["aggregate_score"],
+        freshness_pct=freshness,
     )
 
     # Build results dict for certificate
@@ -132,6 +139,7 @@ def verify_artifact(
         "buyer_avg_error": metrics["buyer_avg_error"],
         "novice_avg_error": metrics["novice_avg_error"],
         "transfer_efficiency_pct": round(te, 1),
+        "freshness_pct": freshness,
         "per_protocol": {
             r.protocol: {
                 "agent_score": r.agent_score,
@@ -149,6 +157,7 @@ def verify_artifact(
         adversarial=adversarial,
         trust_score=trust,
         referee_model=model,
+        artifact_integrity=artifact.compute_integrity(),
     )
 
     return certificate

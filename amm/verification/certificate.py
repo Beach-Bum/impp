@@ -31,9 +31,45 @@ class VerificationCertificate:
     expires_at: str
     referee_model: str
     signature: str = ""
+    # Full-coverage integrity digest of the verified artifact
+    # (MemoryArtifact.compute_integrity). Being part of the signed payload,
+    # it binds the signature to every field of the artifact, not only to the
+    # four fields behind artifact_hash. Empty on certificates issued before
+    # the digest existed.
+    artifact_integrity: str = ""
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        d = asdict(self)
+        # Omitted when empty so that certificates issued before the digest
+        # existed serialize, and therefore sign and verify, exactly as before.
+        if not d.get("artifact_integrity"):
+            d.pop("artifact_integrity", None)
+        return d
+
+    @property
+    def signed(self) -> bool:
+        """Whether the certificate carries a signature at all.
+
+        This says nothing about whether the signature is genuine; use
+        verify_signature() or verify_certificate() for that.
+        """
+        return bool(self.signature)
+
+    def matches_artifact(self, artifact) -> bool:
+        """Check that ``artifact`` is the one this certificate was issued for.
+
+        Compares the content address and, when the certificate carries an
+        integrity digest, the digest recomputed over the whole artifact, so a
+        change to any field (e.g. the attestation) is detected. For
+        certificates without a digest only the content address is compared.
+        """
+        if artifact.hash != self.artifact_hash:
+            return False
+        if artifact.hash != artifact.compute_hash():
+            return False
+        if self.artifact_integrity:
+            return artifact.compute_integrity() == self.artifact_integrity
+        return True
 
     def _signable_payload(self) -> bytes:
         """Canonical JSON bytes for signing (excludes signature field)."""
@@ -125,6 +161,10 @@ def load_public_key(path: Path | None = None) -> Ed25519PublicKey:
     return key
 
 
+class UnsignedCertificateError(RuntimeError):
+    """Raised when a signed certificate was required but no key was available."""
+
+
 def generate_certificate(
     artifact_hash: str,
     benchmark_info: dict,
@@ -134,6 +174,8 @@ def generate_certificate(
     referee_model: str,
     expiry_days: int = CERTIFICATE_EXPIRY_DAYS,
     signing_key: Ed25519PrivateKey | None = None,
+    artifact_integrity: str = "",
+    require_signature: bool = False,
 ) -> VerificationCertificate:
     """Generate a verification certificate, optionally signed.
 
@@ -146,9 +188,15 @@ def generate_certificate(
         referee_model: Model used for verification
         expiry_days: Days until certificate expires
         signing_key: Ed25519 private key for signing (auto-loads from CERTS_DIR if None)
+        artifact_integrity: Full-coverage integrity digest of the artifact
+            (MemoryArtifact.compute_integrity()); included in the signed payload
+        require_signature: If True, raise UnsignedCertificateError instead of
+            returning an unsigned certificate when no signing key is available
 
     Returns:
-        A VerificationCertificate (signed if a key is available).
+        A VerificationCertificate (signed if a key is available). With the
+        default require_signature=False and no key, the certificate is
+        returned unsigned; check ``cert.signed``.
     """
     now = datetime.now(timezone.utc)
 
@@ -171,6 +219,7 @@ def generate_certificate(
         issued_at=now.isoformat(),
         expires_at=(now + timedelta(days=expiry_days)).isoformat(),
         referee_model=referee_model,
+        artifact_integrity=artifact_integrity,
     )
 
     # Auto-sign if key provided or available on disk
@@ -181,6 +230,11 @@ def generate_certificate(
             pass
     if signing_key is not None:
         cert.sign(signing_key)
+    elif require_signature:
+        raise UnsignedCertificateError(
+            "No signing key was given and none could be loaded from "
+            f"{CERTS_DIR / 'impp_signing.key'}; refusing to issue an unsigned certificate."
+        )
 
     return cert
 
@@ -226,3 +280,74 @@ def check_revocation(cert_id: str, crl_path: Path | None = None) -> bool:
     """Check if a certificate has been revoked. Returns True if revoked."""
     crl = load_crl(crl_path)
     return any(entry["cert_id"] == cert_id for entry in crl)
+
+
+# ── Certificate verification ──────────────────────────────────────────
+
+
+@dataclass
+class CertificateCheck:
+    """Outcome of verify_certificate.
+
+    status is one of: "valid", "revoked", "expired", "unsigned",
+    "no_public_key", "signature_invalid", "artifact_mismatch".
+    """
+
+    valid: bool
+    status: str
+    reason: str = ""
+
+
+def verify_certificate(
+    cert: VerificationCertificate,
+    public_key: Ed25519PublicKey | None = None,
+    crl_path: Path | None = None,
+    artifact=None,
+    require_signature: bool = True,
+) -> CertificateCheck:
+    """Decide whether a certificate should be accepted.
+
+    Checks, in order: revocation list, expiry, signature, and (if an
+    artifact is given) that the certificate was issued for that artifact.
+    A missing revocation list means nothing has been revoked.
+
+    Args:
+        cert: The certificate to check
+        public_key: Key to verify the signature with (loads the default
+            public key from CERTS_DIR if None)
+        crl_path: Revocation list to consult (defaults to CRL_PATH)
+        artifact: Optional MemoryArtifact the certificate must match
+        require_signature: If False, an unsigned certificate is not refused
+            for being unsigned (a signature that is present is still checked)
+    """
+    if check_revocation(cert.id, crl_path):
+        entry = next(e for e in load_crl(crl_path) if e["cert_id"] == cert.id)
+        return CertificateCheck(
+            False,
+            "revoked",
+            f"revoked at {entry.get('revoked_at', 'unknown time')}: "
+            f"{entry.get('reason', 'no reason given')}",
+        )
+
+    if cert.is_expired():
+        return CertificateCheck(False, "expired", f"expired at {cert.expires_at}")
+
+    if cert.signed:
+        if public_key is None:
+            try:
+                public_key = load_public_key()
+            except FileNotFoundError:
+                return CertificateCheck(
+                    False, "no_public_key", "signature present but no public key to check it with"
+                )
+        if not cert.verify_signature(public_key):
+            return CertificateCheck(False, "signature_invalid", "signature does not match the certificate")
+    elif require_signature:
+        return CertificateCheck(False, "unsigned", "certificate carries no signature")
+
+    if artifact is not None and not cert.matches_artifact(artifact):
+        return CertificateCheck(
+            False, "artifact_mismatch", "certificate was not issued for this artifact as it now stands"
+        )
+
+    return CertificateCheck(True, "valid")

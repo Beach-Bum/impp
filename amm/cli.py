@@ -10,6 +10,7 @@ import httpx
 from .config import API_BASE_URL, AMM_DIR, CERTS_DIR
 from .verification.certificate import (
     VerificationCertificate,
+    check_revocation,
     generate_keypair,
     load_public_key,
 )
@@ -38,6 +39,11 @@ def verify(artifact: str, local: bool, key: str | None):
         if cert.is_expired():
             click.secho("EXPIRED", fg="red", bold=True)
             click.echo(f"  Certificate expired at {cert.expires_at}")
+            sys.exit(1)
+
+        if check_revocation(cert.id):
+            click.secho("REVOKED", fg="red", bold=True)
+            click.echo(f"  Certificate {cert.id} is on the revocation list")
             sys.exit(1)
 
         if cert.signature:

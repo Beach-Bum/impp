@@ -34,6 +34,29 @@ VALID_LICENSES = (
 )
 
 
+INTEGRITY_PREFIX = "sha256:"
+_INTEGRITY_DOMAIN = b"impp-artifact-integrity-v1:"
+
+
+def integrity_digest(data: dict) -> str:
+    """Full-coverage integrity digest of a serialized artifact.
+
+    SHA-256 over the canonical JSON (sorted keys, no insignificant
+    whitespace) of the whole artifact dictionary, minus the ``integrity``
+    field itself. Unlike ``MemoryArtifact.compute_hash`` (the content
+    address, which covers four fields), every key and every leaf value is
+    covered: attestation, provenance, card, privacy, revocation, and any
+    field added later.
+
+    The digest is not a signature: whoever can rewrite the file can also
+    recompute it. It becomes tamper-evident when it is bound into a signed
+    verification certificate (``VerificationCertificate.artifact_integrity``).
+    """
+    body = {k: v for k, v in data.items() if k != "integrity"}
+    canonical = json.dumps(body, sort_keys=True, separators=(",", ":")).encode("ascii")
+    return INTEGRITY_PREFIX + hashlib.sha256(_INTEGRITY_DOMAIN + canonical).hexdigest()
+
+
 # ── New v0.2 dataclasses ──────────────────────────────────────────────
 
 
@@ -172,6 +195,9 @@ class MemoryArtifact:
     privacy: PrivacyMetadata = field(default_factory=PrivacyMetadata)
     conflicts: list[ConflictDeclaration] = field(default_factory=list)
     revocation: RevocationStatus = field(default_factory=RevocationStatus)
+    # Full-coverage integrity digest (see integrity_digest). Empty on
+    # artifacts published before the digest existed, and until seal() is called.
+    integrity: str = ""
 
     def __post_init__(self):
         if not self.hash:
@@ -191,9 +217,43 @@ class MemoryArtifact:
         )
         return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
 
+    def compute_integrity(self) -> str:
+        """Compute the full-coverage integrity digest of this artifact.
+
+        Covers every field (including ``hash``) except ``integrity`` itself.
+        The content address returned by compute_hash() is left unchanged.
+        """
+        return integrity_digest(self.to_dict())
+
+    def seal(self) -> "MemoryArtifact":
+        """Record the integrity digest. Call once the artifact is final
+        (e.g. after the attestation has been filled in), before publishing."""
+        self.integrity = self.compute_integrity()
+        return self
+
+    def integrity_status(self) -> str:
+        """Return "verified", "mismatch", or "absent".
+
+        "absent" means the artifact carries no integrity digest (it predates
+        the digest, or was never sealed). That is reported, not treated as a
+        failure: only the fields in compute_hash() are protected for it.
+        """
+        if not self.integrity:
+            return "absent"
+        return "verified" if self.integrity == self.compute_integrity() else "mismatch"
+
+    def verify_integrity(self) -> bool:
+        """True unless an integrity digest is present and does not match."""
+        return self.integrity_status() != "mismatch"
+
     def to_dict(self) -> dict:
         """Serialize to dictionary."""
-        return asdict(self)
+        d = asdict(self)
+        # Unsealed artifacts serialize exactly as they did before the
+        # integrity digest was introduced.
+        if not d.get("integrity"):
+            d.pop("integrity", None)
+        return d
 
     def to_json(self, indent: int = 2) -> str:
         """Serialize to JSON string."""
@@ -202,11 +262,25 @@ class MemoryArtifact:
     @classmethod
     def from_dict(cls, data: dict) -> "MemoryArtifact":
         """Deserialize from dictionary."""
+        # Check the full-coverage digest against the data exactly as given,
+        # before any field is defaulted or dropped by reconstruction.
+        # Artifacts without a digest (older format) are still accepted.
+        declared_integrity = data.get("integrity", "")
+        if declared_integrity:
+            computed_integrity = integrity_digest(data)
+            if computed_integrity != declared_integrity:
+                raise ValueError(
+                    f"Integrity digest mismatch: expected {declared_integrity}, "
+                    f"computed {computed_integrity}. "
+                    "Artifact may have been tampered with."
+                )
+
         # Nested dataclass reconstruction
         domain_data = data.get("domain", {})
         knowledge_data = data.get("knowledge", {})
-        provenance_data = data.get("provenance", {})
-        attestation_data = data.get("attestation", {})
+        # Copied: the pops below must not alter the caller's dictionary
+        provenance_data = dict(data.get("provenance", {}))
+        attestation_data = dict(data.get("attestation", {}))
 
         # Handle source_material list in provenance
         source_raw = provenance_data.pop("source_material", [])
@@ -240,6 +314,7 @@ class MemoryArtifact:
             privacy=PrivacyMetadata(**privacy_raw) if privacy_raw else PrivacyMetadata(),
             conflicts=[ConflictDeclaration(**c) for c in conflicts_raw],
             revocation=RevocationStatus(**revocation_raw) if revocation_raw else RevocationStatus(),
+            integrity=declared_integrity,
         )
         # Recompute and verify hash if provided
         if data.get("hash"):
@@ -298,5 +373,9 @@ class MemoryArtifact:
         computed = self.compute_hash()
         if self.hash and self.hash != computed:
             issues.append("Hash integrity check failed")
+
+        # Verify the full-coverage digest when the artifact carries one
+        if self.integrity_status() == "mismatch":
+            issues.append("Integrity digest check failed")
 
         return issues
