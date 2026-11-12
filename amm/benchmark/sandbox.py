@@ -138,6 +138,8 @@ def bootstrap_ci(
     buyer_errors: list[float],
     n_bootstrap: int = 1000,
     ci: float = 95.0,
+    seed: int | None = None,
+    rng: random.Random | None = None,
 ) -> tuple[float, float]:
     """Compute bootstrap confidence interval for transfer efficiency.
 
@@ -149,15 +151,24 @@ def bootstrap_ci(
         buyer_errors: Per-item buyer errors
         n_bootstrap: Number of bootstrap samples
         ci: Confidence level (default 95%)
+        seed: Seed for the resampling; the same seed and inputs always give
+            the same interval
+        rng: A random.Random to draw from (takes precedence over seed)
+
+    With neither seed nor rng, the module-level random generator is used,
+    as before, and the interval varies from run to run.
 
     Returns:
         (lower_bound, upper_bound) as percentages
     """
+    if rng is None:
+        rng = random.Random(seed) if seed is not None else random
+
     n = len(novice_errors)
     te_samples = []
 
     for _ in range(n_bootstrap):
-        indices = [random.randint(0, n - 1) for _ in range(n)]
+        indices = [rng.randint(0, n - 1) for _ in range(n)]
         nov_sample = [novice_errors[i] for i in indices]
         buy_sample = [buyer_errors[i] for i in indices]
         nov_avg = sum(nov_sample) / n
@@ -194,6 +205,7 @@ def paired_uplift_test(
             "items_worsened": count where d_i < 0,
             "items_unchanged": count where d_i == 0,
             "wilcoxon_p": p-value from Wilcoxon signed-rank test (None if not computable),
+            "wilcoxon_method": "exact" or "normal" (None if not computable),
             "significant_at_05": bool,
         }
     """
@@ -220,7 +232,8 @@ def paired_uplift_test(
     unchanged = sum(1 for d in diffs if d == 0)
 
     # Wilcoxon signed-rank test (manual implementation to avoid scipy dependency)
-    p_value = _wilcoxon_signed_rank(diffs)
+    wilcoxon = wilcoxon_signed_rank(diffs)
+    p_value = wilcoxon["p_value"] if wilcoxon is not None else None
 
     return {
         "mean_uplift": round(mean_d, 3),
@@ -230,26 +243,43 @@ def paired_uplift_test(
         "items_worsened": worsened,
         "items_unchanged": unchanged,
         "wilcoxon_p": round(p_value, 4) if p_value is not None else None,
+        "wilcoxon_method": wilcoxon["method"] if wilcoxon is not None else None,
         "significant_at_05": p_value is not None and p_value < 0.05,
     }
 
 
-def _wilcoxon_signed_rank(diffs: list[float]) -> float | None:
-    """Approximate Wilcoxon signed-rank test (two-sided).
+WILCOXON_EXACT_MAX_N = 25
 
-    Uses normal approximation for n >= 10. Returns None if too few non-zero diffs.
+
+def wilcoxon_signed_rank(diffs: list[float]) -> dict | None:
+    """Two-sided Wilcoxon signed-rank test on paired differences.
+
+    Zero differences are dropped (Wilcoxon's original treatment). With n
+    non-zero differences left:
+
+    - n <= WILCOXON_EXACT_MAX_N and no tied magnitudes: the exact p-value.
+      Under the null hypothesis each rank 1..n carries a + or - sign with
+      probability 1/2, so the number of sign assignments giving each rank
+      sum is counted directly and no approximation is involved.
+    - otherwise: the normal approximation, with the variance reduced for
+      tied magnitudes and a continuity correction of 0.5.
+
+    Returns None when every difference is zero, else
+    {"n", "w_plus", "w_minus", "p_value", "method"} with method "exact" or
+    "normal".
     """
     import math
 
     # Remove zeros
     nonzero = [(abs(d), 1 if d > 0 else -1) for d in diffs if d != 0]
     n = len(nonzero)
-    if n < 5:
+    if n == 0:
         return None
 
-    # Rank by absolute value
+    # Rank by absolute value, tied magnitudes share the average rank
     nonzero.sort(key=lambda x: x[0])
     ranks = []
+    tie_sizes = []
     i = 0
     while i < n:
         j = i + 1
@@ -258,23 +288,55 @@ def _wilcoxon_signed_rank(diffs: list[float]) -> float | None:
         avg_rank = (i + 1 + j) / 2
         for k in range(i, j):
             ranks.append((avg_rank, nonzero[k][1]))
+        tie_sizes.append(j - i)
         i = j
 
     # W+ = sum of ranks for positive diffs
     w_plus = sum(r for r, sign in ranks if sign > 0)
     w_minus = sum(r for r, sign in ranks if sign < 0)
-    w = min(w_plus, w_minus)
+    has_ties = any(t > 1 for t in tie_sizes)
 
-    # Normal approximation
-    mean_w = n * (n + 1) / 4
-    std_w = math.sqrt(n * (n + 1) * (2 * n + 1) / 24)
-    if std_w == 0:
-        return None
+    if n <= WILCOXON_EXACT_MAX_N and not has_ties:
+        # counts[s] = number of subsets of the ranks {1..n} that sum to s,
+        # i.e. the number of the 2^n equally likely sign assignments with
+        # W+ = s. Built one rank at a time (subset-sum counting).
+        max_sum = n * (n + 1) // 2
+        counts = [0] * (max_sum + 1)
+        counts[0] = 1
+        for rank in range(1, n + 1):
+            for s in range(max_sum, rank - 1, -1):
+                counts[s] += counts[s - rank]
+        # The distribution is symmetric about its mean, so the two-sided
+        # p-value is twice the lower tail at the smaller rank sum.
+        w = int(min(w_plus, w_minus))
+        p = min(1.0, 2 * sum(counts[: w + 1]) / 2**n)
+        method = "exact"
+    else:
+        mean_w = n * (n + 1) / 4
+        tie_term = sum(t**3 - t for t in tie_sizes) / 48
+        std_w = math.sqrt(n * (n + 1) * (2 * n + 1) / 24 - tie_term)
+        # Continuity correction: W+ is discrete, move 0.5 towards the mean
+        z = max(0.0, abs(w_plus - mean_w) - 0.5) / std_w
+        # Two-sided tail of the standard normal: 2 * (1 - Phi(z))
+        p = math.erfc(z / math.sqrt(2))
+        method = "normal"
 
-    z = (w - mean_w) / std_w
-    # Two-sided p-value from z using approximation
-    p = 2 * (1 - _norm_cdf(abs(z)))
-    return p
+    return {
+        "n": n,
+        "w_plus": w_plus,
+        "w_minus": w_minus,
+        "p_value": p,
+        "method": method,
+    }
+
+
+def _wilcoxon_signed_rank(diffs: list[float]) -> float | None:
+    """Two-sided Wilcoxon signed-rank p-value (see wilcoxon_signed_rank).
+
+    Returns None if there are no non-zero diffs.
+    """
+    result = wilcoxon_signed_rank(diffs)
+    return result["p_value"] if result is not None else None
 
 
 def _norm_cdf(z: float) -> float:
@@ -295,8 +357,11 @@ def compute_transfer_efficiency(
     buyer_results: list[AssessmentResult],
     expert_results: list[AssessmentResult] | None = None,
     training_items: list[str] | None = None,
+    seed: int | None = None,
 ) -> dict:
     """Compute transfer efficiency and related metrics.
+
+    Pass ``seed`` to make the bootstrap confidence interval reproducible.
 
     Transfer Efficiency = (novice_error - buyer_error) / novice_error × 100
 
@@ -311,7 +376,7 @@ def compute_transfer_efficiency(
 
     novice_errors = [r.error for r in novice_results]
     buyer_errors = [r.error for r in buyer_results]
-    ci_lower, ci_upper = bootstrap_ci(novice_errors, buyer_errors)
+    ci_lower, ci_upper = bootstrap_ci(novice_errors, buyer_errors, seed=seed)
 
     # Paired uplift test
     paired = paired_uplift_test(novice_results, buyer_results)
