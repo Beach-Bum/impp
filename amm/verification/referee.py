@@ -149,6 +149,7 @@ def verify_artifact(
         adversarial=adversarial,
         trust_score=trust,
         referee_model=model,
+        artifact_integrity=artifact.compute_integrity(),
     )
 
     return certificate

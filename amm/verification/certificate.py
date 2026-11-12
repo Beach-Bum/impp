@@ -31,9 +31,36 @@ class VerificationCertificate:
     expires_at: str
     referee_model: str
     signature: str = ""
+    # Full-coverage integrity digest of the verified artifact
+    # (MemoryArtifact.compute_integrity). Being part of the signed payload,
+    # it binds the signature to every field of the artifact, not only to the
+    # four fields behind artifact_hash. Empty on certificates issued before
+    # the digest existed.
+    artifact_integrity: str = ""
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        d = asdict(self)
+        # Omitted when empty so that certificates issued before the digest
+        # existed serialize, and therefore sign and verify, exactly as before.
+        if not d.get("artifact_integrity"):
+            d.pop("artifact_integrity", None)
+        return d
+
+    def matches_artifact(self, artifact) -> bool:
+        """Check that ``artifact`` is the one this certificate was issued for.
+
+        Compares the content address and, when the certificate carries an
+        integrity digest, the digest recomputed over the whole artifact, so a
+        change to any field (e.g. the attestation) is detected. For
+        certificates without a digest only the content address is compared.
+        """
+        if artifact.hash != self.artifact_hash:
+            return False
+        if artifact.hash != artifact.compute_hash():
+            return False
+        if self.artifact_integrity:
+            return artifact.compute_integrity() == self.artifact_integrity
+        return True
 
     def _signable_payload(self) -> bytes:
         """Canonical JSON bytes for signing (excludes signature field)."""
@@ -134,6 +161,7 @@ def generate_certificate(
     referee_model: str,
     expiry_days: int = CERTIFICATE_EXPIRY_DAYS,
     signing_key: Ed25519PrivateKey | None = None,
+    artifact_integrity: str = "",
 ) -> VerificationCertificate:
     """Generate a verification certificate, optionally signed.
 
@@ -146,6 +174,8 @@ def generate_certificate(
         referee_model: Model used for verification
         expiry_days: Days until certificate expires
         signing_key: Ed25519 private key for signing (auto-loads from CERTS_DIR if None)
+        artifact_integrity: Full-coverage integrity digest of the artifact
+            (MemoryArtifact.compute_integrity()); included in the signed payload
 
     Returns:
         A VerificationCertificate (signed if a key is available).
@@ -171,6 +201,7 @@ def generate_certificate(
         issued_at=now.isoformat(),
         expires_at=(now + timedelta(days=expiry_days)).isoformat(),
         referee_model=referee_model,
+        artifact_integrity=artifact_integrity,
     )
 
     # Auto-sign if key provided or available on disk
