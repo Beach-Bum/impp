@@ -161,6 +161,10 @@ def load_public_key(path: Path | None = None) -> Ed25519PublicKey:
     return key
 
 
+class UnsignedCertificateError(RuntimeError):
+    """Raised when a signed certificate was required but no key was available."""
+
+
 def generate_certificate(
     artifact_hash: str,
     benchmark_info: dict,
@@ -171,6 +175,7 @@ def generate_certificate(
     expiry_days: int = CERTIFICATE_EXPIRY_DAYS,
     signing_key: Ed25519PrivateKey | None = None,
     artifact_integrity: str = "",
+    require_signature: bool = False,
 ) -> VerificationCertificate:
     """Generate a verification certificate, optionally signed.
 
@@ -185,9 +190,13 @@ def generate_certificate(
         signing_key: Ed25519 private key for signing (auto-loads from CERTS_DIR if None)
         artifact_integrity: Full-coverage integrity digest of the artifact
             (MemoryArtifact.compute_integrity()); included in the signed payload
+        require_signature: If True, raise UnsignedCertificateError instead of
+            returning an unsigned certificate when no signing key is available
 
     Returns:
-        A VerificationCertificate (signed if a key is available).
+        A VerificationCertificate (signed if a key is available). With the
+        default require_signature=False and no key, the certificate is
+        returned unsigned; check ``cert.signed``.
     """
     now = datetime.now(timezone.utc)
 
@@ -221,6 +230,11 @@ def generate_certificate(
             pass
     if signing_key is not None:
         cert.sign(signing_key)
+    elif require_signature:
+        raise UnsignedCertificateError(
+            "No signing key was given and none could be loaded from "
+            f"{CERTS_DIR / 'impp_signing.key'}; refusing to issue an unsigned certificate."
+        )
 
     return cert
 
