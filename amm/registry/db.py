@@ -3,6 +3,7 @@
 import json
 import sqlite3
 import uuid
+from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -151,8 +152,8 @@ def store_artifact(conn: sqlite3.Connection, artifact: MemoryArtifact, seller_id
             artifact.hash,
             f"{artifact.domain.category}:{artifact.domain.subcategory}",
             artifact.knowledge.content,
-            json.dumps(artifact.provenance.__dict__),
-            json.dumps(artifact.attestation.__dict__),
+            json.dumps(asdict(artifact.provenance)),
+            json.dumps(asdict(artifact.attestation)),
             artifact.provenance.created_at,
             seller_id,
         ),
